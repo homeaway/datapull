@@ -1,0 +1,16 @@
+{
+  "useremailaddress": "your_id@DOMAIN.com",
+  "migrations": [
+
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+
+}

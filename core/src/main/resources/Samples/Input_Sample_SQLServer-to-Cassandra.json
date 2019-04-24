@@ -1,0 +1,54 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+    "migrations": [
+        {
+            "comment": "Migration with all data read from source and filtered in Spark memory",
+            "source": {
+                "platform": "mssql",
+              "server": "IP_ADDR_OR_DNS_NAME",
+              "database": "DATABASE_NAME",
+              "table": "SCHEMA_NAME.TABLE_NAME",
+              "login": "LOGIN_NAME",
+              "password": "PASSWORD"
+            },
+            "destination": {
+                "platform": "cassandra",
+              "cluster": "IP_ADDR_OR_DNS_NAME",
+              "keyspace": "YOURKEYSPACE_NAME",
+              "table": "TABLE_NAME",
+              "awsenv": "dev",
+              "vaultenv": "dev",
+              "login": "LOGIN_NAME"
+            }
+        },
+        {
+            "comment": "Migration with data filtered at source",
+            "source": {
+                "platform": "mssql",
+              "server": "IP_ADDR_OR_DNS_NAME",
+              "database": "DATABASE_NAME",
+              "table": "SCHEMA_NAME.TABLE_NAME",
+              "login": "LOGIN_NAME",
+              "password": "PASSWORD"
+            },
+            "destination": {
+              "platform": "cassandra",
+              "cluster": "IP_ADDR_OR_DNS_NAME",
+              "keyspace": "YOURKEYSPACE_NAME",
+              "table": "TABLE_NAME",
+              "awsenv": "dev",
+              "vaultenv": "dev",
+              "login": "LOGIN_NAME"
+            }
+        }
+    ],
+    "cluster": {
+        "pipelinename": "ekg",
+        "awsenv": "dev",
+        "portfolio": "Data Engineering Services",
+        "product": "Data Engineering - COE",
+        "ec2instanceprofile": "Iam role",
+        "cronexpression":"21 * * * *",
+        "ComponentInfo":"YOUR_Component-UUID_dominion"
+    }
+}

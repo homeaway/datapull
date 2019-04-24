@@ -1,0 +1,134 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "The Root Schema",
+  "required": [
+    "migrations",
+    "cluster"
+  ],
+  "properties": {
+    "useremailaddress": {
+      "$id": "#/properties/useremailaddress",
+      "type": "string",
+      "title": "The Useremailaddress Schema",
+      "default": "",
+      "examples": [
+        "emailaddress@domain.com"
+      ],
+      "pattern": "^(.*)$"
+    },
+    "migrations": {
+      "$id": "#/properties/migrations",
+      "type": "array",
+      "title": "The Migrations Schema",
+      "items": {
+        "$id": "#/properties/migrations/items",
+        "type": "object",
+        "title": "The Items Schema",
+        "properties": {
+          "comment": {
+            "$id": "#/properties/migrations/items/properties/comment",
+            "type": "string",
+            "title": "The Comment Schema",
+            "default": "",
+            "examples": [
+              "Migration with all data read from source and filtered in Spark memory"
+            ],
+            "pattern": "^(.*)$"
+          },
+          "source": {
+            "$id": "#/properties/migrations/items/properties/source",
+            "type": "object",
+            "title": "The Source Schema",
+            "default": null
+          },
+          "destination": {
+            "$id": "#/properties/migrations/items/properties/destination",
+            "type": "object",
+            "title": "The Destination Schema",
+            "default": null
+          },
+          "sources": {
+            "$id": "#/properties/migrations/items/properties/sources",
+            "type": "array",
+            "title": "The Sources Schema",
+            "default": null,
+            "items": {
+              "$id": "#/properties/migrations/items/properties/sources/items",
+              "type": "object",
+              "title": "The Items Schema"
+            }
+          }
+        }
+      }
+    },
+    "cluster": {
+      "$id": "#/properties/cluster",
+      "type": "object",
+      "title": "The Cluster Schema",
+      "required": [
+        "pipelinename",
+        "awsenv",
+        "ComponentInfo"
+      ],
+      "properties": {
+        "pipelinename": {
+          "$id": "#/properties/cluster/properties/pipelinename",
+          "type": "string",
+          "title": "The Pipelinename Schema",
+          "examples": [
+            "datapull"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "awsenv": {
+          "$id": "#/properties/cluster/properties/awsenv",
+          "type": "string",
+          "title": "The Awsenv Schema",
+          "examples": [
+            "dev"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "portfolio": {
+          "$id": "#/properties/cluster/properties/portfolio",
+          "type": "string",
+          "title": "The Portfolio Schema",
+          "examples": [
+            "Data Engineering Services"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "product": {
+          "$id": "#/properties/cluster/properties/product",
+          "type": "string",
+          "title": "The Product Schema",
+          "examples": [
+            "Data Engineering Data Tools"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "ec2instanceprofile": {
+          "$id": "#/properties/cluster/properties/ec2instanceprofile",
+          "type": "string",
+          "title": "The Ec2instanceprofile Schema",
+          "examples": [
+            "datapull"
+          ],
+          "pattern": "^(.*)$"
+        },
+        "ComponentInfo": {
+          "$id": "#/properties/cluster/properties/ComponentInfo",
+          "type": "string",
+          "title": "The Componentinfo Schema",
+          "examples": [
+            "00000000-0000-0000-0000-000000000000"
+          ],
+          "pattern": "^(.*)$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "postgres",
+        "table": "users",
+        "alias": "U"
+      },
+
+      "sql": {
+        "query": "SELECT U.UserId , U.UserGuid , U.PasswordSalt , U.Password , U.PasswordEncryption , U.PasswordResetFlag , DATE_FORMAT(U.PasswordModifiedDate, \"y-MM-dd HH:mm:ss.SSS\") AS PasswordModifiedDate FROM U"
+      },
+
+      "destination": {
+        "platform": "elastic",
+        "type": "Users_Destination",
+        "mappingid":"UserId",
+        "savemode":"create",
+        "index": "datatools_destination"
+      }
+    }
+  ]
+}

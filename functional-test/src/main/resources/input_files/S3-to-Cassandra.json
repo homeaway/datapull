@@ -1,0 +1,19 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "s3_source",
+        "fileformat": "json",
+        "post_migrate_command": {
+          "operation": "delete",
+          "s3path": "will be updated"
+        }
+      },
+      "destination": {
+        "platform": "cassandra",
+        "table": "users_destination"
+      }
+    }
+  ]
+
+}

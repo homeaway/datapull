@@ -1,0 +1,27 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "influxdb",
+        "clustername": "localhost",
+        "database": "mydb",
+        "measurementname": "cpu",
+        "login": "root",
+        "password": "root"
+      },
+      "destination": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleInfluxcpudata_json",
+        "fileformat": "json"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "datapulltest",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression": "21 * * * *"
+  }
+}

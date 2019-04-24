@@ -1,0 +1,72 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "parallelmigrations": true,
+  "migrations": [
+    {
+      "source": {
+        "platform": "cassandra",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "keyspace": "YOURKEYSPACE_NAME",
+        "table": "TABLE_NAME",
+        "awsenv": "dev",
+        "vaultenv": "dev",
+        "login": "LOGIN_NAME"
+      },
+      "destination": {
+        "platform": "cassandra",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "keyspace": "YOURKEYSPACE_NAME",
+        "table": "TABLE_NAME",
+        "awsenv": "dev",
+        "vaultenv": "dev",
+        "login": "LOGIN_NAME"
+      }
+    },
+    {
+      "sources":[
+        {
+          "platform": "mssql",
+          "server": "IP_ADDR_OR_DNS_NAME",
+          "database": "DATABASE_NAME",
+          "table": "SCHEMA_NAME.TABLE_NAME",
+          "login": "LOGIN_NAME",
+          "password": "PASSWORD",
+          "alias": "ECTY"
+        },
+        {
+          "platform": "mssql",
+          "server": "IP_ADDR_OR_DNS_NAME",
+          "database": "DATABASE_NAME",
+          "table": "SCHEMA_NAME.TABLE_NAME",
+          "login": "LOGIN_NAME",
+          "password": "PASSWORD",
+          "alias": "ECTA"
+        }
+      ],
+      "destination": {
+        "platform": "mongodb",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "replicaset": "REPLICASET_NAME",
+        "authenticationdatabase": "ADMIN_DATABASE_NAME",
+        "database": "DATABASE_NAME",
+        "collection": "COLLECTION_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      },
+      "sql":
+      {
+        "query":"select * from ECTY JOIN ECTA ON ECTY.EntityCollectionTypeID = ECTA.EntityCollectionTypeID limit 10"
+      }
+
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

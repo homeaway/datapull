@@ -1,0 +1,35 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+"migrations": [
+    {
+      "source": {
+        "platform": "mssql",
+        "server": "IP_ADDR_OR_DNS_NAME",
+        "database": "DATABASE_NAME",
+        "table": "TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      },
+      "destination": {
+        "platform": "elastic",
+        "clustername": "IP_ADDR_OR_DNS_NAME",
+        "port":"9201",
+        "index": "movie",
+        "type":"docs",
+        "version": "5.6.4",
+        "login":"dataengineering_adminuser",
+        "password": ""
+      }
+    }
+
+  ],
+  "cluster": {
+    "pipelinename": "Any name for your data-pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - Data Tools",
+    "cronexpression": "00 16 * * *",
+    "ec2instanceprofile": "EMR_EC2_DefaultRole",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

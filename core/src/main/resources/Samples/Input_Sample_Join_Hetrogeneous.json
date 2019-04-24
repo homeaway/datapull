@@ -1,0 +1,64 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "sources":[
+        {
+          "platform": "mssql",
+          "server": "IP_ADDR_OR_DNS_NAME",
+          "database": "DATABASE_NAME",
+          "table": "TABLE_NAME",
+          "login": "LOGIN_NAME",
+          "password": "PASSWORD",
+          "alias": "X"
+        },
+        {
+          "platform": "mongodb",
+          "cluster": "IP_ADDR_OR_DNS_NAME",
+          "replicaset": "REPLICASET_NAME",
+          "authenticationdatabase": "ADMIN_DATABASE_NAME",
+          "database": "DATABASE_NAME",
+          "collection": "COLLECTION_NAME",
+          "login": "LOGIN_NAME",
+          "password": "PASSWORD",
+          "alias": "Y"
+        },
+       {
+         "platform": "cassandra",
+         "comment_cluster": "consul name required for vault integration",
+         "cluster": "IP_ADDR_OR_DNS_NAME",
+         "keyspace": "YOURKEYSPACE_NAME",
+         "table": "TABLE_NAME",
+         "awsenv": "dev",
+         "vaultenv": "dev",
+         "login": "LOGIN_NAME",
+         "alias": "Z"
+        }
+      ],
+      "destination": {
+        "platform": "mongodb",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "replicaset": "REPLICASET_NAME",
+        "authenticationdatabase": "ADMIN_DATABASE_NAME",
+        "database": "DATABASE_NAME",
+        "collection": "COLLECTION_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      },
+      "sql": {
+        "query": "select X.*,Y.*,Z.* from X JOIN Y ON X.id= Y.id Join Z ON X.id=Z.id"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}
+
+

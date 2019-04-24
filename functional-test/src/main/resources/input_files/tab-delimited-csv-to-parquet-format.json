@@ -1,0 +1,16 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "s3_tab_delimited_data_source",
+        "fileformat": "csv",
+        "delimiter": "\t"
+      },
+      "destination": {
+        "platform": "s3_parquet_destination",
+        "fileformat": "parquet",
+        "savemode": "Overwrite"
+      }
+    }
+  ]
+}

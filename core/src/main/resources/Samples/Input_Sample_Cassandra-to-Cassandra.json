@@ -1,0 +1,33 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "cassandra",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "keyspace": "YOURKEYSPACE_NAME",
+        "table": "TABLE_NAME",
+        "awsenv": "dev",
+        "vaultenv": "dev",
+        "login": "LOGIN_NAME"
+      },
+      "destination": {
+        "platform": "cassandra",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "keyspace": "YOURKEYSPACE_NAME",
+        "table": "TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

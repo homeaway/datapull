@@ -1,0 +1,119 @@
+<!-- turn debug=true on for logback-test.xml to help debug logging configurations. -->
+<configuration scan="true">
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+    <property resource="application-${env}.yml" />
+    <property name="LOG_PATH" value="/Users/srao/logs"/>
+    <springProperty scope="context" name="CLOUDWATCH_GROUP_NAME" source="datapull.logger.cloudwatch.groupName"/>
+    <springProperty scope="context" name="CLOUDWATCH_STREAM_NAME" source="datapull.logger.cloudwatch.streamName"/>
+    <!--<springProperty scope="context" name="ACCESS_KEY" source="ACCESS_KEY"/>
+    <springProperty scope="context" name="SECRET_KEY" source="SECRET_KEY"/> -->
+    <logger name="org.springframework" level="WARN"/>
+    <property name="root.level.console" value="OFF" />
+
+    <!--
+    We prefer logging to console instead of a File. Its very easy
+    to pipe console output to a file and most organizations already
+    have a log rotation setup in place. It can also be faster to use this
+    approach vs using a FileAppender directly
+    -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- encoders are  by default assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+
+        <file>${LOG_PATH}/log.log</file>
+
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>
+                %d{dd-MM-yyyy HH:mm:ss.SSS} [%thread] %-5level %logger{36}.%M - %msg%n
+            </Pattern>
+        </encoder>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>
+                ${LOG_PATH}/archived/log_%d{dd-MM-yyyy}_%i.log
+            </fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>10</maxHistory>
+            <totalSizeCap>100MB</totalSizeCap>
+        </rollingPolicy>
+
+    </appender>
+
+    <appender name="CLOUD-WATCH" class="io.github.dibog.AwsLogAppender">
+        <!--<awsConfig>
+            <credentials>
+                <accessKeyId>${ACCESS_KEY}</accessKeyId>
+                <secretAccessKey>${SECRET_KEY}</secretAccessKey>
+            </credentials>
+            <region></region>
+            <clientConfig class="com.amazonaws.ClientConfiguration">
+                <proxyHost></proxyHost>
+                <proxyPort></proxyPort>
+            </clientConfig>
+        </awsConfig> -->
+        <createLogGroup>false</createLogGroup>
+        <queueLength>100</queueLength>
+        <groupName>${CLOUDWATCH_GROUP_NAME}</groupName>
+        <streamName>${CLOUDWATCH_STREAM_NAME}</streamName>
+        <layout>
+            <pattern>[%thread] %-5level %logger{35} - %msg %n</pattern>
+        </layout>
+    </appender>
+
+
+    <root level="INFO">
+        <appender-ref ref="CLOUD-WATCH" />
+        <appender-ref ref="STDOUT" />
+    </root>
+
+
+    <!--<springProfile name="dev,stage">
+        <logger name="com.homeaway.datapullclient" level="DEBUG" additivity="false">
+            <appender-ref ref="FILE" />
+            <appender-ref ref="STDOUT" />
+        </logger>>
+    </springProfile>
+    <springProfile name="test,production">
+        <logger name="com.homeaway.datapullclient" level="WARN" additivity="false">
+            <appender-ref ref="STDOUT" />
+        </logger>
+    </springProfile> -->
+
+    <!--
+    Async appenders can drastically speed up logging as well as your application's
+    response time but with some potential drawbacks. Read more at.
+    https://logback.qos.ch/manual/appenders.html#AsyncAppender
+    http://blog.takipi.com/how-to-instantly-improve-your-java-logging-with-7-logback-tweaks/
+
+    Always be sure to test different configurations for yourself. Every
+    application has different requirements.
+     -->
+
+    <!--
+    We prefer a default setting of WARN and turn on logging explicitly for
+    any packages we care about. INFO is also a good choice. Going lower than INFO
+    may log sensitive data such as passwords or api tokens via HTTP or networking
+    libraries. Remember these defaults impact third party libraries as well.
+
+    Often times the cost of logging is overlooked. Try a simple benchmark of
+    logging in a tight loop a few million iterations vs not logging and see the difference.
+    There are a few ways you can change logging levels on the fly in a running app.
+    This could be a better solution than over logging.
+    -->
+
+
+    <!--
+    Assume we have a com.stubbornjava.secrets.MySecretPasswordClass.Java class.
+    This line will disable debug logging for only this class and set it to warn
+    so we don't log sensitive data. This is something we may want turned on in
+    our logback-test.xml file for local debugging but not in our production
+    configuration file.
+    -->
+
+</configuration>

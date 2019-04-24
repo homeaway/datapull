@@ -1,0 +1,5 @@
+UserId,UserGuid                        ,Password                                                    ,PasswordEncryption,PasswordResetFlag,PasswordModifiedDate
+1     ,8f719ace879743268e5c29edf3fc889b,UMS                                                         ,UMS               ,true             ,2015-09-29 15:48:00.072
+2     ,067028f8498249a9adb27fa6df67e257,$2a$04$uTVvazCWID661gZL.zwOgufo/HpKB4qaYoYtylCtWjRFhguW/sTXq,B_UMS_NORMAL      ,true             ,2014-03-25 16:21:51.417
+8     ,fe3c8f650f25415aaced01ad8bbe2899,$2a$04$/1CXd4QY9ijO6CEa896IbemXM7ZOQ9rlonM1e8RWt8y4qGbex6Woq,B_UMS_NORMAL      ,true             ,2014-03-28 22:23:22.557
+10    ,1af7a0c6fc31468da51c7085348e5060,$2a$04$3hyudHGxYDDLsTfV8tFZLunl0tsiHRsXzd.7mOBmzfj1i2k2gNRDS,B_UMS_NORMAL      ,false            ,2014-03-25 16:21:51.477

@@ -1,0 +1,24 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "mongodb",
+        "collection": "datapull_test",
+        "alias": "U",
+        "post_migrate_commands": [
+          {
+            "query": "{ delete: \"datapull_test\", deletes: [ { q: { }, limit: 0 } ] }"
+          }
+        ]
+      },
+        "sql": {
+          "query": "SELECT U.UserId , U.UserGuid , U.PasswordSalt , U.Password , U.PasswordEncryption , U.PasswordResetFlag ,  U.PasswordModifiedDate FROM U"
+        },
+        "destination": {
+          "platform": "oracle",
+          "table": "UsersNew"
+
+        }
+      }
+  ]
+}

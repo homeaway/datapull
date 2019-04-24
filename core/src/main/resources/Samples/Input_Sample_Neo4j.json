@@ -1,0 +1,59 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "sources":[
+        {
+          "platform": "filesystem",
+          "path": "/FOLDER/SUB_FOLDER/HelloWorld.csv",
+          "fileformat": "csv",
+          "alias":"ft"
+        },
+        {
+          "platform": "filesystem",
+          "path": "/FOLDER/SUB_FOLDER/HelloWorld.csv",
+          "fileformat": "csv",
+          "alias":"f"
+        },
+        {
+          "platform": "filesystem",
+          "path": "/FOLDER/SUB_FOLDER/HelloWorld.csv",
+          "fileformat": "csv",
+          "alias":"fa"
+        }
+      ],
+      "sql":
+      {
+        "query":"SELECT ft.foodtypeid, ft.foodtype, f.foodid, f.food FROM ft INNER JOIN fa on ft.foodtypeid = fa.foodtypeid INNER JOIN f on f.foodid = fa.foodid"
+      },
+      "destination": {
+        "platform": "neo4j",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "node1": {
+          "label" : "foodtype",
+          "property_key" : "foodtypeid",
+          "properties_nonkey": ["foodtype"]
+        },
+        "relation":{
+          "label": "relatedto"
+        },
+        "node2": {
+          "label" : "food",
+          "property_key" : "foodid",
+          "properties_nonkey": ["food"]
+        },
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "cluster": {
+    "pipelinename": "datapull-functional-test",
+    "portfolio": "data engineering services",
+    "product": "data tools",
+    "awsenv": "TEST",
+    "terminateclusterafterexecution": "false",
+    "ec2instanceprofile": "ekg-loader",
+    "ComponentInfo": "00000000-0000-0000-0000-000000000000"
+  },
+  "s3FunctionalReport": {
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+
+  "cassandra":
+  {
+    "cluster": "IP_ADDR_OR_DNS_NAME",
+    "keyspace": "YOURKEYSPACE_NAME",
+    "table": "TABLE_NAME",
+    "login": "LOGIN_NAME",
+    "password": "00000000-0000-0000-0000-000000000000",
+    "jksfilepath":"s3://BUCKET_NAME/FOLDER_PATH/client-server.jks",
+    "sparkoptions": {
+      "spark.cassandra.connection.ssl.enabled": "true",
+      "comment_truststore_path": "The truststore file should be available to all nodes of the cluster. For EMR clusters spun up using Data Pull, the truststore is injected into all nodes at /mnt/bootstrapfiles/client-server.jks",
+      "spark.cassandra.connection.ssl.trustStore.path": "/mnt/bootstrapfiles/client-server.jks",
+      "spark.cassandra.connection.ssl.trustStore.password": "clientpw"
+    }
+  },
+
+  "mongodb": {
+    "cluster": "IP_ADDR_OR_DNS_NAME",
+    "replicaset": "REPLICA_SET",
+    "authenticationdatabase": "AUTHENTICATION_DATABASE",
+    "database": "DATABASE",
+    "login": "LOGIN_NAME",
+    "password":"00000000-0000-0000-0000-000000000000"
+  },
+
+  "elastic": {
+    "platform": "elastic",
+    "clustername": "IP_ADDR_OR_DNS_NAME",
+    "port": "9201",
+    "version": "6.3.0",
+    "login": "LOGIN_NAME",
+    "password": "PASSWORD",
+    "index": "INDEX_NAME",
+    "type": "docs"
+  },
+  "kafka": {
+    "groupid": "com.homeaway.anyteam",
+    "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9091",
+    "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
+    "topic": "TOPIC_NAME",
+    "offset":"earliest",
+    "deSerializer": "com.kafka.avro.ReflectDecoderAvroDeserializer",
+    "s3location": "s3a://BUCKET_NAME/FOLDER_PATH/"
+  },
+
+  "postgres": {
+    "server": "IP_ADDR_OR_DNS_NAME",
+    "database": "DATABASE_NAME",
+    "login": "LOGIN_NAME",
+    "password": "PASSWORD",
+    "table": "SCHEMA_NAME.TABLE_NAME"
+  },
+  "mysql": {
+    "server": "IP_ADDR_OR_DNS_NAME",
+    "database": "DATABASE_NAME",
+    "login": "LOGIN_NAME",
+    "password": "PASSWORD",
+    "table": "SCHEMA_NAME.TABLE_NAME"
+  },
+
+  "neo4j": {
+    "platform": "neo4j",
+    "cluster": "IP_ADDR_OR_DNS_NAME",
+    "node1": {
+      "label" : "foodtype",
+      "property_key" : "foodtypeid",
+      "properties_nonkey": ["foodtype"]
+    },
+    "relation":{
+      "label": "relatedto"
+    },
+    "node2": {
+      "label" : "food",
+      "property_key" : "foodid",
+      "properties_nonkey": ["food"]
+    },
+    "login": "LOGIN_NAME",
+    "password": "PASSWORD"
+  },
+
+  "s3_destination": {
+    "platform":"s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_destination_csv": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_source": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_source_with_key": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_invalid_source": {
+    "platform": "s3",
+    "s3path": "INVALID_BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_destination_1": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH",
+    "pre_migrate_commands": [
+      {
+        "operation": "delete",
+        "s3path": "BUCKET_NAME/FOLDER_PATH"
+      },
+      {
+        "operation": "delete",
+        "s3path": "BUCKET_NAME/FOLDER_PATH"
+      }
+    ]
+  },
+  "s3_destination_2": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_source_post_migrate_command": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH/",
+    "post_migrate_command": {
+      "operation": "copy",
+      "sources3path": "BUCKET_NAME/FOLDER_PATH/",
+      "destinations3path": "BUCKET_NAME/FOLDER_PATH",
+      "overwrite": true,
+      "partitioned": false,
+      "removesource": false
+    }
+  },
+  "s3_tab_delimited_data_source": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_parquet_destination": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_parquet_source": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+  "s3_csv_destination": {
+    "platform": "s3",
+    "s3path": "BUCKET_NAME/FOLDER_PATH"
+  },
+
+
+  "mssql": {
+    "awsenv": "test",
+    "server": "IP_ADDR_OR_DNS_NAME",
+    "database": "DATABASE_NAME",
+    "login": "LOGIN_NAME",
+    "password": "PASSWORD",
+    "table": "SCHEMA_NAME.TABLE_NAME"
+  },
+  "test_data": {
+    "spark_submit_params": "--class Application s3://BUCKET_NAME/FOLDER_PATH/custom-datapull-1.0-SNAPSHOT.jar",
+    "cron_expression": "0/5 * * * ",
+    "customJarPath": "s3://BUCKET_NAME/FOLDER_PATH/custom-datapull-1.0-SNAPSHOT.jar",
+    "s3_sql_file": "BUCKET_NAME/FOLDER_PATH/mssql_query.sql"
+  }
+
+}

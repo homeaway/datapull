@@ -1,0 +1,17 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "kafka"
+      },
+
+      "destination": {
+        "platform": "postgres",
+        "table": "Users_Destination"
+
+
+      }
+    }
+  ]
+
+}

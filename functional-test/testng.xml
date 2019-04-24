@@ -1,0 +1,23 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd" >
+<suite name="Data Pull Automation Suite" verbose="1" parallel="classes" thread-count="1">
+    <test name="DataPull Test">
+        <classes>
+            <class name="com.homeaway.DataPull.DataPullCassandraToMongoDbTest"/>
+            <class name="com.homeaway.DataPull.DataPullElasticSearchToSQLServerTest"/>
+            <class name="com.homeaway.DataPull.DataPullKafkaToPostgresTest"/>
+            <class name="com.homeaway.DataPull.DataPullMongoDBToOracleTest"/>
+            <class name="com.homeaway.DataPull.DataPullMySQLToNeo4JTest"/>
+            <class name="com.homeaway.DataPull.DataPullOracleToMySQLTest"/>
+            <class name="com.homeaway.DataPull.DataPullPostgresToElasticSearchTest"/>
+            <class name="com.homeaway.DataPull.DataPullS3ToCassandraTest"/>
+            <class name="com.homeaway.DataPull.DataPullSqlServerToS3Test"/>
+            <class name="com.homeaway.DataPull.DataPullParallelMigrationsTest"/>
+            <class name="com.homeaway.DataPull.DataPullCustomJarTest"/>
+            <class name="com.homeaway.DataPull.CronExpressionTest"/>
+            <class name="com.homeaway.DataPull.MandatoryFieldsTest"/>
+            <class name="com.homeaway.DataPull.MandatoryFieldsTest"/>
+            <class name="com.homeaway.DataPull.DataPullS3ToS3Test"/>
+
+        </classes>
+    </test>
+</suite>

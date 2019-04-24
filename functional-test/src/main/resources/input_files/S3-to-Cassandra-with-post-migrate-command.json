@@ -1,0 +1,14 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "s3_source_post_migrate_command",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "cassandra",
+        "table": "users_destination"
+      }
+    }
+  ]
+}

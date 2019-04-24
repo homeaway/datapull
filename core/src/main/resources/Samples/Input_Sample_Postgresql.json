@@ -1,0 +1,40 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "postgres",
+        "server": "IP_ADDR_OR_DNS_NAME",
+        "database": "DATABASE_NAME",
+        "table": "SCHEMA_NAME.TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      },
+      "destination": {
+        "platform": "postgres",
+        "server": "IP_ADDR_OR_DNS_NAME",
+        "database": "DATABASE_NAME",
+        "table": "SCHEMA_NAME.TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "post_migrate_commands": [
+          {
+            "query": "TRUNCATE ONLY SCHEMA_NAME.TABLE_NAME;"
+          }
+        ]
+      },
+      "cluster": {
+        "pipelinename": "ekg",
+        "awsenv": "dev",
+        "portfolio": "Data Engineering Services",
+        "product": "Data Engineering - COE",
+        "ec2instanceprofile": "Iam role",
+        "cronexpression": "21 * * * *",
+        "ComponentInfo": "YOUR_Component-UUID_dominion"
+      }
+
+
+    }
+    ]
+}
+

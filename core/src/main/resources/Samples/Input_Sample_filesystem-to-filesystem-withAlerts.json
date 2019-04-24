@@ -1,0 +1,30 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "minexecutiontime":"1" ,
+  "maxexecutiontime":"10",
+  "migrations": [
+    {
+      "source": {
+        "platform": "filesystem",
+        "path": "/FOLDER/SUB_FOLDER/HelloWorld.csv",
+        "fileformat": "csv"
+      },
+      "destination": {
+        "platform": "filesystem",
+        "path": "/FOLDER/SUB_FOLDER/SampleData_Json",
+        "fileformat": "json",
+        "groupbyfields": "IntField"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *"
+  }
+}
+
+

@@ -1,0 +1,43 @@
+{
+  "useremailaddress": "your_id@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "mongodb",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "replicaset": "REPLICASET_NAME",
+        "authenticationdatabase": "ADMIN_DATABASE_NAME",
+        "database": "DATABASE_NAME",
+        "collection": "COLLECTION_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "pre_migrate_commands": [
+          {
+            "query": "{ delete: \"COLLECTION_NAME\",deletes: [ { q: { user: \"abc123\" }, limit: 1 } ] }"
+          }
+        ]
+
+      },
+      "destination": {
+        "platform": "mongodb",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "replicaset": "REPLICASET_NAME",
+        "authenticationdatabase": "ADMIN_DATABASE_NAME",
+        "database": "DATABASE_NAME",
+        "collection": "COLLECTION_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "post_migrate_command": "{ delete: \"COLLECTION_NAME\",deletes: [ { q: { user: \"abc123\" }, limit: 1 } ] }"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

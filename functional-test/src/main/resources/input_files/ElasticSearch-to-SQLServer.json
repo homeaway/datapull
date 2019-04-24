@@ -1,0 +1,23 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "elastic",
+        "index": "datatools_source",
+        "type":"Users_Source",
+        "alias": "U",
+        "post_migrate_commands": [
+          {
+            "shell": ""
+          }
+        ]
+      },
+
+      "destination": {
+        "platform": "mssql",
+        "table": "dbo.DataPull_Users_Destination"
+      }
+    }
+  ]
+
+}

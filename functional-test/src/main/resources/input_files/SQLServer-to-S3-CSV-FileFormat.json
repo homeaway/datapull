@@ -1,0 +1,20 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "mssql",
+        "table": "dbo.DataPull_Users_Source",
+        "alias": "U"
+      },
+      "sql": {
+        "query": "SELECT U.UserId , U.UserGuid , U.PasswordSalt , U.Password , U.PasswordEncryption , U.PasswordResetFlag , DATE_FORMAT(U.PasswordModifiedDate, \"y-MM-dd HH:mm:ss.SSS\") AS PasswordModifiedDate FROM U"
+      },
+      "destination": {
+        "platform": "s3_destination_csv",
+        "fileformat": "csv",
+        "groupbyfields": "PasswordSalt",
+        "savemode": "Overwrite"
+      }
+    }
+  ]
+}

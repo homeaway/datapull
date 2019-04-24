@@ -1,0 +1,44 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "sources":[ {
+        "platform": "s3",
+        "s3path": "BUCKET_NAME/FOLDER_PATH/SOURCE_OBJECT",
+        "fileformat": "json",
+        "alias":"s3"
+      },
+        {
+          "platform": "s3",
+          "s3path": "BUCKET_NAME/FOLDER_PATH/CDC_OBJECT",
+          "fileformat": "json",
+          "alias":"cdc"
+        }],
+      "destination": {
+        "platform": "s3",
+        "s3path": "BUCKET_NAME/FOLDER_PATH/TEMP_OBJECT",
+        "fileformat": "json",
+        "groupbyfields":"PartitionCol",
+        "post_migrate_command":{
+          "operation" : "copy",
+          "sources3path": "BUCKET_NAME/FOLDER_PATH/TEMP_OBJECT",
+          "destinations3path": "BUCKET_NAME/FOLDER_PATH/SOURCE_OBJECT",
+          "overwrite":true,
+          "removesource":false,
+          "partitioned": true,
+          "s3region": "us-west-2"
+        }
+      },
+      "sql": {
+        "query":"SELECT translate(translate(translate(translate(substring_index(Z.ame_create_date,':',1), '-', ''),':', ''), 'T',''),' ', '') AS PartitionCol, Z.ame_id , Z.ame_roo_id , Z.ame_rco_id ,Z.ame_count,Z.ame_create_date ,Z.ame_update_date, Z.ame_update_timestamp FROM ( SELECT Y.ame_id ,Y.ame_roo_id , Y.ame_rco_id ,Y.ame_count,Y.ame_create_date , Y.ame_update_date , Y.ame_update_timestamp ,ROW_NUMBER() OVER ( PARTITION BY Y.ame_id ORDER BY Y.ame_update_date DESC ) AS RowNum FROM ( SELECT s3.ame_id,s3.ame_roo_id ,s3.ame_rco_id , s3.ame_count,s3.ame_create_date ,s3.ame_update_date ,s3.ame_update_timestamp FROM ( SELECT DISTINCT cdc.ame_create_date FROM cdc) X JOIN s3 ON s3.ame_create_date = X.ame_create_date UNION ALL SELECT cdc.ame_id ,cdc.ame_roo_id ,cdc.ame_rco_id,cdc.ame_count ,cdc.ame_create_date , CASE cdc.operation WHEN 1 THEN '1/1/3000' ELSE cdc.ame_update_date END AS ame_update_date ,cdc.ame_update_timestamp FROM cdc) Y) Z WHERE Z.RowNum = 1"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "s3comp",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

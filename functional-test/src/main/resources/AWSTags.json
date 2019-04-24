@@ -1,0 +1,15 @@
+{
+  "owner": "your_id@DOMAIN.com",
+  "creator": "your_id@DOMAIN.com",
+  "team": "Data Tools",
+  "purpose": "data pull functional test",
+  "env": "dev",
+  "service": "RDS",
+  "product": "data engineering data tools",
+  "portfolio": "data engineering services",
+  "platform": "RDS",
+  "category": "Testing Platform",
+  "brand ": "HomeAway",
+  "assetProtectionLevel":"99",
+  "componentInfo":"00000000-0000-0000-0000-000000000000"
+}

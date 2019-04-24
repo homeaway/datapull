@@ -1,0 +1,38 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "elastic",
+        "clustername": "IP_ADDR_OR_DNS_NAME",
+        "port": "9201",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "index": "INDEX_NAME",
+        "type": "docs",
+        "version": "6.3.0",
+        "alias":"U"
+      },
+      "sql": {
+        "query": "SELECT id, name,DATE_FORMAT(current_date(), \"y-MM-dd HH:mm:ss.SSS\") as date FROM U"
+      },
+      "destination": {
+        "platform": "mssql",
+        "server": "IP_ADDR_OR_DNS_NAME",
+        "database": "DATABASE_NAME",
+        "table": "SCHEMA_NAME.TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "datapull-functional-test",
+    "portfolio": "data engineering services",
+    "product": "data tools",
+    "awsenv": "dev",
+    "terminateclusterafterexecution": "false",
+    "ComponentInfo": "00000000-0000-0000-0000-000000000000",
+    "ec2instanceprofile": "ekg-loader"
+  }
+}

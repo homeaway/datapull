@@ -1,0 +1,175 @@
+#!groovy
+// Note: the library version in this Jenkinsfile is updated by the shared library build
+
+@Library('devops/pipeline-shared-library@v1-latest') _
+properties([
+        buildDiscarder(logRotator(artifactNumToKeepStr: '5', daysToKeepStr: '15')),
+        disableConcurrentBuilds()
+])
+
+
+com.cwctravel.hudson.plugins.extended_choice_parameter.ExtendedChoiceParameterDefinition extensibleChoiceDbs = new com.cwctravel.hudson.plugins.extended_choice_parameter.ExtendedChoiceParameterDefinition(
+        "Databases",
+        "PT_CHECKBOX",
+        "all, cassandra, mongodb, elastic, mssql, kafka, postgres, oracle, mysql, s3, neo4j",
+        null,//project name
+        null,
+        null,
+        null,
+        null,// bindings
+        null,
+        null, // propertykey
+        "all", //default value
+        null,
+        null,
+        null,
+        null, //default bindings
+        null,
+        null,
+        null, //descriptionPropertyValue
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,// javascript file
+        null, // javascript
+        false, // save json param to file
+        false, // quote
+        11, // visible item count
+        "Select databases for which you want to run the tests.",
+        ","
+)
+
+
+
+properties([
+        parameters([
+                choice(choices: [
+                        '--Select Env--',
+                        'test',
+                        'dev'
+                ],
+                        description: '',
+                        name: 'Environment'),
+                choice(choices: [
+                        '--Select Version--',
+                        'ha-internal',
+                        'open-source'
+                ],
+                        description: '',
+                        name: 'DataPull_Version'),
+                string(name: 'Num_of_parallel_threads',defaultValue: '5', description: '', trim: true),
+                string(defaultValue: 'abc@DOMAIN.com', description: '', name: 'Email_Address', trim: true),
+                extensibleChoiceDbs
+        ])
+])
+
+
+node('coe-build') {
+
+    def build_ok = true
+    withCredentials([
+            file(credentialsId: "dev_secrets", variable: 'secrets_file_dev'),
+            file(credentialsId: "test_secrets", variable: 'secrets_file_test'),
+            file(credentialsId: 'jenkins_id_rsa', variable: 'id_rsa'),
+            file(credentialsId: 'ssh_config', variable: 'ssh_config')
+
+    ]){
+        stage('Checkout') {
+            checkoutProject()
+            ignoreQuickBuildCommits()
+            echo "executed checkout project method"
+            def devProps = readProperties file: "${secrets_file_dev}"            
+            def testProps = readProperties file: "${secrets_file_test}"
+            def testProps_new = readProperties file: "${secrets_file_test}"
+            def var = readFile("testng.xml")
+            def xml = new XmlParser()
+            def parallel_execution = "false"
+            xml.setFeature("http://apache.org/xml/features/disallow-doctype-decl", false)
+            xml = xml.parseText(var)
+            if(params.Num_of_parallel_threads.isInteger() && (params.Num_of_parallel_threads as Integer) > 1) {
+                xml.attributes().put("thread-count", params.Num_of_parallel_threads)
+                parallel_execution = "true"
+            }
+            else {
+                    xml.attributes().put("thread-count", "1")
+            }
+            writeFile(file: "testng.xml",text: getXml(xml))
+            if(params.Environment == "dev"){
+                testProps = devProps;
+            }
+            def environmentVar = readProperties file: 'src/main/resources/environment.properties'
+
+            environmentVar.environment = params.Environment
+            environmentVar.awsAccessKey = testProps.AWS_ACCESS_KEY_ID
+            environmentVar.awsSecretKey = testProps.AWS_SECRET_ACCESS_KEY
+            environmentVar['dev.awsAccessKey'] = devProps.AWS_ACCESS_KEY_ID
+            environmentVar['dev.awsSecretKey'] = devProps.AWS_SECRET_ACCESS_KEY
+            environmentVar['test.awsAccessKey'] = testProps_new.AWS_ACCESS_KEY_ID
+            environmentVar['test.awsSecretKey'] = testProps_new.AWS_SECRET_ACCESS_KEY
+            environmentVar.version = params.DataPull_Version
+            environmentVar.userEmailAddress = params.Email_Address
+            environmentVar.parallelExecution = parallel_execution
+
+            def envFileText = ""
+            environmentVar.each{
+                key, value -> envFileText <<= "${key}=${value}\n";
+            }
+            writeFile file: 'src/main/resources/environment.properties', text: envFileText.toString()
+        }
+
+        try{
+            stage('Test') {
+                def groups = ""
+                def DBsArray = Databases.split(",")
+                if(DBsArray[0] != "all"){
+                    DBsArray.each {
+                        groups += "${it},"
+                    }
+                }
+
+                if(groups != "" ){
+                    groups += "config"
+                }
+
+                def mvnCommand = "mvn clean -Dgroups=${groups} -Dmaven.test.failure.ignore=true test"
+
+                sh '''docker run --rm -v $PWD:/usr/src/DataPullFunctionalTest -v $PWD/src/main/resources/m2/:/root/.m2 -w /usr/src/DataPullFunctionalTest maven '''+ mvnCommand
+
+            }
+        } catch(e) {
+            build_ok = false
+            echo e.toString()
+        }
+
+        stage('Reporting'){
+            step([$class: 'Publisher', reportFilenamePattern: '**/testng-results.xml'])
+
+            publishHTML (target: [
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: false,
+                    keepAll: true,
+                    reportDir: 'report',
+                    reportFiles: 'extent-report.html',
+                    reportName: "Functional Test Report"
+            ])
+        }
+
+        if(build_ok) {
+            currentBuild.result = "SUCCESS"
+        } else {
+            currentBuild.result = "FAILURE"
+        }
+    }
+}
+
+@NonCPS
+String getXml(xml)
+{
+    def stringWriter = new StringWriter()
+    def nodePrinter = new XmlNodePrinter(new PrintWriter(stringWriter))
+    nodePrinter.print(xml)
+    return stringWriter.toString()
+}

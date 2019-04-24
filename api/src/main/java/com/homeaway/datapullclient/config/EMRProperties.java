@@ -1,0 +1,72 @@
+/* Copyright (c) 2019 Expedia Group.
+ * All rights reserved.  http://www.homeaway.com
+
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+
+ *      http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.homeaway.datapullclient.config;
+
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+
+import java.util.HashMap;
+import java.util.Map;
+
+@EnableConfigurationProperties
+@ConfigurationProperties(prefix = "datapull.emr")
+@Data
+public class EMRProperties {
+
+    @Value("${ec2_key_name:}")
+    private String keyName;
+
+    @Value("${subnet_id:}")
+    private String subnet;
+
+    @Value("${emr_security_group_master:}")
+    private String masterSg;
+
+    @Value("${emr_security_group_slave:}")
+    private String slaveSg;
+
+    @Value("${emr_security_group_service_access:}")
+    private String serviceAccessSg;
+
+    @Value("${emr_region:}")
+    private String emrRegion;
+
+    @Value("${instance_count:3}")
+    private int instanceCount;
+
+    @Value( "${master_type:m4.xlarge}" )
+    private String masterType;
+
+    @Value( "${slave_type:m4.xlarge}" )
+    private String slaveType;
+
+    @Value( "${service_role:EMR_DefaultRole}" )
+    private String serviceRole;
+
+    @Value("${job_flow_role:emr_ec2_datapull_role}")
+    private String jobFlowRole;
+
+    @Value( "${emr_release:emr-5.15.0}" )
+    private String emrReleaseVersion;
+
+    @Value( "${bootstrap_folder_path:}" )
+    private String bootstrapFolderPath;
+
+    private Map<String, String> tags = new HashMap<String, String>();
+}

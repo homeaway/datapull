@@ -1,0 +1,34 @@
+{
+  "useremailaddress": "test@DOMAIN.com",
+  "migrations": [
+    {
+      "comment": "Migration with all data read from source and filtered in Spark memory",
+      "source": {
+        "platform": "mysql",
+        "server": "IP_ADDR_OR_DNS_NAME",
+        "database": "DATABASE_NAME",
+        "table": "TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "alias":"test32"
+      },
+      "destination": {
+        "platform": "s3",
+        "s3path": "BUCKET_NAME/FOLDER_PATH",
+        "fileformat": "json"
+      },
+      "sql":{
+        "query":"select ame_id as id, ame_roo_id as id1, ame_rco_id as id2 from test32"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

@@ -1,0 +1,7 @@
+UserId,UserGuid                        ,Password                                                    ,PasswordEncryption,PasswordResetFlag,PasswordModifiedDate
+3     ,fd1a20888b524c938f9d05fd26f9f150,$2a$04$g4b/qc7nTlBFbN.DZCr2DeZOz9HYe/0ohjWbDKJllbEhiRNGaPBqS,B_UMS_NORMAL      ,true             ,2014-03-25 16:21:51.423
+4     ,7f8e18c099174c268595c2a277624fe1,$2a$04$fUUE1.IHO.i2E8FJ5XAnt.3t22RHGElPRx9ALipAAh8yRfHJIKrmi,B_UMS_NORMAL      ,true             ,2014-03-25 16:21:51.437
+5     ,9ad63308062e49f4b888284af9fc0ff8,$2a$04$pU0HqN3LAR6izBbzXeVpo.RetuKORGvAo/dxvlXpXDCaNJfxm/lMW,B_UMS_NORMAL      ,true             ,2014-03-25 16:21:51.437
+6     ,eac137afa4c343a6817d72784c43e3b0,$2a$04$h3K2cohvNBLTv46gQwV/5ePCtdkXHtboX.0MVixW2QuNHrf/B.DYO,B_UMS_NORMAL      ,true             ,2014-03-25 16:21:51.453
+7     ,17de72b2ca354b8b9a72c023477e13c7,$2a$04$P7WlNwP79bwPvyrB0kywxeh3T3RRMla6anSQ0Y8EFOfnmf6yjaVw2,B_UMS_NORMAL      ,true             ,2014-03-25 16:21:51.466
+9     ,fe02a99b51014a3fae0248d55bc4ab29,$2a$04$yiS/1au5oqDZSkLJtncp6.uxe7TEnw/gmWuVgMAQEbiZ7N2EXfeiu,B_UMS_NORMAL      ,false            ,2014-03-25 16:21:51.475

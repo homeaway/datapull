@@ -1,0 +1,16 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "s3_parquet_source",
+        "fileformat": "parquet",
+        "mergeschema": true
+      },
+      "destination": {
+        "platform": "s3_csv_destination",
+        "fileformat": "csv",
+        "savemode": "Overwrite"
+      }
+    }
+  ]
+}

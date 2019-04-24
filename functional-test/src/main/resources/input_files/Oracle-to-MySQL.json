@@ -1,0 +1,16 @@
+{
+  "migrations": [{
+    "source": {
+      "platform": "oracle",
+      "table": "USERS"
+    },
+
+    "destination": {
+      "platform": "mysql",
+      "table": "Users_Destination"
+    }
+
+  }
+
+  ]
+}

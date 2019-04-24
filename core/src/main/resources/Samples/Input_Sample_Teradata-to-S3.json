@@ -1,0 +1,39 @@
+{
+  "useremailaddress":"ur_email_id",
+  "precisecounts":true,
+  "parallelmigrations":true,
+  "migrations":[
+    {
+      "source":{
+        "platform":"teradata",
+       "server": "IP_ADDR_OR_DNS_NAME",
+        "database": "DATABASE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "table": "(select id from SCHEMA_NAME.TABLE_NAME) A"
+      },
+      "destination": {
+        "platform": "s3",
+        "s3path": "BUCKET_NAME/FOLDER_PATH",
+        "fileformat": "json"
+      },
+      "sql": {
+        "query": "SELECT * FROM dbname.tablename"
+      }
+    }
+  ],
+  "cluster":{
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion",
+    "tags":{
+      "Creator":"xyz",
+      "Product":"Datapull"
+    }
+  }
+}
+

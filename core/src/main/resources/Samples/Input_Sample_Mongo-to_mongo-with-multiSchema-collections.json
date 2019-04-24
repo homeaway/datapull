@@ -1,0 +1,38 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "mongodb",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "replicaset": "REPLICASET_NAME",
+        "authenticationdatabase": "ADMIN_DATABASE_NAME",
+        "database": "DATABASE_NAME",
+        "collection": "COLLECTION_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "overrideconnector":true
+      },
+      "destination": {
+        "platform": "mongodb",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "replicaset": "REPLICASET_NAME",
+        "authenticationdatabase": "ADMIN_DATABASE_NAME",
+        "database": "DATABASE_NAME",
+        "collection": "COLLECTION_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "documentfromjsonfield":true
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "datascience",
+    "awsenv": "prod",
+    "portfolio": "data science",
+    "ec2instanceprofile": "data-science-datapull",
+    "ComponentInfo": "00000000-0000-0000-0000-000000000000",
+    "product": "data science - shared function",
+    "terminateclusterafterexecution":"false"
+  }
+}

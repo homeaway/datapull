@@ -1,0 +1,36 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "s3",
+        "s3path": "BUCKET_NAME/FOLDER_PATH",
+        "fileformat": "json",
+        "alias":"test32"
+      },
+
+      "destination": {
+        "platform": "mongodb",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "replicaset": "REPLICASET_NAME",
+        "authenticationdatabase": "ADMIN_DATABASE_NAME",
+        "database": "DATABASE_NAME",
+        "collection": "COLLECTION_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD"
+      },
+      "sql":{
+        "query":"select ame_id as _id, ame_roo_id as id1, ame_rco_id as id2, struct(ame_id as id2) as data from test32"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "cassandra",
+        "table": "users",
+        "alias": "U"
+
+      },
+      "sql": {
+        "query": "SELECT U.UserId as _id, U.UserId , U.UserGuid , U.PasswordSalt , U.Password , U.PasswordEncryption , U.PasswordResetFlag , U.PasswordModifiedDate FROM U"
+      },
+      "destination": {
+        "platform": "mongodb",
+        "collection": "Users_Destination_DataPull_Test",
+        "replacedocuments": "true"
+
+      }
+    }
+  ]
+
+}

@@ -1,0 +1,1 @@
+![Screenshot](architecture_diagram.png)

@@ -1,0 +1,35 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "cassandra",
+        "cluster": "IP_ADDR_OR_DNS_NAME",
+        "keyspace": "YOURKEYSPACE_NAME",
+        "table": "TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "sparkoptions": {
+          "spark.cassandra.connection.ssl.enabled": "true",
+          "comment_truststore_path": "The truststore file should be available to all nodes of the cluster. For EMR clusters spun up using DataPull, the truststore is injected into all nodes at /mnt/bootstrapfiles/client-server.jks",
+          "spark.cassandra.connection.ssl.trustStore.path": "/mnt/bootstrapfiles/client-server.jks",
+          "spark.cassandra.connection.ssl.trustStore.password": "TRUSTUSTORE_PASSWORD"
+        }
+      },
+      "destination": {
+        "platform": "s3",
+        "s3path": "BUCKET_NAME/FOLDER_PATH",
+        "fileformat": "json"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

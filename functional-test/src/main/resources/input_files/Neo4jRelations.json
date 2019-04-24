@@ -1,0 +1,38 @@
+{
+  "migrations": [
+    {
+      "sources": [
+        {
+          "platform": "mysql",
+          "table": "Users_Source",
+          "alias": "U"
+        },
+        {
+          "platform": "mysql",
+          "table": "Users_Type",
+          "alias": "UT"
+        }
+      ],
+      "sql": {
+        "query": "Select U.UserId , U.UserGuid , U.PasswordSalt , U.Password , U.PasswordEncryption , U.PasswordResetFlag ,  U.PasswordModifiedDate, UT.UserType from U inner join UT on U.UserId = UT.UserId"
+      },
+      "destination": {
+        "platform": "neo4j",
+        "node1": {
+          "label": "Users",
+          "property_key": "UserId"
+        },
+        "relation": {
+          "label": "user_of_type_2"
+        },
+        "node2": {
+          "label": "Users_Type",
+          "property_key": "UserId",
+          "properties_nonkey": [
+            "UserType"
+          ]
+        }
+      }
+    }
+  ]
+}

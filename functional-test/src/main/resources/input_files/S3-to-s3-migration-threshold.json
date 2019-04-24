@@ -1,0 +1,54 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "s3_source",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "s3_destination_1",
+        "fileformat": "json"
+      }
+    },
+    {
+      "source": {
+        "platform": "s3_invalid_source",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "s3_destination",
+        "fileformat": "json"
+      }
+    },
+    {
+      "source": {
+        "platform": "s3_invalid_source",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "s3_destination",
+        "fileformat": "json"
+      }
+    },
+    {
+      "source": {
+        "platform": "s3_invalid_source",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "s3_destination",
+        "fileformat": "json"
+      }
+    },
+    {
+      "source": {
+        "platform": "s3_source",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "s3_destination_2",
+        "fileformat": "json"
+      }
+    }
+  ]
+}

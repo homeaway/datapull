@@ -1,0 +1,36 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "filesystem",
+        "path": "/FOLDER/SUB_FOLDER/SampleNeoData.csv",
+        "fileformat": "csv"
+      },
+      "destination": {
+        "platform": "oracle",
+        "server": "IP_ADDR_OR_DNS_NAME",
+        "database": "DATABASE_NAME",
+        "table": "SCHEMA_NAME.TABLE_NAME",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "post_migrate_commands": [
+          {
+            "query": "DELETE FROM SCHEMA_NAME.TABLE_NAME t WHERE t.id=1"
+          }
+        ]
+
+
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion"
+  }
+}

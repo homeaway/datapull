@@ -1,0 +1,51 @@
+datapull:
+  secretstore:
+    vault:
+      vault_url: VAULT_URL
+      vault_nonce: VAULT_NONCE
+      vault_path_env: /v1/dbops/staticsecrets/awsenvironments/
+      vault_path_clus: /awsregions/us-east-1/clusters/
+      vault_path_login: /v1/auth/aws-ec2/login
+  aws:
+    prod_acc_id: PROD_AWS_ACCOUNT_ID
+    stage_acc_id: STAGE_AWS_ACCOUNT_ID
+    test_acc_id: TEST_AWS_ACCOUNT_ID
+  json:
+    inputjson: Input_Sample_filesystem-to-filesystem.json
+  spark:
+    network: spark.network.timeout
+    timeout: 10000s
+    executor: spark.executor.heartbeatInterval
+    interval: 1000s
+    broadcasttimeout: spark.sql.broadcastTimeout
+    btimeout: 36000
+    scheduler: spark.scheduler.mode
+    mode: FAIR
+    failures: spark.task.maxFailures
+  miscellaneous:
+    no_of_retries: 16
+    timeout: 10000
+    consul_url: http://CONSUL_ADDRESS/v1/health/service/
+    sleeptimeout: 60000
+  application:
+    region: us-east-1
+  logger:
+    s3:
+      loggingfolder: S3_BUCKET_NAME/datapull-opensource/logs/
+    mssql:
+      server: SQL_SERVER_ADDRESS
+      database: DATABASE
+      login: USERNAME
+      password: PASSWORD
+      table: SCHEMA.TABLE_NAME
+      driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    cloudwatch:
+      groupName: /ecs/datapull-web-api
+      streamName: datapull-stream
+      region: us-east-1
+  email:
+    smtp:
+      emailaddress: DATAPULL_REPORT_EMAIL@DOMAIN.com
+      smtpserveraddress: SMTP_SERVER
+    ses:
+      region: us-west-2
