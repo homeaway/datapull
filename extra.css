@@ -1,0 +1,30 @@
+/*for json key*/
+.codehilite .nt, .md-typeset .highlight .nt {
+    color: #c2185b;
+}
+/*for json value*/
+.codehilite .s2, .md-typeset .highlight .s2 {
+    color: #4C4BF6;
+}
+/*top heading*/
+.md-typeset h1 {
+    margin: 0 0 2rem;
+    color: #424646;
+}
+/*header of table*/
+.md-typeset table:not([class]) th{
+    background-color:rgba(39, 36, 36, 0.73)
+}
+/*size of table*/
+.md-typeset table:not([class]) {
+    font-size: 0.9rem;
+}
+
+.md-typeset .admonition.example>.admonition-title {
+    background-color: #c8c8c8;
+}
+
+.md-typeset .admonition>.admonition-title  {
+    background-color: #c8c8c8;
+}
+

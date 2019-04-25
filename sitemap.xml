@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+     <loc>https://homeaway.github.io/datapull/</loc>
+     <lastmod>2019-04-25</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/architecture/</loc>
+     <lastmod>2019-04-25</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/installation_emr/</loc>
+     <lastmod>2019-04-25</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/emr_runbook/</loc>
+     <lastmod>2019-04-25</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/transformation/</loc>
+     <lastmod>2019-04-25</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/faq/</loc>
+     <lastmod>2019-04-25</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+</urlset>
