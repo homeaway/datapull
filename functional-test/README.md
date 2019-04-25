@@ -1,11 +1,11 @@
 ## DataPull-Functional-Automation-Test
 #### Pre-Requiste 
-  You need to have [maven](https://maven.apache.org/install.html) installed 
+  [maven](https://maven.apache.org/install.html) is installed 
 #### How to run this functional test?
 ##### Update environment.properties file 
-In order to run this, first of all we need to update the details of [environment.properties](../functional-test/src/main/resources/environment.properties) file.
-* _environment_ - supported values are dev and test where, EMR cluster will be launched by the DataPull API. If we want to create new environment, we have to create corresponding _environment_ global-config.json
-* _awsAccessKey / awsSecretKey_ - AWS access key and secret key of the environment set above. It should have read only access of AWS EMR cluster and read and write access of AWS s3 bucket if we are interested in running test cases which uses s3 either as a source or destination database.  
+In order to run, [environment.properties](../functional-test/src/main/resources/environment.properties) file must be updated.
+* _environment_ - supported values are dev and test where, EMR cluster will be launched by the DataPull API. New environments require corresponding creation/edits of _environment_ global-config.json
+* _awsAccessKey / awsSecretKey_ - AWS access key and secret key of the environment set above. Running test cases which uses S3 either as a source or destination database require read only access of AWS EMR cluster and read and write access of AWS s3 bucket.  
 * _rdsInstancesRequired_ - If we don't have database like - oracle, mysql, mssql, postgres. But we still want to test functionality related to these databases. We can create AWS RDS instances of these databases on the fly and it will get terminated after test suite completion. For this we have to pass AccessKey and SecretKey in dev.awsAccessKey and  dev.awsSecretKey respectively which is having necessary permission to create AWS RDS instance.
 * _test.awsAccessKey / test.awsSecretKey_ - This keys are mainly used to test that AWS S3 can be accessed by providing access key and secret key in DataPull input json. If we are running test - s3ToCassandraTestWithKey then it is required.
 * _awsRegion_ - AWS region where EMR cluster is running and S3 bucket is located.
