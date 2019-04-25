@@ -1,8 +1,10 @@
-![Screenshot](logo.png)
+<p align="center">
+  <img width="222" height="207" src="logo.png">
+</p>
 
-## What is DataPull? ##
+# DataPull
 
-DataPull is one of the tools provided by Data Tools team to enable the teams to migrate data to cloud effortlessly. This tool enables teams to migrate data from one data store to another. To enable this, We have an app which can spin up the infrastructure for the migration of the data, run the job and terminate the infrastructure once the job is done to keep the portfolio costs low for the migration job. 
+DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data to cloud effortlessly. This tool enables teams to migrate data from one data store to another. To enable this, We have an app which can spin up Spark infrastructure for the migration of the data, run the job and terminate the infrastructure once the job is done to keep the portfolio costs low for the migration job. 
 You can do multiple migrations in a parallel/serial manner to finish the jobs faster. We integrated our tool with vault so that you need not to keep clear texts passwords in the Migration jobs. We even support scheduling for daily/recurring jobs.    
 
 Please find below for the source/destinations supported with the DataPull. DataPull supports any of the sources to any of the destinations mentioned. 
@@ -84,8 +86,5 @@ Once this is complete you can revert back to the original of how to use DataPull
 
 Please add an element **_cronexpression_** in the cluster section of the Input Json. Example:- "cronexpression": "0 21 * * *"
 This means the DataPull gets executed every day at 9 PM UTC.
- 
-### Questions/Concerns/Pull Requests/specific Usecase Requests? ###
-Please contact the slack channel [#datapull-support](https://homeaway.slack.com/messages/C1JRLUGFQ/) and we'll be happy to assist you.
 
  

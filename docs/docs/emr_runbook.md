@@ -1,5 +1,5 @@
 disqus:
-# EMR Runbook #
+# Runbook for using DataPull deployed on AWS EMR #
 ## 1. Prepare the Pipeline JSON ##
 
 1.1 Here's a sample JSON that joins Property information from SQL Server with units in cassandra and moves to s3. Please copy this to your favorite text editor
