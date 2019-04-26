@@ -63,7 +63,27 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
 
 
 
-  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String,mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean): org.apache.spark.sql.DataFrame = {
+  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String,mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String,isSFTP: Boolean,login:String,host:String,password:String,awsEnv:String , vaultEnv:String): org.apache.spark.sql.DataFrame = {
+
+    if( filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null )
+    {
+      throw new Exception("Platform cannot have null values")
+    }
+
+    if( filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null )
+    {
+      throw new Exception("Platform cannot have empty values")
+    }
+
+    var vaultPassword = password
+    var vaultLogin = login
+    if (vaultPassword == "" && awsEnv != "false" && vaultEnv != "false") {
+      val secretService = new SecretService(secretstore,appConfig)
+      val vaultCreds = secretService.getSecret(awsEnv,  "sftp-"+host, login, vaultEnv)
+      vaultLogin = vaultCreds("username")
+      vaultPassword = vaultCreds("password")
+    }
+
     var filePrefix = ""
 
     if (isS3) {
@@ -73,91 +93,140 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       df
     }
 
-    if (fileFormat == "json") {
-      createOrReplaceTempViewOnDF(sparkSession.read.json(s"$filePrefix$filePath"))
-    } else if (fileFormat == "csv") {
-      createOrReplaceTempViewOnDF(sparkSession.read.format("csv")
-        .option("delimiter", delimiter)
-        .option("mode", "DROPMALFORMED")
-        .option("header", "true") //reading the headers
-        .option("charset", charset)
-        .csv(s"$filePrefix$filePath"))
+    if(isSFTP)
+    {
 
-    } else if (fileFormat == "avro") {
-      createOrReplaceTempViewOnDF(sparkSession.read.format("com.databricks.spark.avro").load(s"$filePrefix$filePath"))
-    } else {
-      //parquet
-      createOrReplaceTempViewOnDF(sparkSession.read.option("mergeSchema", mergeSchema).parquet(s"$filePrefix$filePath"))
+      createOrReplaceTempViewOnDF(sparkSession.read.
+        format("com.springml.spark.sftp").
+        option("host", host).
+        option("username", login).
+        option("password", password).
+        option("fileType", fileFormat).
+        load(filePath))
+
+    }
+
+    else {
+      if (fileFormat == "json") {
+        createOrReplaceTempViewOnDF(sparkSession.read.json(s"$filePrefix$filePath"))
+      } else if (fileFormat == "csv") {
+        createOrReplaceTempViewOnDF(sparkSession.read.format("csv")
+          .option("delimiter", delimiter)
+          .option("mode", "DROPMALFORMED")
+          .option("header", "true") //reading the headers
+          .option("charset", charset)
+          .csv(s"$filePrefix$filePath"))
+
+      } else if (fileFormat == "avro") {
+        createOrReplaceTempViewOnDF(sparkSession.read.format("com.databricks.spark.avro").load(s"$filePrefix$filePath"))
+      } else {
+        //parquet
+        createOrReplaceTempViewOnDF(sparkSession.read.option("mergeSchema", mergeSchema).parquet(s"$filePrefix$filePath"))
+      }
     }
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, sparkSession: SparkSession): Unit = {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean,secretstore:String, sparkSession: SparkSession,isSFTP: Boolean,login:String,host:String,password:String,awsEnv:String,vaultEnv:String): Unit = {
+
+    if( filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null )
+    {
+      throw new Exception("Platform cannot have null values")
+    }
+
+    if( filePath.isEmpty() == true && fileFormat.isEmpty() == true && groupByFields.isEmpty() == true && s3SaveMode.isEmpty() == true && login.isEmpty() == true  && sparkSession == null)
+    {
+      throw new Exception("Platform cannot have empty values")
+    }
+
+    //if password isn't set, attempt to get from Vault
+    var vaultPassword = password
+    var vaultLogin = login
+    if (vaultPassword == "" && awsEnv != "false" && vaultEnv != "false") {
+      val secretService = new SecretService(secretstore,appConfig)
+      val vaultCreds = secretService.getSecret(awsEnv,  "sftp-"+host, login, vaultEnv)
+      vaultLogin = vaultCreds("username")
+      vaultPassword = vaultCreds("password")
+    }
+
     var groupByFieldsArray = groupByFields.split(",")
     var filePrefix = ""
     if (isS3) {
       filePrefix = "s3a://"
     }
+    if(isSFTP)
+    {
 
-    if (fileFormat == "json") {
-      if (groupByFields == "") {
+      df.write.
+        format("com.springml.spark.sftp").
+        option("host", host).
+        option("username", login).
+        option("password", password).
+        option("fileType", fileFormat).
+        save(filePath)
 
-        df
-          .write
-          .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
-      } else {
-        df
-          .write
-          .partitionBy(groupByFieldsArray: _*)
-          .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
-      }
-    } else if (fileFormat == "csv") {
-      if (groupByFields == "") {
-        df.coalesce(1)
-          .write
-          .option("header", "true")
-          .mode(SaveMode.valueOf(s3SaveMode))
-          .csv(s"$filePrefix$filePath")
-      } else {
-        df.coalesce(1)
-          .write
-          .partitionBy(groupByFieldsArray: _*)
-          .option("header", "true")
-          .mode(SaveMode.valueOf(s3SaveMode))
-          .csv(s"$filePrefix$filePath")
-      }
-    } else if (fileFormat == "avro") {
-      if (groupByFields == "") {
-        df.coalesce(1)
-          .write
-          .format("com.databricks.avro")
-          .option("header", "true")
-          .mode(SaveMode.valueOf(s3SaveMode))
-          .save(s"$filePrefix$filePath")
-      } else {
-        df.coalesce(1)
-          .write
-          .format("com.databricks.avro")
-          .partitionBy(groupByFieldsArray: _*)
-          .option("header", "true")
-          .mode(SaveMode.valueOf(s3SaveMode))
-          .save(s"$filePrefix$filePath")
-      }
+      df.show()
     }
     else {
-      //parquet
-      if (groupByFields == "") {
-        Option(df
-          .write
-          .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
-      } else {
-        Option(df
-          .write
-          .partitionBy(groupByFieldsArray: _*)
-          .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
+      if (fileFormat == "json") {
+        if (groupByFields == "") {
+
+          df
+            .write
+            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
+        } else {
+          df
+            .write
+            .partitionBy(groupByFieldsArray: _*)
+            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
+        }
+      } else if (fileFormat == "csv") {
+        if (groupByFields == "") {
+          df.coalesce(1)
+            .write
+            .option("header", "true")
+            .mode(SaveMode.valueOf(s3SaveMode))
+            .csv(s"$filePrefix$filePath")
+        } else {
+          df.coalesce(1)
+            .write
+            .partitionBy(groupByFieldsArray: _*)
+            .option("header", "true")
+            .mode(SaveMode.valueOf(s3SaveMode))
+            .csv(s"$filePrefix$filePath")
+        }
+      } else if (fileFormat == "avro") {
+        if (groupByFields == "") {
+          df.coalesce(1)
+            .write
+            .format("com.databricks.avro")
+            .option("header", "true")
+            .mode(SaveMode.valueOf(s3SaveMode))
+            .save(s"$filePrefix$filePath")
+        } else {
+          df.coalesce(1)
+            .write
+            .format("com.databricks.avro")
+            .partitionBy(groupByFieldsArray: _*)
+            .option("header", "true")
+            .mode(SaveMode.valueOf(s3SaveMode))
+            .save(s"$filePrefix$filePath")
+        }
       }
+      else {
+        //parquet
+        if (groupByFields == "") {
+          Option(df
+            .write
+            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
+        } else {
+          Option(df
+            .write
+            .partitionBy(groupByFieldsArray: _*)
+            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
+        }
+      }
+
     }
-
-
   }
 
   /**

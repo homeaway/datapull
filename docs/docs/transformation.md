@@ -1,4 +1,3 @@
-disqus:
 ```json
 {
   "useremailaddress": "your_email_address",

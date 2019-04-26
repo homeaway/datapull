@@ -4,33 +4,33 @@
 
 # DataPull
 
-DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data to cloud effortlessly. This tool enables teams to migrate data from one data store to another. To enable this, We have an app which can spin up Spark infrastructure for the migration of the data, run the job and terminate the infrastructure once the job is done to keep the portfolio costs low for the migration job. 
-You can do multiple migrations in a parallel/serial manner to finish the jobs faster. We integrated our tool with vault so that you need not to keep clear texts passwords in the Migration jobs. We even support scheduling for daily/recurring jobs.    
+DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data across heterogeneous datastores effortlessly. When deployed to Amazon AWS, DataPull spins up EMR Spark infrastructure, does the data movement and terminates the infrastructure once the job is complete; to minimize costs. 
+Multiple data migrations can be done ither serially or in parallel within a DataPull job. There also exists built-in integration with [Hashicorp Vault](https://www.vaultproject.io/) so that datastore credentials are never exposed. DataPull also has a built-in scheduler for daily/recurring jobs; or its REST API endpoints can be invoked by a third-party scheduler.
 
-Please find below for the source/destinations supported with the DataPull. DataPull supports any of the sources to any of the destinations mentioned. 
+DataPull supports the following datastores as sources and destinations.
 
-| Platform | Source? | Destination? |
+| Platform | Source | Destination |
 |:---: |:---: |:---: |
 | SQL Server | ✔ | ✔ |
 | Cassandra | ✔ | ✔ |
 | Mongodb | ✔ | ✔ |
 | S3 | ✔ | ✔ |
 | FileSystem | ✔ | ✔ |
-| Hive | ✔ | ✔ |
+| SFTP | ✔ | ✔ |
 | Elasticsearch | ✔ | ✔ |
 | Kafka | ✔ |**X**|
 | Neo4j |**X** | ✔ |
 | MySql | ✔ | ✔ |
-| Oracle | ✔ | ✔ |
 | Postgres | ✔ | ✔ | 
+| InfluxDB | ✔ | ✔ | 
 
-## How to use DataPull?
+## How to use DataPull
 
 ###  Steps common to all environments (Dev/Test/Stage/Prod)...
 
 * Create a json file/string that has the source/s, destination/s and the portfolio information for tagging the ephemeral infrastructure needed to do the DataPull
-  * Here are some sample JSON files for some common use cases: {{ repo_url }}/blob/master/core/src/main/resources/Samples
-  * Here is JSON specification document which has all the possible options supported by DataPull: {{ repo_url }}/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json
+  * Here are some sample JSON files for some common use cases: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples
+  * Here is JSON specification document which has all the possible options supported by DataPull: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json
 * Please provide an email address for the element "useremailaddress" in the JSON input. Once your DataPull completes,  an email will be sent with all the migration details along with the source, destination details of the migrations, the time taken for the migrations to complete and the number of records processed, etc. 
 * For DataPull to get access to the source and destination data platforms, you need to either provide the login and password within the JSON (not recommended for Stage and Production environments); or provide the login and an IAM Role which is mapped to the credentials in Vault (you also need to add the ```"awsenv"``` and ```"vaultenv"``` elements to the source(s) and destination in the json input).
 * Navigate to your swagger api URL and invoke this REST API with the json as input.
@@ -41,8 +41,8 @@ Please find below for the source/destinations supported with the DataPull. DataP
 The input JSON mainly divided into Three sections.
 
 1. Basic Information about the Job
-2. Migrations
-3. Cluster
+1. Migrations
+1. Cluster
 
 The basic information section is there for allowing the users to put their email address, enabling the jobs to run in parallel or serial etc.
 
@@ -51,7 +51,7 @@ Migrations section is an array and primarily covers source and the destination d
 Cluster section is mostly related to the infrastructure of the migration job which has details about the portfolio, product, Cron expression and environment in which the job will be running etc. The cluster will be spun up based on the awsenv(aws environment) element in this section among dev/test/stage/prod. 
 
 
-[This link]({{ repo_url }}/blob/master/core/src/main/resources/Samples/Input_Sample_S3-to-Cassandra-withSparkFilter.json) is a sample JSON to move data from S3 to Cassandra. 
+[This sample JSON input](https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Sample_MySql_to_S3.json) moves data from MySql to AWS S3
 
 
 ## What we use to make the DataPull do it's job?
@@ -64,14 +64,14 @@ DataPull expects the Input JSON as an argument and irrespective of any spark env
 ### If you are starting from scratch...
 
 * Prepare the Input JSON as explained in the above section with all the required information.
-* Then please go to swagger API URL and submit the JSON in the **_inputJson_** field provided and click _Try it out!_
+* Then please go to swagger API URL and submit the JSON in the _inputJson_ field provided and click _Try it out!_
 
 ### For Elastic Search In the field of mappingid it is recommended to use _id or id as fieldnames as they are a unique keyword in Elastic Search.
   
 ### How to use delta DataPulls?
 So lets say you did a DataPull, however in the second datapull you do not want to repopulate everything but only need the deltas of new records. Here is what is needed.
 
-**Pre-req:- CDC needs to enabled on the database**
+> Pre-req: CDC needs to enabled on the database
 
 *  Setup CDC for your specified tables.
 *  It creates a watermarking table which essentially allows you to calculate the deltas.
@@ -84,7 +84,4 @@ Once this is complete you can revert back to the original of how to use DataPull
 
 ### How to schedule a DataPull ?
 
-Please add an element **_cronexpression_** in the cluster section of the Input Json. Example:- "cronexpression": "0 21 * * *"
-This means the DataPull gets executed every day at 9 PM UTC.
-
- 
+Please add an element _cronexpression_ in the cluster section of the Input Json. For example, `"cronexpression": "0 21 * * *"` executes DataPull every day at 9 PM UTC.

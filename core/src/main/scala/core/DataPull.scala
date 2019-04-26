@@ -59,17 +59,16 @@ object DataPull {
     /*-------------------JSON INPUT-------------------------------------------------------------------------------------------------*/
     var jsonString = ""
     var isLocal:Boolean = true
+
     if (args.length == 0) {
+
       val dp: String = DataPull.getFile("Samples/" + config.inputjson)
       jsonString = dp
     }
-    else if (args.length == 2 && args(1) == "local")
-    {
+    else if (args.length == 2 && args(1) == "local") {
       val dp: String = DataPull.getFile(args(0), false)
       jsonString = dp
-    }
-    else {
-      jsonString = args(0)
+    } else {
       isLocal = false
     }
 

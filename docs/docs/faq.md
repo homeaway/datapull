@@ -1,4 +1,3 @@
-disqus:
 #FAQs
 
 #### Can I use datapull to bulk delete rows in my Cassandra database?

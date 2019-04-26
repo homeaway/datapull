@@ -197,7 +197,8 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
       toAddresses = toAddresses + "," + emailAddress
     }
 
-    if (!isNullOrEmpty(emailAddress)) {
+    if (appConfig.smtpServerAddress != "SMTP_SERVER") {
+      if (!isNullOrEmpty(emailAddress)) {
       if (!isNullOrEmpty(appConfig.smtpServerAddress)) {
         val properties = System.getProperties
         properties.put("mail.smtp.host", appConfig.smtpServerAddress)
@@ -250,6 +251,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
 
         val result = appConfig.getSESClient().sendEmail(request);
       }
+    }
     }
   }
 

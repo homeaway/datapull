@@ -31,7 +31,7 @@ def mainA(args: String*) = {
   findpath(masterConfig, "",  paths);
   val apiConfigFile = String.format("api/src/main/resources/application-%s.yml", env)
   val apiconfig = yamlMapper.readTree(new File(apiConfigFile))
-  val coreConfigFile = "core/src/main/resources/application.yml"
+  val coreConfigFile = String.format("core/src/main/resources/application-%s.yml",env)
   val coreconfig = yamlMapper.readTree(new File(coreConfigFile))
 
   paths.stream().filter(x => !masterConfig.at(x).asText("").equals("")).forEach(x => {

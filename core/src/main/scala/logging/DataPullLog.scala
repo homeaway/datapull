@@ -89,8 +89,11 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
     */
   def persistLog(df: org.apache.spark.sql.DataFrame, logSubFolder: String, sparkSession: SparkSession):Unit = {
     var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
-    dataframeFromTo.dataFrameToFile(appConfig.s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal), sparkSession)
-    logDataFrameToCloudWatch(appConfig.cloudWatchLogGroup, appConfig.cloudWatchLogStream, appConfig.cloudWatchLogRegion, appConfig.accessKeyForCloudWatchLog, appConfig.secretKeyForCloudWatchLog, df, sparkSession);
+    dataframeFromTo.dataFrameToFile(appConfig.s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal),null, sparkSession,false,null,null,null,null,null)
+
+    if (sparkSession.sparkContext.isLocal == false) {
+      logDataFrameToCloudWatch(appConfig.cloudWatchLogGroup, appConfig.cloudWatchLogStream, appConfig.cloudWatchLogRegion, appConfig.accessKeyForCloudWatchLog, appConfig.secretKeyForCloudWatchLog, df, sparkSession);
+    }
   }
 
   def logDataFrameToCloudWatch(groupName : String, streamName : String, region : String, accessKey : String, secretKey : String, df : org.apache.spark.sql.DataFrame, sparkSession: SparkSession): Unit = {

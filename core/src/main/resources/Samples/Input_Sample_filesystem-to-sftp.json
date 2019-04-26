@@ -1,0 +1,28 @@
+{
+
+  "migrations": [
+    {
+      "source": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleData/foods.csv",
+        "fileformat": "csv"
+      },
+      "destination": {
+        "platform": "sftp",
+        "host": "IP_ADDR_OR_DNS_NAME",
+        "path": "PATH_TO_THE_FILE",
+        "login": "LOGIN_NAME",
+        "password": "PASSWORD",
+        "fileformat": "csv"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *"
+  }
+}

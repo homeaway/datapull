@@ -1,5 +1,5 @@
 {
   "jsoninputfile": {
-    "s3path": "ha-dev-data-datatools-us-east-1/datapull-opensource/source/final-input-json.json"
+    "s3path": "S3_BUCKET/datapull-opensource/source/final-input-json.json"
   }
 }

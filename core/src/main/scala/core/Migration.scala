@@ -196,11 +196,16 @@ class Migration extends  SparkListener {
       } else if (destinationMap("platform") == "s3") {
         setAWSCredentials(sparkSession, destinationMap)
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
-        dataframeFromTo.dataFrameToFile(destinationMap("s3path"), destinationMap("fileformat"), destinationMap("groupbyfields"),destinationMap.getOrElse("savemode","Append"), dft, true,sparkSession)
+        dataframeFromTo.dataFrameToFile(destinationMap("s3path"), destinationMap("fileformat"), destinationMap("groupbyfields"),destinationMap.getOrElse("savemode","Append"), dft, true,destinationMap.getOrElse("secretstore","vault"),sparkSession,false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"))
       } else if (destinationMap("platform") == "filesystem") {
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
-        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"),destinationMap.getOrElse("savemode","Append"), dft, false,sparkSession)
-      } else if (destinationMap("platform") == "hive") {
+        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"),destinationMap.getOrElse("savemode","Append"), dft, false,destinationMap.getOrElse("secretstore","vault"),sparkSession,false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"))
+      }
+      else if (destinationMap("platform") == "sftp") {
+
+        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false,destinationMap.getOrElse("secretstore","vault") ,sparkSession,true, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"))
+      }
+      else if (destinationMap("platform") == "hive") {
         dataframeFromTo.dataFrameToHive(destinationMap("cluster"), destinationMap("clustertype"), destinationMap("database"), destinationMap("table"), dft)
       } else if (destinationMap("platform") == "mongodb") {
         dataframeFromTo.dataFrameToMongodb(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("database"), destinationMap("authenticationdatabase"), destinationMap("collection"), destinationMap("login"), destinationMap("password"), destinationMap.getOrElse("replicaset",null), destinationMap.getOrElse("replacedocuments","true"),destinationMap.getOrElse("orderedrecords","false"), dft, sparkSession, destinationMap.getOrElse("documentfromjsonfield","false"), destinationMap.getOrElse("jsonfield","jsonfield"), destinationMap("vaultenv"),destinationMap.getOrElse("secretstore","vault"),destination.optJSONObject("sparkoptions"), destinationMap.getOrElse("maxBatchSize",null))
@@ -408,11 +413,16 @@ class Migration extends  SparkListener {
     } else if (platform == "s3") {
       sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
       setAWSCredentials(sparkSession, propertiesMap)
-      dataframeFromTo.fileToDataFrame(propertiesMap("s3path"), propertiesMap("fileformat"),propertiesMap.getOrElse("delimiter",","),propertiesMap.getOrElse("charset","utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, true)
+      dataframeFromTo.fileToDataFrame(propertiesMap("s3path"), propertiesMap("fileformat"),propertiesMap.getOrElse("delimiter",","),propertiesMap.getOrElse("charset","utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, true,propertiesMap.getOrElse("secretstore","vault"),false, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
     } else if (platform == "filesystem") {
       sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
-      dataframeFromTo.fileToDataFrame(propertiesMap("path"), propertiesMap("fileformat"),propertiesMap.getOrElse("delimiter",","),propertiesMap.getOrElse("charset","utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, false)
-    } else if (platform == "hive") {
+      dataframeFromTo.fileToDataFrame(propertiesMap("path"), propertiesMap("fileformat"),propertiesMap.getOrElse("delimiter",","),propertiesMap.getOrElse("charset","utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, false,propertiesMap.getOrElse("secretstore","vault"),false, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
+    }
+
+    else if (platform == "sftp") {
+      dataframeFromTo.fileToDataFrame(propertiesMap("path"), propertiesMap("fileformat"), propertiesMap.getOrElse("delimiter", ","), propertiesMap.getOrElse("charset", "utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, false,propertiesMap.getOrElse("secretstore","vault"),true, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
+    }
+    else if (platform == "hive") {
       dataframeFromTo.hiveToDataFrame(propertiesMap("cluster"), propertiesMap("clustertype"), propertiesMap("database"), propertiesMap("table"))
     } else if (platform == "mongodb") {
       dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector","false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"),platformObject.optJSONObject("sparkoptions"),propertiesMap.getOrElse("secretstore","vault"))}
@@ -442,9 +452,10 @@ class Migration extends  SparkListener {
       propertiesMap = extractCredentialsFromSecretManager(propertiesMap)
     }
     var platform = propertiesMap("platform")
-    var s3Client = AmazonS3ClientBuilder.defaultClient()
+    var s3Client: AmazonS3 = null
 
     if (platform == "s3") {
+      s3Client = AmazonS3ClientBuilder.defaultClient()
       s3Client = s3ClientBuilder(platformObject, sparkSession)
     }
 

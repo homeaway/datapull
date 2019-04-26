@@ -1,4 +1,3 @@
-disqus:
 # Runbook for using DataPull deployed on AWS EMR #
 ## 1. Prepare the Pipeline JSON ##
 

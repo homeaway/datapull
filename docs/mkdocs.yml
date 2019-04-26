@@ -10,7 +10,7 @@ theme:
 nav:
     - Home: index.md
     - Architecture: architecture.md
-    - Installing DataPull on AWS Fargate and S3: installation_emr.md
+    - Installing DataPull on AWS Fargate and S3: install_on_aws.md
     - Running DataPull on AWS EMR: emr_runbook.md
     - Sample input JSON: transformation.md
     - FAQs: faq.md
