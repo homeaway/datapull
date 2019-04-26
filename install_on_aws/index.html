@@ -13,7 +13,7 @@
         <meta name="description" content="Open Source Docs and Community Standards">
       
       
-        <link rel="canonical" href="https://homeaway.github.io/datapull/installation_emr/">
+        <link rel="canonical" href="https://homeaway.github.io/datapull/install_on_aws/">
       
       
         <meta name="author" content="Data Tools">
@@ -42,7 +42,7 @@
     
     
       
-        <title>Installing DataPull on AWS Fargate and S3 - DataPull Documentation</title>
+        <title>Deploying DataPull on AWS ECS Fargate and EMR - DataPull Documentation</title>
       
     
     
@@ -125,7 +125,7 @@
               DataPull Documentation
             </span>
             <span class="md-header-nav__topic">
-              Installing DataPull on AWS Fargate and S3
+              Deploying DataPull on AWS ECS Fargate and EMR
             </span>
           
         </div>
@@ -257,233 +257,11 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Installing DataPull on AWS Fargate and S3
-      </label>
-    
-    <a href="./" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../installation_emr.md" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
       Installing DataPull on AWS Fargate and S3
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#datapull-app-structure" title="DataPull App Structure" class="md-nav__link">
-    DataPull App Structure
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pre-requisites" title="Pre-requisites" class="md-nav__link">
-    Pre-requisites
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configure-datapull" title="Configure DataPull" class="md-nav__link">
-    Configure DataPull
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#master_application_configymlpresent-in-project-root-directory-configuration-parameters" title="master_application_config.yml(present in project root directory) configuration parameters" class="md-nav__link">
-    master_application_config.yml(present in project root directory) configuration parameters
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#datapull-api-configuration-paramtersapisrcmainresourcesapplication-envyml" title="DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)" class="md-nav__link">
-    DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#datapull-core-configuration-paramterscoresrcmainresourcesapplicationyml" title="DataPull Core configuration paramters(core/src/main/resources/application.yml)" class="md-nav__link">
-    DataPull Core configuration paramters(core/src/main/resources/application.yml)
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#oracle-and-teradata-support" title="Oracle and Teradata support" class="md-nav__link">
-    Oracle and Teradata support
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#steps-to-download-ojdbc-jar-" title="Steps to download ojdbc jar :-" class="md-nav__link">
-    Steps to download ojdbc jar :-
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#steps-to-download-teradata-jar-" title="Steps to download teradata jar :-" class="md-nav__link">
-    Steps to download teradata jar :-
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#steps-to-include-oracle-into-the-project-" title="Steps to include Oracle into the project :-" class="md-nav__link">
-    Steps to include Oracle into the project :-
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#steps-to-include-teradata-into-the-project-" title="Steps to include Teradata into the project :-" class="md-nav__link">
-    Steps to include Teradata into the project :-
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-datapull-infrastructure-" title="Create DataPull Infrastructure:-" class="md-nav__link">
-    Create DataPull Infrastructure:-
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-datapull-infrastructure-_1" title="Create DataPull Infrastructure:-" class="md-nav__link">
-    Create DataPull Infrastructure:-
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#datapull-app-structure_1" title="DataPull App Structure" class="md-nav__link">
-    DataPull App Structure
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configure-datapull_1" title="Configure DataPull" class="md-nav__link">
-    Configure DataPull
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#datapull-api-configuration-paramtersapisrcmainresourcesapplication-envyml_1" title="DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)" class="md-nav__link">
-    DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#datapull-core-configuration-paramters-coresrcmainresourcesapplicationyml" title="DataPull Core configuration paramters core/src/main/resources/application.yml" class="md-nav__link">
-    DataPull Core configuration paramters core/src/main/resources/application.yml
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-datapull-infrastructure-_2" title="Create DataPull Infrastructure:-" class="md-nav__link">
-    Create DataPull Infrastructure:-
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#create-iam-user-and-roles-with-policies" title="Create IAM User and Roles, with policies" class="md-nav__link">
-    Create IAM User and Roles, with policies
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#create-aws-fargate-api-app" title="Create AWS Fargate API App" class="md-nav__link">
-    Create AWS Fargate API App
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#browse-to-the-datapull-api-swagger-endpoint" title="Browse to the DataPull API swagger endpoint" class="md-nav__link">
-    Browse to the DataPull API swagger endpoint
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#do-your-first-datapull" title="Do your first DataPull" class="md-nav__link">
-    Do your first DataPull
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#steps-to-download-ojdbc-jar-_1" title="Steps to download ojdbc jar :-" class="md-nav__link">
-    Steps to download ojdbc jar :-
-  </a>
-  
-</li>
-      
-      
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
     
@@ -573,8 +351,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#datapull-api-configuration-paramtersapisrcmainresourcesapplication-envyml" title="DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)" class="md-nav__link">
-    DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)
+  <a href="#datapull-api-configuration-parameters-apisrcmainresourcesapplication-envyml" title="DataPull API configuration parameters (api/src/main/resources/application-${env}.yml)" class="md-nav__link">
+    DataPull API configuration parameters (api/src/main/resources/application-${env}.yml)
   </a>
   
 </li>
@@ -600,29 +378,29 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#steps-to-download-ojdbc-jar-" title="Steps to download ojdbc jar :-" class="md-nav__link">
-    Steps to download ojdbc jar :-
+  <a href="#steps-to-download-ojdbc-jar" title="Steps to download ojdbc jar" class="md-nav__link">
+    Steps to download ojdbc jar
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#steps-to-download-teradata-jar-" title="Steps to download teradata jar :-" class="md-nav__link">
-    Steps to download teradata jar :-
+  <a href="#steps-to-download-teradata-jar" title="Steps to download teradata jar" class="md-nav__link">
+    Steps to download teradata jar
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#steps-to-include-oracle-into-the-project-" title="Steps to include Oracle into the project :-" class="md-nav__link">
-    Steps to include Oracle into the project :-
+  <a href="#steps-to-include-oracle-into-the-project" title="Steps to include Oracle into the project" class="md-nav__link">
+    Steps to include Oracle into the project
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#steps-to-include-teradata-into-the-project-" title="Steps to include Teradata into the project :-" class="md-nav__link">
-    Steps to include Teradata into the project :-
+  <a href="#steps-to-include-teradata-into-the-project" title="Steps to include Teradata into the project" class="md-nav__link">
+    Steps to include Teradata into the project
   </a>
   
 </li>
@@ -633,62 +411,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#create-datapull-infrastructure-" title="Create DataPull Infrastructure:-" class="md-nav__link">
-    Create DataPull Infrastructure:-
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-datapull-infrastructure-_1" title="Create DataPull Infrastructure:-" class="md-nav__link">
-    Create DataPull Infrastructure:-
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#datapull-app-structure_1" title="DataPull App Structure" class="md-nav__link">
-    DataPull App Structure
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#configure-datapull_1" title="Configure DataPull" class="md-nav__link">
-    Configure DataPull
-  </a>
-  
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#datapull-api-configuration-paramtersapisrcmainresourcesapplication-envyml_1" title="DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)" class="md-nav__link">
-    DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#datapull-core-configuration-paramters-coresrcmainresourcesapplicationyml" title="DataPull Core configuration paramters core/src/main/resources/application.yml" class="md-nav__link">
-    DataPull Core configuration paramters core/src/main/resources/application.yml
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#create-datapull-infrastructure-_2" title="Create DataPull Infrastructure:-" class="md-nav__link">
-    Create DataPull Infrastructure:-
+  <a href="#create-datapull-infrastructure" title="Create DataPull Infrastructure" class="md-nav__link">
+    Create DataPull Infrastructure
   </a>
   
     <nav class="md-nav">
@@ -715,21 +439,14 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#do-your-first-datapull" title="Do your first DataPull" class="md-nav__link">
-    Do your first DataPull
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#steps-to-download-ojdbc-jar-_1" title="Steps to download ojdbc jar :-" class="md-nav__link">
-    Steps to download ojdbc jar :-
+  <a href="#do-your-first-datapull" title="Do your first DataPull" class="md-nav__link">
+    Do your first DataPull
   </a>
   
 </li>
@@ -750,7 +467,7 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/installation_emr.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/install_on_aws.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
                 <h1 id="deploying-datapull-on-aws-ecs-fargate-and-emr">Deploying DataPull on AWS ECS Fargate and EMR</h1>
@@ -758,7 +475,7 @@
 - Creates an IAM user that has enough permissions to create a ECS Fargate app, and upload DataPull JARs to S3
 - Creates an IAM role that has enough permissions to create EMR clusters, and read/write to S3</p>
 <h2 id="datapull-app-structure">DataPull App Structure</h2>
-<p><code>DataPull</code> application is divided into two components i.e. <code>api</code> and <code>core</code>. Core contains the actual spark logic that moves data across databases. It is the component that actually does the data transfer. Api contains code that allows accessing DataPull services. It exposes REST endpoints which helps you in the submitting input json. It internally schedules the job, saves DataPull configuration into S3 and manager EMR lifecycle for spark job.</p>
+<p><code>DataPull</code> application is divided into two components i.e. <code>api</code> and <code>core</code>. Core contains the actual spark logic that moves data across databases. It is the component that actually does the data transfer. Api contains code that allows accessing DataPull services. It exposes the REST endpoint that accepts the input json. The API internally schedules the job, saves DataPull configuration into S3 and manages EMR lifecycle for spark job.</p>
 <h2 id="pre-requisites">Pre-requisites</h2>
 <ul>
 <li>Clone/download the master branch of this repo</li>
@@ -797,7 +514,7 @@
 <blockquote>
 <p>Note: from the above <code>datapull.email.smtp</code> and <code>datapull.email.ses</code> properties, one of the properties is required to be configured. If both of these properties are not configured, there is no way for DataPull to send process completion mail. </p>
 </blockquote>
-<h3 id="datapull-api-configuration-paramtersapisrcmainresourcesapplication-envyml">DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)</h3>
+<h3 id="datapull-api-configuration-parameters-apisrcmainresourcesapplication-envyml">DataPull API configuration parameters (api/src/main/resources/application-${env}.yml)</h3>
 <ul>
 <li>
 <p><b> datapull.api.s3_bucket_name</b>: Specify DataPull S3 bucket name here. This is the bucket where DataPull input jsons and logs are stored. </p>
@@ -845,42 +562,35 @@
 </ul>
 <h2 id="oracle-and-teradata-support">Oracle and Teradata support</h2>
 <p>For performing Data migration on Oracle and Teradata, the respective jar needs to be manually downloaded from their Company's website and add dependency in pom.xml file. </p>
+<h3 id="steps-to-download-ojdbc-jar">Steps to download ojdbc jar</h3>
 <ul>
-<li>
-<h3 id="steps-to-download-ojdbc-jar-">Steps to download ojdbc jar :-</h3>
-</li>
 <li>Go to the url :- https://www.oracle.com/technetwork/apps-tech/jdbc-112010-090769.html</li>
 <li>Accept the license agreement by clicking of the radio button in front of the 'Accept License Agreement'.</li>
 <li>Oracle would ask you to create an account if you don't have one already. If you already have an account you can simply login to your account.</li>
-<li>
-<p>Click on ojdbc6.jar. Download will start in few seconds.</p>
-</li>
-<li>
-<h3 id="steps-to-download-teradata-jar-">Steps to download teradata jar :-</h3>
-</li>
+<li>Click on ojdbc6.jar. Download will start in few seconds.</li>
+</ul>
+<h3 id="steps-to-download-teradata-jar">Steps to download teradata jar</h3>
+<ul>
 <li>Go to the url :- https://downloads.teradata.com/download/connectivity/jdbc-driver.</li>
 <li>For downloading teradata jar, account needs to be created on teradata website.</li>
 <li>Downloads will be available in either .tar or .zip format. Archive file name will be in the format TeraJDBC__indep_indep_{version}.zip. Download the archive file.</li>
-<li>
-<p>The archive file with contain two jar files terajdbc4.jar and tdgssconfig.jar. Both jars are needed for teradata jdbc functionality to work.</p>
-</li>
-<li>
-<h3 id="steps-to-include-oracle-into-the-project-">Steps to include Oracle into the project :-</h3>
-</li>
+<li>The archive file with contain two jar files terajdbc4.jar and tdgssconfig.jar. Both jars are needed for teradata jdbc functionality to work.</li>
+</ul>
+<h3 id="steps-to-include-oracle-into-the-project">Steps to include Oracle into the project</h3>
+<ul>
 <li>Run this command to include Oracle jar into maven repo. Run this command from folder where Oracle jars are present. Change the value of <code>-Dversion=11.2.0.3</code> in the command according to downloaded jar version.</li>
 <li><b>Command</b>  :- <code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=ojdbc6.jar -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.3 -Dpackaging=jar</code></li>
-<li>
-<p>Add below mentioned dependency to pom.xml(core/pom.xml) in DataPull core. Replace {version} with the downloaded jar version.</p>
-<pre><code>     &lt;dependency&gt; 
-         &lt;groupId&gt;com.oracle&lt;/groupId&gt;
-         &lt;artifactId&gt;ojdbc6&lt;/artifactId&gt;
-         &lt;version&gt;{version}&lt;/version&gt;
-     &lt;/dependency&gt;
+<li>Add below mentioned dependency to pom.xml(core/pom.xml) in DataPull core. Replace {version} with the downloaded jar version.</li>
+</ul>
+<pre><code>&lt;dependency&gt; 
+    &lt;groupId&gt;com.oracle&lt;/groupId&gt;
+    &lt;artifactId&gt;ojdbc6&lt;/artifactId&gt;
+    &lt;version&gt;{version}&lt;/version&gt;
+&lt;/dependency&gt;
 </code></pre>
-</li>
-<li>
-<h3 id="steps-to-include-teradata-into-the-project-">Steps to include Teradata into the project :-</h3>
-</li>
+
+<h3 id="steps-to-include-teradata-into-the-project">Steps to include Teradata into the project</h3>
+<ul>
 <li>Run these commands to include Teradata jars into maven repo. Run this command from folder where Teradata jars are present. Change the value of <code>-Dversion=16.20.00.10</code> in the command according to downloaded jar version.</li>
 <li>
 <p><b>Commands</b>  :- <code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=terajdbc4.jar -DgroupId=com.teradata -DartifactId=terajdbc4 -Dversion=16.20.00.10 -Dpackaging=jar</code></p>
@@ -888,22 +598,22 @@
 </li>
 <li>
 <p>Add below mentioned dependency to pom.xml(core/pom.xml) in DataPull core. Replace {version} with the downloaded jar version.</p>
-<pre><code>     &lt;dependency&gt;
-          &lt;groupId&gt;com.teradata&lt;/groupId&gt;
-          &lt;artifactId&gt;terajdbc4&lt;/artifactId&gt;
-          &lt;version&gt;{version}&lt;/version&gt;
-     &lt;/dependency&gt;
-
-     &lt;dependency&gt;
-          &lt;groupId&gt;com.teradata&lt;/groupId&gt;
-          &lt;artifactId&gt;tdgssconfig&lt;/artifactId&gt;
-          &lt;version&gt;{version}&lt;/version&gt;
-     &lt;/dependency&gt;
-</code></pre>
 </li>
 </ul>
-<h2 id="create-datapull-infrastructure-">Create DataPull Infrastructure:-</h2>
-<h2 id="create-datapull-infrastructure-_1">Create DataPull Infrastructure:-</h2>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.teradata&lt;/groupId&gt;
+    &lt;artifactId&gt;terajdbc4&lt;/artifactId&gt;
+    &lt;version&gt;{version}&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;com.teradata&lt;/groupId&gt;
+    &lt;artifactId&gt;tdgssconfig&lt;/artifactId&gt;
+    &lt;version&gt;{version}&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+
+<h2 id="create-datapull-infrastructure">Create DataPull Infrastructure</h2>
 <ul>
 <li>Have available, the AWS access key <code>&lt;aws_admin_access_key&gt;</code> and secret key <code>&lt;aws_admin_secret_key&gt;</code> of an IAM user that can create IAM users and IAM roles in your AWS account<ul>
 <li>It is advisable that AWS access key <code>&lt;aws_admin_access_key&gt;</code> and secret key <code>&lt;aws_admin_secret_key&gt;</code> have admin access to the AWS account. Hence, this step would be typically done by the team managing the AWS account.</li>
@@ -915,73 +625,6 @@
 <li>Have Docker installed on the machine used for deployment</li>
 <li>The Oracle ojdbc jar should be present in the resources folder of DataPull core component i.e. core/src/main/resources/ojdbc-jar/. The process of downloading ojdbc jar is explained at the end of this file.</li>
 </ul>
-<h3 id="datapull-app-structure_1">DataPull App Structure</h3>
-<p><code>DataPull</code> api is divided into two components i.e. <code>api</code> and <code>core</code>. Core contains the actual spark logic that moves data across databases. It is the component that actually does the data transfer. Api contains code that allows accessing DataPull services. It exposes REST endpoints which helps you in the submitting input json. It internally schedules the job, saves DataPull configuration into S3 and manager EMR lifecycle for spark job.</p>
-<h2 id="configure-datapull_1">Configure DataPull</h2>
-<p><code>master_application_config.yml</code> under project root directory contains configuration that is common to both core and api. Change following properties within <code>master_application_config.yml</code><br/>
-- ### master_application_config.yml configuration parameters
-  <b>datapull.application.region(Optional)</b> : This specifies the regions supported by AWS. If you specify this value, you don't have to separately specify region for s3 buckets and emr cluster. This parameter is <b>mandatory</b> if you don't specify emr region and s3 region in api config. </br></p>
-<p>##### <code>datapull.logger.s3</code> node:-
-  - <b>datapull.logger.s3.loggingfolder</b> : This parameter is used to store spark logs in s3. Give a valid S3 bucket path to store logs. For example {bucket_name}/datapull-opensource/logs/ is a valid s3 path. As of now this is a mandatory. </br></p>
-<p>##### <code>datapull.logger.cloudwatch(Optional)</code> node:-
-  - Required only if you want DataPull core to put log events into cloudwatch. DataPull api uses <code>api/src/main/resources/logback-spring.xml</code> for configuring logging. For DataPull api component to put logs into cloudwatch, please enable cloudwatch logging in <code>api/src/main/resources/logback-spring.xml</code>. <code>datapull.logger.cloudwatch.accessKey</code> and <code>datapull.logger.cloudwatch.secretKey</code> needs to be specified only if the machine running the application(core and api part) doesn't have the desired IAM roles.</p>
-<p>##### <code>datapull.logger.mssql(Optional)</code> node:-
-  - Required only you want to log events into mssql. In case you want to use this feature please specify all the paramters required within this node.</br></p>
-<p>##### <code>datapull.email.smtp(Optional)</code> node:-
-  - This is required if you want to specify task completion mail from DataPull. If you want to use SMTP server to send you emails, values of all the properties within this node has to be specified. You can also configure AWS SES to send emails.</br></p>
-<p>##### <code>datapull.email.ses(Optional)</code> node:-
-  - This property configures aws ses to send DataPull task completion email. <code>email</code> property within this node is the AWS SES verified email. <code>datapull.email.ses.accessKey</code> and <code>datapull.email.ses.secretKey</code> needs to be specified only if the machine running the application(core and api part) doesn't have the desired IAM roles.</br></p>
-<p>##### Note:- from the above <code>datapull.email.smtp</code> and <code>datapull.email.ses</code> properties, one of the properties is required to be configured. If both of these properties are not configured, there is no way for DataPull to send process completion mail. </p>
-<ul>
-<li>
-<h3 id="datapull-api-configuration-paramtersapisrcmainresourcesapplication-envyml_1">DataPull API configuration paramters(api/src/main/resources/application-${env}.yml)</h3>
-</li>
-</ul>
-<p>##### <code>datapull.api</code> node:-
-  - <b> 1) datapull.api.s3_bucket_name</b>: Specify DataPull S3 bucket name here. This is the bucket where DataPull input jsons and logs are stored. </br></p>
-<ul>
-<li>
-<p><b> 2) datapull.api.s3_bucket_region(Optional)</b>: DataPull S3 bucket region. Needs to be specified only if datapull.application.region is not specified in master_application_config.yml or S3 region is different from datapull.application.region specified in master_application_config.yml.</br> </p>
-</li>
-<li>
-<p><b> 3) datapull.api.s3_jar_path</b>: This is the path of DataPull core jar in S3. You can keep it in any S3 bucket provided your app has access to this bucket. By default you can keep s3 path as s3://<datapull_s3_bucket>/datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar</br></p>
-</li>
-<li>
-<p><b> 4) datapull.api.application_subnet</b>: subnet for your application. The fargate app will be deployed within this subnet. If emr_subnet is not provided for EMR cluster, the emr cluster will also be created within this subnet.</p>
-</li>
-<li>
-<p><b> 5) datapull.api.application_security_group</b>: security group for fargate app. This security group can also be used for emr clusters, but as of now security group for emr are created by EMR sdk API.</br></p>
-</li>
-</ul>
-<p>##### Note:- from the above  properties, <code>datapull.api.s3_bucket_region</code> needs to be specified only if <code>datapull.application.region</code> is not specified in <code>master_application_config.yml</code> or S3 region is different from <code>datapull.application.region</code> specified in <code>master_application_config.yml</code>. </p>
-<p>##### <code>datapull.emr</code> node:-
-  - <b> datapull.emr.emr_security_group_master(Optional)</b>: Security group for EMR master node.</br></p>
-<ul>
-<li>
-<p><b> datapull.emr.emr_security_group_slave(Optional)</b>: Security group for EMR slave node.</br></p>
-</li>
-<li>
-<p><b> datapull.emr.emr_security_group_service_access(Optional)</b>: Service access security group for EMR. This security group allows accessing spark UI through web browser.</p>
-</li>
-<li><b> datapull.emr.emr_region(Optional)</b>: DataPull EMR region. Needs to be specified only if <code>datapull.application.region</code> is not specified in <code>master_application_config.yml</code> or EMR region is different from <code>datapull.application.region</code> specified in <code>master_application_config.yml</code>.</br></li>
-<li><b> datapull.emr.tags(Optional)</b>: Tag for emr cluster. </li>
-</ul>
-<p>##### Note:- from the above properties properties, <code>datapull.emr.emr_region</code> needs to be specified only if <code>datapull.application.region</code> is not specified in <code>master_application_config.yml</code> or emr region is different from <code>datapull.application.region</code> specified in <code>master_application_config.yml</code>. </p>
-<ul>
-<li>
-<p>In the file <a href="api/src/main/resources/terraform/datapull_task/datapull_ecs.tf">api/src/main/resources/terraform/datapull_task/datapull_ecs.tf</a> set</p>
-<ul>
-<li>the HCL resource attribute <code>aws_ecs_service.datapullwebapi_service.network_configuration.assign_public_ip</code> to false if the VPC subnet id <code>&lt;aws_subnetid_private&gt;</code> is accessible from your clients' network; else set this to true</li>
-<li><strong>Note:</strong> Setting this value to has obvious security risks since this exposes the DataPull endpoint to the internet. Use this for demo purposes only.    </li>
-</ul>
-</li>
-<li>
-<h3 id="datapull-core-configuration-paramters-coresrcmainresourcesapplicationyml">DataPull Core configuration paramters <a href="core/src/main/resources/application.yml">core/src/main/resources/application.yml</a></h3>
-</li>
-</ul>
-<p>##### <code>datapull.secretstore.vault(Optional)</code> node:-
-  - Required only if application is using vault to access credentials. Configure the properties within this yml node to make DataPull work with vault.</p>
-<h2 id="create-datapull-infrastructure-_2">Create DataPull Infrastructure:-</h2>
 <h3 id="create-iam-user-and-roles-with-policies">Create IAM User and Roles, with policies</h3>
 <ul>
 <li>From the terminal at the root of the repo, run <code>cd api/src/main/resources/terraform/datapull_iam/</code></li>
@@ -1012,7 +655,7 @@ datapull_user_secret_key = &lt;datapull_user_secret_key&gt;
 <li>If the HCL resource attribute <code>aws_ecs_service.datapullwebapi_service.network_configuration.assign_public_ip</code> was set to false, take the Private IP of the task as <code>&lt;datapull_api_ip&gt;</code> else take this as the Public IP</li>
 <li>Open the API endpoint url <code>http://&lt;datapull_api_ip&gt;:8080/swagger-ui.html#!/data45pull45request45handler/startDataPullUsingPOST</code></li>
 </ul>
-<h3 id="do-your-first-datapull">Do your first DataPull</h3>
+<h2 id="do-your-first-datapull">Do your first DataPull</h2>
 <ul>
 <li>Create a csv file at the S3 location <code>s3://&lt;datapull_s3_bucket&gt;/datapull-opensource/data/firstdatapull/source/helloworld.csv</code> with the following data</li>
 </ul>
@@ -1063,12 +706,6 @@ hello,world
 <li>The logs for each DataPull invocation are available at <code>s3://&lt;datapull_s3_bucket&gt;/datapull-opensource/logs/DataPullHistory</code>. The logs for each migration with DataPull invocations are available at <code>s3://&lt;datapull_s3_bucket&gt;/datapull-opensource/logs/MigrationHistory</code></li>
 <li>If you had configured the anonymous SMTP server for DataPull to send you email reports, you could get a report with the subject <code>DataPull Report - firstdatapull (application_&lt;random_numbers&gt;)</code></li>
 </ul>
-<h2 id="steps-to-download-ojdbc-jar-_1">Steps to download ojdbc jar :-</h2>
-<p>1) Go to the url :- https://www.oracle.com/technetwork/apps-tech/jdbc-112010-090769.html
-2) Accept the license agreement by clicking of the radio button in front of the 'Accept License Agreement'.
-3) Oracle would ask you to create an account if you don't have one already. If you already have an account you can simply login to your account.
-4) Click on ojdbc6.jar. Download will start in few seconds.
-5) Place this jar into the resources folder of DataPull core component i.e. core/src/main/resources/ojdbc-jar/</p>
                 
                   
                 
@@ -1085,41 +722,6 @@ hello,world
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid">
-        
-          <a href="../architecture/" title="Architecture" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
-            </div>
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Architecture
-              </span>
-            </div>
-          </a>
-        
-        
-          <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Running DataPull on AWS EMR
-              </span>
-            </div>
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
