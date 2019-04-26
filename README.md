@@ -14,7 +14,7 @@ DataPull is an ETL tool to join and transform data from heterogeneous datastores
 * build the Scala JAR from within the core folder
   ```
   cd datapull/core
-  mvn clean install
+  make build
   ```
 * Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.  
   ```
@@ -25,8 +25,8 @@ DataPull is an ETL tool to join and transform data from heterogeneous datastores
 > Pre-requisite: IntelliJ with Scala plugin configured. Check out this [Help page](https://docs.scala-lang.org/getting-started-intellij-track/getting-started-with-scala-in-intellij.html) if this plugin is not installed.
 * Clone this repo locally and checkout the master branch
 * Open the folder [core](core) in IntelliJ IDE.
-* When prompted, add this project as a maven project. 
-* By default, this source code is designed to execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json. 
+* When prompted, add this project as a maven project.
+* By default, this source code is designed to execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.
 * Go to File > Project Structure... , and choose 1.8 (java version) as the Project SDK
 * Go to Run > Edit Configurations... , and do the following
     * Create an Application configuration (use the + sign on the top left corner of the modal window)
