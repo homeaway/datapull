@@ -713,7 +713,7 @@
 <p>Note: from the above properties properties, <code>datapull.emr.emr_region</code> needs to be specified only if <code>datapull.application.region</code> is not specified in <code>master_application_config.yml</code> or emr region is different from <code>datapull.application.region</code> specified in <code>master_application_config.yml</code>. </p>
 </blockquote>
 <ul>
-<li>In the file <a href="api/src/main/resources/terraform/datapull_task/datapull_ecs.tf">api/src/main/resources/terraform/datapull_task/datapull_ecs.tf</a> set</li>
+<li>In the file <a href="https://github.com/homeaway/datapull/blob/master/api/src/main/resources/terraform/datapull_task/datapull_ecs.tf">api/src/main/resources/terraform/datapull_task/datapull_ecs.tf</a> set</li>
 <li>the HCL resource attribute <code>aws_ecs_service.datapullwebapi_service.network_configuration.assign_public_ip</code> to false if the VPC subnet id <code>&lt;aws_subnetid_private&gt;</code> is accessible from your clients' network; else set this to true</li>
 <li><strong>Note:</strong> Setting this value to has obvious security risks since this exposes the DataPull endpoint to the internet. Use this for demo purposes only.    </li>
 </ul>
@@ -725,14 +725,14 @@
 <p>For performing Data migration on Oracle and Teradata, the respective jar needs to be manually downloaded from their Company's website and add dependency in pom.xml file. </p>
 <h3 id="steps-to-download-ojdbc-jar">Steps to download ojdbc jar</h3>
 <ul>
-<li>Go to the url :- https://www.oracle.com/technetwork/apps-tech/jdbc-112010-090769.html</li>
+<li>Go to the url https://www.oracle.com/technetwork/apps-tech/jdbc-112010-090769.html</li>
 <li>Accept the license agreement by clicking of the radio button in front of the 'Accept License Agreement'.</li>
 <li>Oracle would ask you to create an account if you don't have one already. If you already have an account you can simply login to your account.</li>
 <li>Click on ojdbc6.jar. Download will start in few seconds.</li>
 </ul>
 <h3 id="steps-to-download-teradata-jar">Steps to download teradata jar</h3>
 <ul>
-<li>Go to the url :- https://downloads.teradata.com/download/connectivity/jdbc-driver.</li>
+<li>Go to the url https://downloads.teradata.com/download/connectivity/jdbc-driver.</li>
 <li>For downloading teradata jar, account needs to be created on teradata website.</li>
 <li>Downloads will be available in either .tar or .zip format. Archive file name will be in the format TeraJDBC__indep_indep_{version}.zip. Download the archive file.</li>
 <li>The archive file with contain two jar files terajdbc4.jar and tdgssconfig.jar. Both jars are needed for teradata jdbc functionality to work.</li>
@@ -740,7 +740,7 @@
 <h3 id="steps-to-include-oracle-into-the-project">Steps to include Oracle into the project</h3>
 <ul>
 <li>Run this command to include Oracle jar into maven repo. Run this command from folder where Oracle jars are present. Change the value of <code>-Dversion=11.2.0.3</code> in the command according to downloaded jar version.</li>
-<li><b>Command</b>  :- <code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=ojdbc6.jar -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.3 -Dpackaging=jar</code></li>
+<li><b>Command</b>  :<code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=ojdbc6.jar -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.3 -Dpackaging=jar</code></li>
 <li>Add below mentioned dependency to pom.xml(core/pom.xml) in DataPull core. Replace {version} with the downloaded jar version.</li>
 </ul>
 <pre><code>&lt;dependency&gt; 
@@ -754,7 +754,7 @@
 <ul>
 <li>Run these commands to include Teradata jars into maven repo. Run this command from folder where Teradata jars are present. Change the value of <code>-Dversion=16.20.00.10</code> in the command according to downloaded jar version.</li>
 <li>
-<p><b>Commands</b>  :- <code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=terajdbc4.jar -DgroupId=com.teradata -DartifactId=terajdbc4 -Dversion=16.20.00.10 -Dpackaging=jar</code></p>
+<p><b>Commands</b>  : <code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=terajdbc4.jar -DgroupId=com.teradata -DartifactId=terajdbc4 -Dversion=16.20.00.10 -Dpackaging=jar</code></p>
 <p><code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=tdgssconfig.jar -DgroupId=com.teradata -DartifactId=tdgssconfig -Dversion=16.20.00.10 -Dpackaging=jar</code></p>
 </li>
 <li>
