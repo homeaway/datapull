@@ -42,7 +42,7 @@
     
     
       
-        <title>Deploying DataPull on AWS ECS Fargate and EMR - DataPull Documentation</title>
+        <title>Installing DataPull on AWS Fargate and S3 - DataPull Documentation</title>
       
     
     
@@ -125,7 +125,7 @@
               DataPull Documentation
             </span>
             <span class="md-header-nav__topic">
-              Deploying DataPull on AWS ECS Fargate and EMR
+              Installing DataPull on AWS Fargate and S3
             </span>
           
         </div>
@@ -257,11 +257,172 @@
       
       
 
+  
 
-  <li class="md-nav__item">
-    <a href="../installation_emr.md" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Installing DataPull on AWS Fargate and S3
+      </label>
+    
+    <a href="./" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link md-nav__link--active">
       Installing DataPull on AWS Fargate and S3
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#datapull-app-structure" title="DataPull App Structure" class="md-nav__link">
+    DataPull App Structure
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pre-requisites" title="Pre-requisites" class="md-nav__link">
+    Pre-requisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configure-datapull" title="Configure DataPull" class="md-nav__link">
+    Configure DataPull
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#master_application_configymlpresent-in-project-root-directory-configuration-parameters" title="master_application_config.yml(present in project root directory) configuration parameters" class="md-nav__link">
+    master_application_config.yml(present in project root directory) configuration parameters
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datapull-api-configuration-parameters-apisrcmainresourcesapplication-envyml" title="DataPull API configuration parameters (api/src/main/resources/application-${env}.yml)" class="md-nav__link">
+    DataPull API configuration parameters (api/src/main/resources/application-${env}.yml)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datapull-core-configuration-paramterscoresrcmainresourcesapplicationyml" title="DataPull Core configuration paramters(core/src/main/resources/application.yml)" class="md-nav__link">
+    DataPull Core configuration paramters(core/src/main/resources/application.yml)
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#oracle-and-teradata-support" title="Oracle and Teradata support" class="md-nav__link">
+    Oracle and Teradata support
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#steps-to-download-ojdbc-jar" title="Steps to download ojdbc jar" class="md-nav__link">
+    Steps to download ojdbc jar
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steps-to-download-teradata-jar" title="Steps to download teradata jar" class="md-nav__link">
+    Steps to download teradata jar
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steps-to-include-oracle-into-the-project" title="Steps to include Oracle into the project" class="md-nav__link">
+    Steps to include Oracle into the project
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steps-to-include-teradata-into-the-project" title="Steps to include Teradata into the project" class="md-nav__link">
+    Steps to include Teradata into the project
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#create-datapull-infrastructure" title="Create DataPull Infrastructure" class="md-nav__link">
+    Create DataPull Infrastructure
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#create-iam-user-and-roles-with-policies" title="Create IAM User and Roles, with policies" class="md-nav__link">
+    Create IAM User and Roles, with policies
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create-aws-fargate-api-app" title="Create AWS Fargate API App" class="md-nav__link">
+    Create AWS Fargate API App
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#browse-to-the-datapull-api-swagger-endpoint" title="Browse to the DataPull API swagger endpoint" class="md-nav__link">
+    Browse to the DataPull API swagger endpoint
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#do-your-first-datapull" title="Do your first DataPull" class="md-nav__link">
+    Do your first DataPull
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
     
@@ -722,6 +883,41 @@ hello,world
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../architecture/" title="Architecture" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Architecture
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Running DataPull on AWS EMR
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">

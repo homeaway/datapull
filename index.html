@@ -262,8 +262,8 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-use-datapull" title="How to use DataPull?" class="md-nav__link">
-    How to use DataPull?
+  <a href="#how-to-use-datapull" title="How to use DataPull" class="md-nav__link">
+    How to use DataPull
   </a>
   
     <nav class="md-nav">
@@ -365,7 +365,7 @@
 
 
   <li class="md-nav__item">
-    <a href="installation_emr.md" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
+    <a href="install_on_aws/" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
       Installing DataPull on AWS Fargate and S3
     </a>
   </li>
@@ -428,8 +428,8 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-use-datapull" title="How to use DataPull?" class="md-nav__link">
-    How to use DataPull?
+  <a href="#how-to-use-datapull" title="How to use DataPull" class="md-nav__link">
+    How to use DataPull
   </a>
   
     <nav class="md-nav">
@@ -526,15 +526,15 @@
 </p>
 
 <h1 id="datapull">DataPull</h1>
-<p>DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data to cloud effortlessly. This tool enables teams to migrate data from one data store to another. To enable this, We have an app which can spin up Spark infrastructure for the migration of the data, run the job and terminate the infrastructure once the job is done to keep the portfolio costs low for the migration job. 
-You can do multiple migrations in a parallel/serial manner to finish the jobs faster. We integrated our tool with vault so that you need not to keep clear texts passwords in the Migration jobs. We even support scheduling for daily/recurring jobs.    </p>
-<p>Please find below for the source/destinations supported with the DataPull. DataPull supports any of the sources to any of the destinations mentioned. </p>
+<p>DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data across heterogeneous datastores effortlessly. When deployed to Amazon AWS, DataPull spins up EMR Spark infrastructure, does the data movement and terminates the infrastructure once the job is complete; to minimize costs. 
+Multiple data migrations can be done ither serially or in parallel within a DataPull job. There also exists built-in integration with <a href="https://www.vaultproject.io/">Hashicorp Vault</a> so that datastore credentials are never exposed. DataPull also has a built-in scheduler for daily/recurring jobs; or its REST API endpoints can be invoked by a third-party scheduler.</p>
+<p>DataPull supports the following datastores as sources and destinations.</p>
 <table>
 <thead>
 <tr>
 <th align="center">Platform</th>
-<th align="center">Source?</th>
-<th align="center">Destination?</th>
+<th align="center">Source</th>
+<th align="center">Destination</th>
 </tr>
 </thead>
 <tbody>
@@ -564,7 +564,7 @@ You can do multiple migrations in a parallel/serial manner to finish the jobs fa
 <td align="center">✔</td>
 </tr>
 <tr>
-<td align="center">Hive</td>
+<td align="center">SFTP</td>
 <td align="center">✔</td>
 <td align="center">✔</td>
 </tr>
@@ -589,23 +589,23 @@ You can do multiple migrations in a parallel/serial manner to finish the jobs fa
 <td align="center">✔</td>
 </tr>
 <tr>
-<td align="center">Oracle</td>
+<td align="center">Postgres</td>
 <td align="center">✔</td>
 <td align="center">✔</td>
 </tr>
 <tr>
-<td align="center">Postgres</td>
+<td align="center">InfluxDB</td>
 <td align="center">✔</td>
 <td align="center">✔</td>
 </tr>
 </tbody>
 </table>
-<h2 id="how-to-use-datapull">How to use DataPull?</h2>
+<h2 id="how-to-use-datapull">How to use DataPull</h2>
 <h3 id="steps-common-to-all-environments-devteststageprod">Steps common to all environments (Dev/Test/Stage/Prod)...</h3>
 <ul>
 <li>Create a json file/string that has the source/s, destination/s and the portfolio information for tagging the ephemeral infrastructure needed to do the DataPull</li>
-<li>Here are some sample JSON files for some common use cases: {{ repo_url }}/blob/master/core/src/main/resources/Samples</li>
-<li>Here is JSON specification document which has all the possible options supported by DataPull: {{ repo_url }}/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json</li>
+<li>Here are some sample JSON files for some common use cases: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples</li>
+<li>Here is JSON specification document which has all the possible options supported by DataPull: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json</li>
 <li>Please provide an email address for the element "useremailaddress" in the JSON input. Once your DataPull completes,  an email will be sent with all the migration details along with the source, destination details of the migrations, the time taken for the migrations to complete and the number of records processed, etc. </li>
 <li>For DataPull to get access to the source and destination data platforms, you need to either provide the login and password within the JSON (not recommended for Stage and Production environments); or provide the login and an IAM Role which is mapped to the credentials in Vault (you also need to add the <code>"awsenv"</code> and <code>"vaultenv"</code> elements to the source(s) and destination in the json input).</li>
 <li>Navigate to your swagger api URL and invoke this REST API with the json as input.</li>
@@ -620,7 +620,7 @@ You can do multiple migrations in a parallel/serial manner to finish the jobs fa
 <p>The basic information section is there for allowing the users to put their email address, enabling the jobs to run in parallel or serial etc.</p>
 <p>Migrations section is an array and primarily covers source and the destination details of a migration. It can have multiple migration objects. And enabling the any options/features is very easy, we just have to add the element as specified in the Input_specifications document which is available in the resources folder. If you want to migrate only set of columns of the source data, DataPull supports this by using Mappings array inside a migration object and Please check the sample JSONs available for a example. </p>
 <p>Cluster section is mostly related to the infrastructure of the migration job which has details about the portfolio, product, Cron expression and environment in which the job will be running etc. The cluster will be spun up based on the awsenv(aws environment) element in this section among dev/test/stage/prod. </p>
-<p><a href="{{ repo_url }}/blob/master/core/src/main/resources/Samples/Input_Sample_S3-to-Cassandra-withSparkFilter.json">This link</a> is a sample JSON to move data from S3 to Cassandra. </p>
+<p><a href="https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Sample_MySql_to_S3.json">This sample JSON input</a> moves data from MySql to AWS S3</p>
 <h2 id="what-we-use-to-make-the-datapull-do-its-job">What we use to make the DataPull do it's job?</h2>
 <p>Spark is the main engine which drives the DataPull. So technically it will run on any spark environment. But we are biased to Amazon's Elastic Map Reduce(EMR) to have minimum dependencies(AWS versus AWS+Qubole) and our app does use EMR to spin up the spark clusters. But after all as it is a spark application it will run on any spark cluster whether it is EMR or Qubole or any other spark clusters.</p>
 <p>DataPull expects the Input JSON as an argument and irrespective of any spark environment we have to pass the Input JSON as an argument to make the DataPull work.   </p>
@@ -628,12 +628,14 @@ You can do multiple migrations in a parallel/serial manner to finish the jobs fa
 <h3 id="if-you-are-starting-from-scratch">If you are starting from scratch...</h3>
 <ul>
 <li>Prepare the Input JSON as explained in the above section with all the required information.</li>
-<li>Then please go to swagger API URL and submit the JSON in the <strong><em>inputJson</em></strong> field provided and click <em>Try it out!</em></li>
+<li>Then please go to swagger API URL and submit the JSON in the <em>inputJson</em> field provided and click <em>Try it out!</em></li>
 </ul>
 <h3 id="for-elastic-search-in-the-field-of-mappingid-it-is-recommended-to-use-_id-or-id-as-fieldnames-as-they-are-a-unique-keyword-in-elastic-search">For Elastic Search In the field of mappingid it is recommended to use _id or id as fieldnames as they are a unique keyword in Elastic Search.</h3>
 <h3 id="how-to-use-delta-datapulls">How to use delta DataPulls?</h3>
 <p>So lets say you did a DataPull, however in the second datapull you do not want to repopulate everything but only need the deltas of new records. Here is what is needed.</p>
-<p><strong>Pre-req:- CDC needs to enabled on the database</strong></p>
+<blockquote>
+<p>Pre-req: CDC needs to enabled on the database</p>
+</blockquote>
 <ul>
 <li>Setup CDC for your specified tables.</li>
 <li>It creates a watermarking table which essentially allows you to calculate the deltas.</li>
@@ -642,8 +644,7 @@ You can do multiple migrations in a parallel/serial manner to finish the jobs fa
 <p>In your pre-migrate step you populate your watermarking table with defaults and you update the watermark_from with watermark to field. And as part of post migration field you reset the watermark_to field with now date so you are ready for the future datapull</p>
 <p>Once this is complete you can revert back to the original of how to use DataPull again.</p>
 <h3 id="how-to-schedule-a-datapull">How to schedule a DataPull ?</h3>
-<p>Please add an element <strong><em>cronexpression</em></strong> in the cluster section of the Input Json. Example:- "cronexpression": "0 21 * <em> </em>"
-This means the DataPull gets executed every day at 9 PM UTC.</p>
+<p>Please add an element <em>cronexpression</em> in the cluster section of the Input Json. For example, <code>"cronexpression": "0 21 * * *"</code> executes DataPull every day at 9 PM UTC.</p>
                 
                   
                 
