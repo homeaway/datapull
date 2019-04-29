@@ -5,6 +5,7 @@
 DataPull is an ETL tool to join and transform data from heterogeneous datastores. It provides users an easy and consistent way to move data from one datastore to another. Supported datastores include, but are not limited to, SQLServer, MySql, Postgres, Cassandra, MongoDB and Kafka.
 
 ## Run DataPull locally
+> Note: DataPull consits of two services, an API written Java Spring Boot, and a Spark app written in Scala. Although Scala apps can run on JDK 11, per [official docs](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-11-compatibility-notes) it is recommended that Java 8 be used for compiling Scala code. The effort to upgrade to OpenJDK 11+ is tracked [here](issues/2)
 ### Build and execute within a Dockerised Spark environment
 > Pre-requisite: Docker Desktop
 * Clone this repo locally and checkout the master branch
