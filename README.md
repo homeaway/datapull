@@ -11,6 +11,7 @@ DataPull is an ETL tool to join and transform data from heterogeneous datastores
 1. Picks up datastore credentials stored in [Hashicorp Vault](https://www.vaultproject.io), [Amazon Secrets Manager](https://aws.amazon.com/secrets-manager/)
 1. Execution logs and migration history configurable to Amazon AWS Cloudwatch, S3
 1. Use built-in cron scheduler, or call REST API from external schedulers
+
 ... and many more features documented [here](https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json)
 
 ## Run DataPull locally
