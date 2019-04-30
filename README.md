@@ -4,8 +4,17 @@
 </p>
 DataPull is an ETL tool to join and transform data from heterogeneous datastores. It provides users an easy and consistent way to move data from one datastore to another. Supported datastores include, but are not limited to, SQLServer, MySql, Postgres, Cassandra, MongoDB and Kafka.
 
+## Features
+1. JSON configuration-driven data movement - no Java/Scala knowledge needed
+1. Join and transform data among heterogeneous datastores (including NoSQL datastores) using ANSI SQL
+1. Deploys on Amazon AWS EMR and Fargate; but can run on any Spark cluster
+1. Picks up datastore credentials stored in [Hashicorp Vault](https://www.vaultproject.io), [Amazon Secrets Manager](https://aws.amazon.com/secrets-manager/)
+1. Execution logs and migration history configurable to Amazon AWS Cloudwatch, S3
+1. Use built-in cron scheduler, or call REST API from external schedulers
+... and many more features documented [here](https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json)
+
 ## Run DataPull locally
-> Note: DataPull consits of two services, an API written Java Spring Boot, and a Spark app written in Scala. Although Scala apps can run on JDK 11, per [official docs](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-11-compatibility-notes) it is recommended that Java 8 be used for compiling Scala code. The effort to upgrade to OpenJDK 11+ is tracked [here](https://github.com/homeaway/datapull/issues/2)
+> Note: DataPull consists of two services, an API written in Java Spring Boot, and a Spark app written in Scala. Although Scala apps can run on JDK 11, per [official docs](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-11-compatibility-notes) it is recommended that Java 8 be used for compiling Scala code. The effort to upgrade to OpenJDK 11+ is tracked [here](https://github.com/homeaway/datapull/issues/2)
 ### Build and execute within a Dockerised Spark environment
 > Pre-requisite: Docker Desktop
 * Clone this repo locally and checkout the master branch
