@@ -49,26 +49,16 @@ public class DataPullApi {
 
     private RequestSpecification getRequestSpec() {
         RequestSpecBuilder requestSpec = new RequestSpecBuilder();
-        String uri = "";
-        String version = Environment.version.trim().toLowerCase();
-        switch (version) {
-            case "ha-internal":
-                uri = Environment.dataPullUri;
-                break;
-            case "open-source":
-                uri = Environment.dataPullOpenSourceUri;
-                break;
-            default:
-                log.error("Version can be either internal or Open-Source");
-                break;
+        String uri = Environment.dataPullUri;
+        if(Environment.properties.getProperty("okta.url") != null){
+            generateToken();
+            requestSpec.addHeader("Authorization", "Bearer " + System.getProperty("jwt_access_token"));
         }
-        log.info("{} Data Pull URI - {}", version.toUpperCase(), uri);
-        //generateToken();
+
         requestSpec.
                 setContentType("application/json").
                 addHeader("Accept", "application/json").
-                //addHeader("Authorization", "Bearer " + System.getProperty("jwt_access_token")).
-                setBaseUri(uri).build();
+                setBaseUri(uri);
         return requestSpec.build();
 
     }
@@ -80,7 +70,7 @@ public class DataPullApi {
                     formParam("client_secret", Environment.properties.getProperty("okta.client_secret")).
                     formParam("grant_type", "client_credentials").
                     formParam("scope", "custom_scope").
-                    post(Environment.properties.getProperty("okta_url") + "/v1/token");
+                    post(Environment.properties.getProperty("okta.url") + "/v1/token");
             JsonNode tokenNode = null;
             try {
                 tokenNode = new ObjectMapper().readTree(response.body().prettyPrint());
@@ -94,7 +84,7 @@ public class DataPullApi {
 
     private boolean isTokenValid() {
         AccessTokenVerifier jwtVerifier = JwtVerifiers.accessTokenVerifierBuilder()
-                .setIssuer(Environment.properties.getProperty("okta_url"))
+                .setIssuer(Environment.properties.getProperty("okta.url"))
                 .setAudience("api://default")      // defaults to 'api://default'
                 .build();
         try {

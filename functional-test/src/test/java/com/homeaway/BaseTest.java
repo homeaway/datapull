@@ -37,8 +37,6 @@ public class BaseTest {
     @BeforeSuite(groups = "config")
     public static void beforeSuite() throws IOException {
         log.info("Environment - {}", Environment.envName);
-        log.info("Data Pull version - {}", Environment.version);
-
         testDataMap = getTestData();
         extent = ExtentManager.getInstance();
         initiateRDSCreation();

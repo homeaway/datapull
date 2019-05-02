@@ -10,9 +10,6 @@ import com.fasterxml.jackson.dataformat.javaprop.JavaPropsMapper;
 import com.homeaway.constants.Environment;
 import com.homeaway.dto.RDSSpecification;
 import com.homeaway.utils.Wait;
-import com.homeaway.utils.db.MySQL;
-import com.homeaway.utils.db.Oracle;
-import com.homeaway.utils.db.PostgreSQL;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 
@@ -53,7 +50,7 @@ public class RDSInstance {
             e.printStackTrace();
         }
         client = AmazonRDSClientBuilder.standard().withRegion(Environment.awsRegion)
-                .withCredentials(new AWSStaticCredentialsProvider(Environment.devCredentials)).build();
+                .withCredentials(new AWSStaticCredentialsProvider(Environment.awsCredentials)).build();
         createDbInstance();
         if(waitForAvailability)
            waitTillRDSAvailability();

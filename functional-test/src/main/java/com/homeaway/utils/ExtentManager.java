@@ -22,7 +22,6 @@ public class ExtentManager {
         extent = new ExtentReports();
         extent.setSystemInfo("Environment", Environment.envName);
         extent.setSystemInfo("User Email", Environment.userEmailAddress);
-        extent.setSystemInfo("DataPull Version", Environment.version);
         extent.setSystemInfo("Databases Covered", getGroupsExecuted());
         ExtentHtmlReporter htmlReporter = new ExtentHtmlReporter(fileName);
         htmlReporter.config().setTestViewChartLocation(ChartLocation.TOP);
