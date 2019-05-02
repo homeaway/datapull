@@ -28,7 +28,7 @@ public class EmrCluster {
         emr = AmazonElasticMapReduceClientBuilder.
                 standard().
                 withRegion(Environment.awsRegion).
-                withCredentials(new AWSStaticCredentialsProvider(Environment.credentials)).
+                withCredentials(new AWSStaticCredentialsProvider(Environment.awsCredentials)).
                 build();
         getClusterId();
     }
@@ -130,16 +130,7 @@ public class EmrCluster {
     }
 
     private String getStepName() {
-        String stepName = "";
-        switch (Environment.version.trim().toLowerCase()) {
-            case "ha-internal":
-                stepName = "customJar";
-                break;
-            case "open-source":
-                stepName = inputJson.getCluster().getEmrClusterName();
-                break;
-        }
-        return stepName;
+        return inputJson.getCluster().getEmrClusterName();
     }
 
     public boolean waitForClusterToStartRunning() {

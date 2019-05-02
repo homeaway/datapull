@@ -41,7 +41,7 @@ public class AwsS3 {
         }
         s3 = AmazonS3ClientBuilder.standard()
                 .withRegion(Environment.awsRegion)
-                .withCredentials(new AWSStaticCredentialsProvider(Environment.credentials))
+                .withCredentials(new AWSStaticCredentialsProvider(Environment.awsCredentials))
                 .build();
     }
 
@@ -171,7 +171,7 @@ public class AwsS3 {
     public void uploadTestReport(String s3ReportPath) {
         s3 = AmazonS3ClientBuilder.standard()
                 .withRegion(Environment.awsRegion)
-                .withCredentials(new AWSStaticCredentialsProvider(Environment.devCredentials))
+                .withCredentials(new AWSStaticCredentialsProvider(Environment.awsCredentials))
                 .build();
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd-M-yyyy hh:mm:ss");
         s3ReportPath += simpleDateFormat.format(new Date()) + "/";
@@ -183,7 +183,7 @@ public class AwsS3 {
     public void uploadInputJson(InputJson userInputJson, InputJson saveInputJson) throws IOException {
         s3 = AmazonS3ClientBuilder.standard()
                 .withRegion(Environment.awsRegion)
-                .withCredentials(new AWSStaticCredentialsProvider(Environment.devCredentials))
+                .withCredentials(new AWSStaticCredentialsProvider(Environment.awsCredentials))
                 .build();
 
         ObjectMapper mapper = new ObjectMapper();

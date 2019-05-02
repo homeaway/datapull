@@ -1,8 +1,6 @@
 package com.homeaway.DataPull;
 
-import com.amazonaws.auth.AWSCredentials;
 import com.homeaway.BaseTest;
-import com.homeaway.constants.Environment;
 import com.homeaway.dto.InputJson;
 import com.homeaway.dto.Migration;
 import com.homeaway.dto.migration.Destination;
@@ -18,7 +16,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -37,27 +34,19 @@ public class DataPullS3ToCassandraTest extends BaseTest {
 
     @BeforeMethod(alwaysRun = true)
     public void createDBConnection(Method method) throws Exception {
-        boolean injectCredentials = false;
         if (method.getName().equals("s3ToCassandraTest")) {
             inputJson = new InputJson("S3-to-Cassandra");
         } else if (method.getName().equals("verifyS3CopyOperation")) {
             inputJson = new InputJson("S3-to-Cassandra-with-post-migrate-command");
-        } else if (method.getName().equals("s3ToCassandraTestWithKey")) {
-            inputJson = new InputJson("S3-to-Cassandra-With-AccessKey");
-            injectCredentials = true;
         }
+
         Migration firstMigration = inputJson.getMigrations().get(0);
         source = inputJson.getMigrations().get(0).getSource();
         if (firstMigration.getSource().getPostMigrateCommand() != null) {
             firstMigration.getSource().getPostMigrateCommand().setS3path(source.getS3path());
         }
         destination = inputJson.getMigrations().get(0).getDestination();
-        if (injectCredentials) {
-            AWSCredentials credentials = swapCredentials();
-            s3 = new AwsS3(source.getS3path(), credentials);
-        } else {
-            s3 = new AwsS3(source.getS3path());
-        }
+        s3 = new AwsS3(source.getS3path());
         s3.insertData();
         sourceDataList = s3.getListOfRecords();
         postMigrateCommand = source.getPostMigrateCommand();
@@ -73,20 +62,6 @@ public class DataPullS3ToCassandraTest extends BaseTest {
         Assert.assertEquals(0, destDataList.size());
     }
 
-    private AWSCredentials swapCredentials() {
-        String env = Environment.envName;
-        AWSCredentials credentials;
-        if (env.equals("dev")) {
-            source.setAccessKey(Environment.testCredentials.getAWSAccessKeyId());
-            source.setSecretKey(Environment.testCredentials.getAWSSecretKey());
-            credentials = Environment.testCredentials;
-        } else {
-            source.setAccessKey(Environment.devCredentials.getAWSAccessKeyId());
-            source.setSecretKey(Environment.devCredentials.getAWSSecretKey());
-            credentials = Environment.devCredentials;
-        }
-        return credentials;
-    }
 
     @Test(groups = {"s3", "cassandra"})
     public void s3ToCassandraTest() throws IOException {
@@ -124,13 +99,6 @@ public class DataPullS3ToCassandraTest extends BaseTest {
             Assert.assertEquals(partitionedSourceData.size(), s3.getPartitionedCsvData().size());
         }
 
-    }
-
-    @Test(groups = {"s3", "cassandra"})
-    public void s3ToCassandraTestWithKey() throws IOException {
-        DataPull.start(inputJson);
-        test.get().pass("DataPull Migration step is completed");
-        verifySourceAndDestinationData();
     }
 
     @AfterMethod(alwaysRun = true)
