@@ -20,6 +20,7 @@ public class CronExpressionTest extends BaseTest {
     @Test
     public void cronExpressionTest() throws ParseException, InterruptedException {
         InputJson inputJson = new InputJson("Close-EMR-Cluster");
+
         EmrCluster emrCluster = new EmrCluster(inputJson);
         if (emrCluster.getClusterId() == null) {
             DataPull.start(inputJson);

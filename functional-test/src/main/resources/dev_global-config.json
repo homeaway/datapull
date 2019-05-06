@@ -12,13 +12,12 @@
     "s3path": "BUCKET_NAME/FOLDER_PATH"
   },
 
-  "cassandra":
-  {
-    "cluster": "IP_ADDR_OR_DNS_NAME",
-    "keyspace": "YOURKEYSPACE_NAME",
-    "table": "TABLE_NAME",
-    "login": "LOGIN_NAME",
-    "password": "00000000-0000-0000-0000-000000000000",
+  "cassandra": {
+    "cluster": "cassandra.cluster",
+    "keyspace": "test_keyspace",
+    "table": "uses_table",
+    "login": "user_name",
+    "password": "password",
     "jksfilepath":"s3://BUCKET_NAME/FOLDER_PATH/client-server.jks",
     "sparkoptions": {
       "spark.cassandra.connection.ssl.enabled": "true",
@@ -29,12 +28,12 @@
   },
 
   "mongodb": {
-    "cluster": "IP_ADDR_OR_DNS_NAME",
+    "cluster": "mongodb.cluster",
     "replicaset": "REPLICA_SET",
-    "authenticationdatabase": "AUTHENTICATION_DATABASE",
-    "database": "DATABASE",
-    "login": "LOGIN_NAME",
-    "password":"00000000-0000-0000-0000-000000000000"
+    "authenticationdatabase": "users_db",
+    "database": "users_db",
+    "login": "user_name",
+    "password":"password"
   },
 
   "elastic": {
