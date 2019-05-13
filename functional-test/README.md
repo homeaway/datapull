@@ -15,7 +15,7 @@ Database and cluster details can be edited in following file if env is Dev , fil
 ### How to update database details
 Suppose I am interested in running test cases related to Cassandra as a source and MongoDB as a destination. I will find there is a test class - `DataPullCassandraToMongoDbTest` matching these criteria. After reading a couple of lines, I will find that `Cassandra-to-MongoDB.json` file is being read in the test class. This file is available under resources/input_files folder. If I read this file, I will find that there are no connection details of Cassandra and MongoDB cluster. Actually, we are using this file as a template and actual values will be fetched from dev_global-config.json or test_global-config.json depending on environment entered in environment.properties file. Mapping is like the value of the platform key in Cassandra-to-MongoDB.json file is a key in the dev/test_global-config.json file. So, the value of the cassandra and mongodb in dev/test_global-config.json file will be updated in the source and destination object of Cassandra-to-MongoDB.json file respectively. So, place to update any test data or database connection details is dev/test_global-config.json file. 
 
-<img href= "updating_test_data.gif" title= "updating_test_data.gif"/>
+<img src = "updating_test_data.gif" title= "updating_test_data.gif"/>
 
 ### Run test cases 
 * Use the command ```mvn clean test``` to run all test cases.
@@ -23,6 +23,7 @@ Suppose I am interested in running test cases related to Cassandra as a source a
 * If we are interested in running test cases related to few class files, we can update the testng.xml . Remove the class tags which we do not want to run and execute the command ```mvn clean test```.
 ### Check report after execution
 Extent report and logs are generated in the report folder. If configured, these documents can be uploaded to a s3 bucket.
+
 
 ### FAQ
 **Q:** Do I need to add some sample records in source databases before executing functional tests?
