@@ -23,3 +23,18 @@ Suppose I am interested in running test cases related to Cassandra as a source a
 * If we are interested in running test cases related to few class files, we can update the testng.xml . Remove the class tags which we do not want to run and execute the command ```mvn clean test```.
 ### Check report after execution
 Extent report and logs are generated in the report folder. If configured, these documents can be uploaded to a s3 bucket.
+
+### FAQ
+**Q:** Do I need to add some sample records in source databases before executing functional tests?
+
+**A:** No, Test script will create a Users table in source database if it does not exist and will also add some dummy data if there are no records in the Users table.
+
+
+**Q:** Do I need to create a table in destination databases?
+
+**A:** No, the Test script will take care of this. Most of the cases we are creating Users_Destination table with the required schema.
+
+**Q:** is it possible to create a database on the fly while executing test cases?
+
+**A:** Yes, we are supporting creation of some AWS RDS instance on the fly and destroy it after test suite execution completes. Supported RDS instances are Oracle, MySQL, MS SQL Server, PostgreSQL. Only thing, we need to do is assign this as comma separated values to rdsInstancesRequired key in the environment.properties file.
+
