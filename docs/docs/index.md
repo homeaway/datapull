@@ -7,10 +7,10 @@
 DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data across heterogeneous datastores effortlessly. When deployed to Amazon AWS, DataPull spins up EMR Spark infrastructure, does the data movement and terminates the infrastructure once the job is complete; to minimize costs. 
 Multiple data migrations can be done ither serially or in parallel within a DataPull job. There also exists built-in integration with [Hashicorp Vault](https://www.vaultproject.io/) so that datastore credentials are never exposed. DataPull also has a built-in scheduler for daily/recurring jobs; or its REST API endpoints can be invoked by a third-party scheduler.
 
-##Contributors. 
-##Marko Varghese.
-##Nirav Shah.
-##Srinivas Gajjala.
+# Contributors. 
+# Marko Varghese.
+# Nirav Shah.
+# Srinivas Gajjala.
 
 DataPull supports the following datastores as sources and destinations.
 
