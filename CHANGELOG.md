@@ -8,3 +8,4 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.0.1] - 2019-06-26
 ### Fixed
 - Fixed "No json input available to Data Pull" exception when running DataPull from EMR 
+- Fixed create_user_and_roles.sh script
