@@ -69,6 +69,7 @@ object DataPull {
       val dp: String = DataPull.getFile(args(0), false)
       jsonString = dp
     } else {
+      jsonString = args(0)
       isLocal = false
     }
 
