@@ -486,3 +486,15 @@ resource "aws_iam_instance_profile" "datapull_default_instance_profile" {
   role = "${aws_iam_role.emr_ec2_datapull_role.name}"
 
 }
+
+resource "aws_iam_access_key" "datapull_iam_access_key" {
+ user    = "${aws_iam_user.datapull_user.name}"
+}
+
+output "datapull_user_access_key" {
+ value = "${aws_iam_access_key.datapull_iam_access_key.id}"
+}
+
+output "datapull_user_secret_key" {
+ value = "${aws_iam_access_key.datapull_iam_access_key.secret}"
+}
