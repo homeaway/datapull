@@ -66,6 +66,52 @@ Spark is the main engine which drives the DataPull. So technically it will run o
 
 DataPull expects the Input JSON as an argument and irrespective of any spark environment we have to pass the Input JSON as an argument to make the DataPull work.   
 
+How do I do Delta Moves for DataPull?
+Here is an example
+
+{
+  "useremailaddress": "your_id@expediagroup.com",
+  "migrations": [
+    {
+      "sources": [{
+        "platform": "cassandra",
+        "cluster": "prod-cassandra-booking.service.us-east-1-vpc-D9087BBE.consul",
+        "keyspace": "terms_conditions",
+        "table": "user_events",
+        "login": "terms_conditions_appuser",
+        "awsenv": "prod",
+        "vaultenv": "prod",
+        "alias":"source"
+      },
+      {
+        "platform": "s3",
+        "s3path": "ha-prod-bookingservices-us-east-1/cassandra/terms_and_conditions/user_events",
+        "fileformat": "json",
+        "alias":"destination"
+      }
+    ],
+      "destination": {
+        "platform": "s3",
+        "s3path": "ha-prod-bookingservices-us-east-1/cassandra/terms_and_conditions/user_events",
+        "fileformat": "json"
+      },
+      "sql":{
+        "query":"select source.* from source LEFT JOIN destination on source.id= destination.id where destination.id=null"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "terms-and-services-user-events",
+    "awsenv": "prod",
+    "portfolio": "payment-services",
+    "product": "payment-onboarding",
+    "ec2instanceprofile": "datapull_termsandconditions_events",
+    "cronexpression": "0/15 * * * *",
+    "terminateclusterafterexecution": "false",
+    "ComponentInfo": "c72061a0-14a4-4033-aedf-3b861dfb40d9"
+  }
+}
+
 ## Run your DataPull on a spark cluster
 ### If you are starting from scratch...
 
