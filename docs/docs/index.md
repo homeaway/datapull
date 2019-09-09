@@ -66,7 +66,7 @@ Spark is the main engine which drives the DataPull. So technically it will run o
 
 DataPull expects the Input JSON as an argument and irrespective of any spark environment we have to pass the Input JSON as an argument to make the DataPull work.   
 
-How do I do Delta Moves for DataPull?
+### How do I do Delta Moves for DataPull?
 Here is an example
 ```
 {
