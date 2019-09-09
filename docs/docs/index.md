@@ -68,31 +68,31 @@ DataPull expects the Input JSON as an argument and irrespective of any spark env
 
 How do I do Delta Moves for DataPull?
 Here is an example
-
+```
 {
   "useremailaddress": "your_id@expediagroup.com",
   "migrations": [
     {
       "sources": [{
         "platform": "cassandra",
-        "cluster": "prod-cassandra-booking.service.us-east-1-vpc-D9087BBE.consul",
+        "cluster": "cassandracluster",
         "keyspace": "terms_conditions",
-        "table": "user_events",
-        "login": "terms_conditions_appuser",
+        "table": "your_table",
+        "login": "your_appuser",
         "awsenv": "prod",
         "vaultenv": "prod",
         "alias":"source"
       },
       {
         "platform": "s3",
-        "s3path": "ha-prod-bookingservices-us-east-1/cassandra/terms_and_conditions/user_events",
+        "s3path": "bucketpath",
         "fileformat": "json",
         "alias":"destination"
       }
     ],
       "destination": {
         "platform": "s3",
-        "s3path": "ha-prod-bookingservices-us-east-1/cassandra/terms_and_conditions/user_events",
+        "s3path": "bucketpath",
         "fileformat": "json"
       },
       "sql":{
@@ -101,17 +101,17 @@ Here is an example
     }
   ],
   "cluster": {
-    "pipelinename": "terms-and-services-user-events",
+    "pipelinename": "yourpipeline",
     "awsenv": "prod",
     "portfolio": "payment-services",
     "product": "payment-onboarding",
-    "ec2instanceprofile": "datapull_termsandconditions_events",
+    "ec2instanceprofile": "instanceprofile",
     "cronexpression": "0/15 * * * *",
     "terminateclusterafterexecution": "false",
-    "ComponentInfo": "c72061a0-14a4-4033-aedf-3b861dfb40d9"
+    "ComponentInfo": "someuuid"
   }
 }
-
+```
 ## Run your DataPull on a spark cluster
 ### If you are starting from scratch...
 
