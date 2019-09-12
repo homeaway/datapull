@@ -7,6 +7,12 @@
 DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data across heterogeneous datastores effortlessly. When deployed to Amazon AWS, DataPull spins up EMR Spark infrastructure, does the data movement and terminates the infrastructure once the job is complete; to minimize costs. 
 Multiple data migrations can be done ither serially or in parallel within a DataPull job. There also exists built-in integration with [Hashicorp Vault](https://www.vaultproject.io/) so that datastore credentials are never exposed. DataPull also has a built-in scheduler for daily/recurring jobs; or its REST API endpoints can be invoked by a third-party scheduler.
 
+# Authors. 
+ Marko Varghese.
+ Nirav Shah.
+ Srinivas Gajjala.
+
+
 DataPull supports the following datastores as sources and destinations.
 
 | Platform | Source | Destination |
@@ -60,6 +66,52 @@ Spark is the main engine which drives the DataPull. So technically it will run o
 
 DataPull expects the Input JSON as an argument and irrespective of any spark environment we have to pass the Input JSON as an argument to make the DataPull work.   
 
+### How do I do Delta Moves for DataPull?
+Here is an example
+```
+{
+  "useremailaddress": "your_id@expediagroup.com",
+  "migrations": [
+    {
+      "sources": [{
+        "platform": "cassandra",
+        "cluster": "cassandracluster",
+        "keyspace": "terms_conditions",
+        "table": "your_table",
+        "login": "your_appuser",
+        "awsenv": "prod",
+        "vaultenv": "prod",
+        "alias":"source"
+      },
+      {
+        "platform": "s3",
+        "s3path": "bucketpath",
+        "fileformat": "json",
+        "alias":"destination"
+      }
+    ],
+      "destination": {
+        "platform": "s3",
+        "s3path": "bucketpath",
+        "fileformat": "json"
+      },
+      "sql":{
+        "query":"select source.* from source LEFT JOIN destination on source.id= destination.id where destination.id=null"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "yourpipeline",
+    "awsenv": "prod",
+    "portfolio": "payment-services",
+    "product": "payment-onboarding",
+    "ec2instanceprofile": "instanceprofile",
+    "cronexpression": "0/15 * * * *",
+    "terminateclusterafterexecution": "false",
+    "ComponentInfo": "someuuid"
+  }
+}
+```
 ## Run your DataPull on a spark cluster
 ### If you are starting from scratch...
 

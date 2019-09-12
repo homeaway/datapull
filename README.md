@@ -2,7 +2,7 @@
 <p align="center">
   <img width="222" height="207" src="docs/docs/logo.png">
 </p>
-DataPull is an ETL tool to join and transform data from heterogeneous datastores. It provides users an easy and consistent way to move data from one datastore to another. Supported datastores include, but are not limited to, SQLServer, MySql, Postgres, Cassandra, MongoDB and Kafka.
+DataPull is a self service Distributed ETL tool to join and transform data from heterogeneous datastores. It provides users an easy and consistent way to move data from one datastore to another. Supported datastores include, but are not limited to, SQLServer, MySql, Postgres, Cassandra, MongoDB and Kafka.
 
 ## Features
 1. JSON configuration-driven data movement - no Java/Scala knowledge needed
