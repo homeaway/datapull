@@ -16,14 +16,6 @@ Use an SSH client to connect to the master node, configure SSH tunneling with lo
 ### Option 2 (recommended for new users)
 Use an SSH client to connect to the master node, configure SSH tunneling with dynamic port forwarding, and configure your Internet browser to use an add-on such as FoxyProxy or SwitchySharp to manage your SOCKS proxy settings. This method allows you to automatically filter URLs based on text patterns and to limit the proxy settings to domains that match the form of the master node's DNS name. The browser add-on automatically handles turning the proxy on and off when you switch between viewing websites hosted on the master node and those on the Internet. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-ssh-tunnel.html
 
-## Prerequisite for Production env in Vrbo and EG Data Platform
-
-To access EMR clusters' master nodes in Vrbo and EG Data Platform production environments, you need to be on [Vrbo Production VPN](prodvpn.homeawaycorp.com) and have Teleport. Follow [this page](https://wiki.homeawaycorp.com/pages/viewpage.action?spaceKey=Hostingopps&title=Teleport+Client) for steps on installing  Teleport and enabling teleport connection. 
-
-> Pro Tip: The latest version: 4.1.4 of Teleport will be installed when you do `brew install teleport` which is unstable and not compatible with VRBO instead use this command:
-
-```brew install https://raw.githubusercontent.com/igas/homebrew-core/87fa144e04b1b513196b581b958a508270e4aba6/Formula/teleport.rb```
-
 # Steps to access Spark UI
 1. Open the AWS console for environment in which the datapull job is running. select [EMR](https://console.aws.amazon.com/elasticmapreduce/home) under the 
       services tab.
