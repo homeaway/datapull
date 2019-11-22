@@ -1,1 +1,1 @@
-![Screenshot](architecture_diagram.png)
+![Screenshot](media/architecture_diagram.png)
