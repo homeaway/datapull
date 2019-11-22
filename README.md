@@ -54,5 +54,17 @@ Deploying DataPull to Amazon AWS, involves
 - installing the DataPull API and Spark JAR in AWS Fargate, using [this runbook](https://homeaway.github.io/datapull/install_on_aws/)
 - running DataPulls in AWS EMR, using [this runbook](https://homeaway.github.io/datapull/emr_runbook/)
 
-## Bugs/Feature Requests
+## Contribute to this project
+### Bugs/Feature Requests
 Please create an issue in this git repo, using the bug report or feature request templates.
+### Documentation
+DataPull documentation is available at https://homeaway.github.io/datapull/ . To update this documentation, please do the following steps...
+- Create a [Feature Request](https://github.com/homeaway/datapull/issues/new?template=feature_request.md) issue
+  - Please fill in the title and the body of the issue. Our suggested title is "Documentation for `<what this documention is for>`". 
+- Fork the [DataPull](https://github.com/homeaway/datapull) repo
+- Install [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)
+- Clone your forked repo locally, and run `mkdocs serve` in Terminal from the `docs` folder of the repo
+- Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
+- Once you're done updating the documnentation, please commit and push your local master branch to your fork. Also, run `mkdocs gh-deploy` at the terminal to update and push your `gh-pages` branch. 
+- Create 2 PRs (one for master branch, one for gh-pges branch); and we'll review and approve them. 
+- Thanks again, for helping make DataPull better!
