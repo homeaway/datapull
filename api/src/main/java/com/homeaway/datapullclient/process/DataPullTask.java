@@ -86,22 +86,20 @@ public class DataPullTask implements Runnable {
         DataPullProperties dataPullProperties = config.getDataPullProperties();
         String logFilePath = dataPullProperties.getLogFilePath();
         String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
-        s3JarPath = s3JarPath.equals("") ? dataPullProperties.getS3JarPath() : s3JarPath;
         String logPath = logFilePath == null || logFilePath.equals("") ?
                 "s3://"+s3RepositoryBucketName+"/" + "datapull-opensource/logs/SparkLogs" : logFilePath;
 
-        String jarPath = s3JarPath == null || s3JarPath.equals("")  ?
-                "s3://"+s3RepositoryBucketName+"/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar" : s3JarPath;
+        s3JarPath = "s3://"+s3RepositoryBucketName+"/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar" ;
 
         if(!clusters.isEmpty()){
             ClusterSummary summary  = clusters.get(0);
 
             if(summary != null){
-                runTaskOnExistingCluster(summary.getId(), jarPath, Boolean.valueOf(Objects.toString(clusterProperties.getTerminateClusterAfterExecution(),"false")),Objects.toString(clusterProperties.getSparksubmitparams(), ""));
+                runTaskOnExistingCluster(summary.getId(), s3JarPath, Boolean.valueOf(Objects.toString(clusterProperties.getTerminateClusterAfterExecution(),"false")),Objects.toString(clusterProperties.getSparksubmitparams(), ""));
             }
         }
         else{
-            RunJobFlowResult result = runTaskInNewCluster(emr,logPath, jarPath,Objects.toString(clusterProperties.getSparksubmitparams(), ""));
+            RunJobFlowResult result = runTaskInNewCluster(emr,logPath, s3JarPath,Objects.toString(clusterProperties.getSparksubmitparams(), ""));
         }
 
         log.info("Task "+taskId+" submitted to EMR cluster");
@@ -164,16 +162,15 @@ public class DataPullTask implements Runnable {
         EMRProperties emrProperties = config.getEmrProperties();
         int instanceCount = emrProperties.getInstanceCount();
         String masterType = emrProperties.getMasterType();
-        String emrSubnet = emrProperties.getSubnet();
         DataPullProperties datapullProperties = config.getDataPullProperties();
 
-        String applicationSubnet = datapullProperties.getApplicationSubnetId();
-        emrSubnet  = emrSubnet != null && !emrSubnet.trim().isEmpty() ? emrSubnet : applicationSubnet;
+        String applicationSubnet = datapullProperties.getApplicationSubnetId_1();
+
         int count = Integer.valueOf(Objects.toString(clusterProperties.getEmrInstanceCount(), Integer.toString(instanceCount)));
         JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
                 .withEc2KeyName(Objects.toString(clusterProperties.getEc2KeyName(), emrProperties.getKeyName())) //passing invalid key will make the process terminate
                 //can be removed in case of default vpc
-                .withEc2SubnetId(emrSubnet).withMasterInstanceType(Objects.toString(clusterProperties.getMasterInstanceType(), masterType))
+                .withEc2SubnetId(applicationSubnet).withMasterInstanceType(Objects.toString(clusterProperties.getMasterInstanceType(), masterType))
                 .withInstanceCount(count)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString(clusterProperties.getTerminateClusterAfterExecution(), "true")));
 
@@ -299,7 +296,7 @@ public class DataPullTask implements Runnable {
                 ", jsonS3Path='" + jsonS3Path + '\'' +
                 ", logFilePath='" + dataPullProperties.getLogFilePath() + '\'' +
                 ", s3RepositoryBucketName='" + dataPullProperties.getS3BucketName() + '\'' +
-                ", s3JarPath='" + dataPullProperties.getS3JarPath() + '\'' +
+                ", s3JarPath='" + s3JarPath + '\'' +
                 ", instanceCount=" + emrProperties.getInstanceCount() +
                 ", masterType='" + emrProperties.getMasterType() + '\'' +
                 ", slaveType='" + emrProperties.getSlaveType() + '\'' +

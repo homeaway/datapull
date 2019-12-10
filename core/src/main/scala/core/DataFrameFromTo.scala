@@ -61,8 +61,6 @@ import scala.util.control.Breaks._
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
-
-
   def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String,mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String,isSFTP: Boolean,login:String,host:String,password:String,awsEnv:String , vaultEnv:String): org.apache.spark.sql.DataFrame = {
 
     if( filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null )
@@ -79,7 +77,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     var vaultLogin = login
     if (vaultPassword == "" && awsEnv != "false" && vaultEnv != "false") {
       val secretService = new SecretService(secretstore,appConfig)
-      val vaultCreds = secretService.getSecret(awsEnv,  "sftp-"+host, login, vaultEnv)
+      val vaultCreds = secretService.getSecret(awsEnv, "sftp-"+host, login, vaultEnv)
       vaultLogin = vaultCreds("username")
       vaultPassword = vaultCreds("password")
     }
@@ -957,7 +955,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       val parser = new Schema.Parser()
       val schema = parser.parse(userSchema)
 
-      val producer = new KafkaProducer[Object, GenericRecord](props)
+      val producer = new KafkaProducer[Object,GenericRecord](props)
       val jsonParser = new JSONParser()
 
       partition.foreach((item: String) => {

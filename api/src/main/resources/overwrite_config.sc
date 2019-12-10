@@ -25,7 +25,9 @@ def mainA(args: String*) = {
   val env  = args(0)
   println("Running script for env = "+env)
   val yamlMapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES));
-  val masterConfig = yamlMapper.readTree(new File("master_application_config.yml"))
+
+  val masterconfigFile= String.format("master_application_config-%s.yml",env)
+  val masterConfig = yamlMapper.readTree(new File(masterconfigFile))
 
   var paths = new java.util.ArrayList[String]()
   findpath(masterConfig, "",  paths);
@@ -33,6 +35,8 @@ def mainA(args: String*) = {
   val apiconfig = yamlMapper.readTree(new File(apiConfigFile))
   val coreConfigFile = String.format("core/src/main/resources/application-%s.yml",env)
   val coreconfig = yamlMapper.readTree(new File(coreConfigFile))
+  val apiConfigDest="api/src/main/resources/application.yml"
+  val coreConfigDest="core/src/main/resources/application.yml"
 
   paths.stream().filter(x => !masterConfig.at(x).asText("").equals("")).forEach(x => {
     val coreValue = coreconfig.at(x).asText("")
@@ -51,7 +55,7 @@ def mainA(args: String*) = {
 
       var coreYaml = yamlMapper.writeValueAsString(coreconfig);
       coreYaml = coreYaml.replaceAll("null|---", "").trim
-      val writer = new BufferedWriter(new FileWriter(new File(coreConfigFile)))
+      val writer = new BufferedWriter(new FileWriter(new File(coreConfigDest)))
       writer.write(coreYaml)
       writer.close()
     }
@@ -67,7 +71,7 @@ def mainA(args: String*) = {
       }
       var apiYaml = yamlMapper.writeValueAsString(apiconfig);
       apiYaml = apiYaml.replaceAll("null|---", "").trim
-      val writer = new BufferedWriter(new FileWriter(new File(apiConfigFile)))
+      val writer = new BufferedWriter(new FileWriter(new File(apiConfigDest)))
       writer.write(apiYaml)
       writer.close()
     }

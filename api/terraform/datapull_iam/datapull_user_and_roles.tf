@@ -160,7 +160,8 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split2" {
                 "ecs:DeleteService",
                  "ecr:BatchDeletImage",
                  "ecr:ListImages",
-                 "ecr:DescribeImages"
+                 "ecr:DescribeImages",
+                "ecs:StopTask"
             ],
             "Resource": "*"
         }

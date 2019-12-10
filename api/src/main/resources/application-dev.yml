@@ -1,48 +1,29 @@
 datapull:
   api:
-    s3_bucket_name: S3_BUCKET_NAME
-    s3_jar_path: s3://S3_BUCKET_NAME/datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar
-    application_subnet: APP_SUBNET
-    application_security_group: APP_SECURITY_GROUP
-    accessKey:
-    secretKey:
-    s3_bucket_region: us-east-1
-    load_balancer_vpc: LOAD_BALANCER_VPC
-    load_balancer_subnet: ['LOAD_BALANCER_SUBNET_1','LOAD_BALANCER_SUBNET_2']
-    load_balancer_certificate_arn: LOAD_BALANCER_CERTIFICATE
-  ui:
-    load_balancer_subnet: ['LOAD_BALANCER_SUBNET_1','LOAD_BALANCER_SUBNET_2']
+    s3_bucket_name:
+    application_subnet_1:
+    application_subnet_2:
+    application_security_group:
+    vpc_id:
+    load_balancer_certificate_arn:
   emr:
-    emr_security_group_master: EMR_MASTER_SECURITY_GROUP
-    emr_security_group_slave: EMR_SLAVE_SECURITY_GROUP
-    emr_security_group_service_access: EMR_SERVICE_ACCESS_SECURITY_GROUP
-    emr_region: us-east-1
+    emr_security_group_master:
+    emr_security_group_slave:
+    emr_security_group_service_access:
     tags:
-      Brand: HomeAway
-      category: EMRPipeline
-      Owner: HOMEAWAY
-      Purpose: EMRPipeline
-      Service: emr
-      Platform: EMRPipeline
+      Brand:
+      category:
+      Owner:
+      Purpose:
+      Service:
+      Platform:
   application:
-    region: us-east-1
+    region:
   logger:
     s3:
-      loggingfolder: S3_BUCKET_NAME/datapull-opensource/logs/
+      loggingfolder:
     cloudwatch:
-      groupName: /ecs/datapull-web-api
-      streamName: datapull-stream
-      region: us-east-1
-    mssql:
-      server: SQL_SERVER_ADDRESS
-      database: DATABASE
-      login: USERNAME
-      password: PASSWORD
-      table: SCHEMA.TABLE_NAME
-      driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
-  email:
-    smtp:
-      emailaddress: DATAPULL_REPORT_EMAIL@DOMAIN.com
-      smtpserveraddress: SMTP_SERVER
-    ses:
-      region: us-west-2
+      groupName:
+      streamName:
+      region:
+

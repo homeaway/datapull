@@ -20,20 +20,21 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@EnableConfigurationProperties
+@Configuration
 @ConfigurationProperties(prefix = "datapull.emr")
+@EnableConfigurationProperties
 @Data
+
+
 public class EMRProperties {
 
     @Value("${ec2_key_name:}")
     private String keyName;
-
-    @Value("${subnet_id:}")
-    private String subnet;
 
     @Value("${emr_security_group_master:}")
     private String masterSg;
@@ -43,9 +44,6 @@ public class EMRProperties {
 
     @Value("${emr_security_group_service_access:}")
     private String serviceAccessSg;
-
-    @Value("${emr_region:}")
-    private String emrRegion;
 
     @Value("${instance_count:3}")
     private int instanceCount;

@@ -71,8 +71,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private Schema inputJsonSchema = null;
     @Autowired
     private DataPullClientConfig config;
-    @Autowired
-    private EMRProperties emrProperties;
+//    @Autowired
+//    private EMRProperties emrProperties;
 
     @Value( "${env:dev}" )
     private String env;
@@ -399,7 +399,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 jsonS3PathList.add(s3path);
                 String userAccessKey = jsonInputFile.getAwsAccessKeyId();
                 String userSecretKey = jsonInputFile.getAwsSecretAccessKey();
-                AmazonS3 s3Client = config.getS3Client(userAccessKey, userSecretKey);
+                AmazonS3 s3Client = config.getS3Client();
                 String bucketName = s3path.substring(0, s3path.indexOf("/"));
                 String path = s3path.substring(s3path.indexOf("/") + 1);
                 json = readFileFromS3(s3Client, bucketName, path);

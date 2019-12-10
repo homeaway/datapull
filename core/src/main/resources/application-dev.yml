@@ -1,51 +1,49 @@
 datapull:
+  api:
+    s3_bucket_name:
   secretstore:
     vault:
-      vault_url: VAULT_URL
-      vault_nonce: VAULT_NONCE
-      vault_path_env: /v1/dbops/staticsecrets/awsenvironments/
-      vault_path_clus: /awsregions/us-east-1/clusters/
-      vault_path_login: /v1/auth/aws-ec2/login
-  aws:
-    prod_acc_id: PROD_AWS_ACCOUNT_ID
-    stage_acc_id: STAGE_AWS_ACCOUNT_ID
-    test_acc_id: TEST_AWS_ACCOUNT_ID
+      vault_url:
+      static_secret_path_prefix:
+      vault_nonce:
+      vault_path_login:
   json:
-    inputjson: Input_Sample_filesystem-to-filesystem.json
+    inputjson:
   spark:
-    network: spark.network.timeout
-    timeout: 10000s
-    executor: spark.executor.heartbeatInterval
-    interval: 1000s
-    broadcasttimeout: spark.sql.broadcastTimeout
-    btimeout: 36000
-    scheduler: spark.scheduler.mode
-    mode: FAIR
-    failures: spark.task.maxFailures
+    network:
+    timeout:
+    executor:
+    interval:
+    broadcasttimeout:
+    btimeout:
+    scheduler:
+    mode:
+    failures:
   miscellaneous:
-    no_of_retries: 16
-    timeout: 10000
-    consul_url: http://CONSUL_ADDRESS/v1/health/service/
-    sleeptimeout: 60000
+    no_of_retries:
+    timeout:
+    consul_url:
+    sleeptimeout:
   application:
-    region: us-east-1
+    region:
   logger:
     s3:
-      loggingfolder: S3_BUCKET_NAME/datapull-opensource/logs/
+      loggingfolder:
     mssql:
-      server: SQL_SERVER_ADDRESS
-      database: DATABASE
-      login: USERNAME
-      password: PASSWORD
-      table: SCHEMA.TABLE_NAME
-      driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      server:
+      database:
+      login:
+      password:
+      table:
+      driver:
     cloudwatch:
-      groupName: /ecs/datapull-web-api
-      streamName: datapull-stream
-      region: us-east-1
+      groupName:
+      streamName:
   email:
     smtp:
-      emailaddress: DATAPULL_REPORT_EMAIL@DOMAIN.com
-      smtpserveraddress: SMTP_SERVER
+      emailaddress:
+      smtpserveraddress:
     ses:
-      region: us-west-2
+      email:
+      access_key:
+      secret_key:
