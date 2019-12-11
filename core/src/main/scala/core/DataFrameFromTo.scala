@@ -33,7 +33,7 @@ import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
 import com.mongodb.spark.sql.toSparkSessionFunctions
-import com.mongodb.{MongoClient, MongoClientURI, MongoCredential, ServerAddress}
+import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
@@ -43,7 +43,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Encoder, Encoders, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
 import org.elasticsearch.spark.sql._
@@ -688,7 +688,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector:String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String,addlSparkOptions: JSONObject,secretStore:String): org.apache.spark.sql.DataFrame = {
+  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String): org.apache.spark.sql.DataFrame = {
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
@@ -696,18 +696,24 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       clusterName = consul.serviceName
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",") + ":27017"
     }
-    //if password isn't set, attempt to get from Vault
-    var vaultPassword = password
-    var vaultLogin = login
-    if (vaultPassword == "") {
-      val secretService = new SecretService(secretStore,appConfig)
-      val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
-      vaultLogin = vaultCreds("username")
-      vaultPassword = vaultCreds("password")
+    var uri: String = null
+    val authenticationEnabledLocal = authenticationEnabled
+    //if password isn't set, attempt to get from security.Vault
+    if (authenticationEnabledLocal == "true") {
+      var vaultPassword = password
+      var vaultLogin = login
+      if (vaultPassword == "") {
+        val secretService = new SecretService(secretStore, appConfig)
+        val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
+        vaultLogin = vaultCreds("username")
+        vaultPassword = vaultCreds("password")
+      }
+
+      uri = "mongodb://" + URLEncoder.encode(vaultLogin, "UTF-8") + ":" + URLEncoder.encode(vaultPassword, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (authenticationDatabase != "") authenticationDatabase else "admin")
+    } else {
+      uri = "mongodb://" + cluster + ":27017/" + database + "." + collection
+
     }
-
-    val uri: String = "mongodb://" + URLEncoder.encode(vaultLogin, "UTF-8") + ":" + URLEncoder.encode(vaultPassword, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (authenticationDatabase != "") authenticationDatabase else "admin")
-
     if (overrideconnector.toBoolean)
     {
 
@@ -744,25 +750,33 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String): Unit = {
+  def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: String): Unit = {
 
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     if (consul.IsConsulDNSName()) {
       clusterName = consul.serviceName
     }
+    var uri: String = null
+    val authenticationEnabledLocal = authenticationEnabled
     //if password isn't set, attempt to get from security.Vault
-    var vaultPassword = password
-    var vaultLogin = login
-    if (vaultPassword == "") {
-      val secretService = new SecretService(secretStore,appConfig)
-      val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
-      vaultLogin = vaultCreds("username")
-      vaultPassword = vaultCreds("password")
+    if (authenticationEnabledLocal == "true") {
+      var vaultPassword = password
+      var vaultLogin = login
+      if (vaultPassword == "") {
+        val secretService = new SecretService(secretStore, appConfig)
+        val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
+        vaultLogin = vaultCreds("username")
+        vaultPassword = vaultCreds("password")
+      }
+      uri = "mongodb://" + URLEncoder.encode(vaultLogin, "UTF-8") + ":" + URLEncoder.encode(vaultPassword, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (authenticationDatabase != "") authenticationDatabase else "admin") + (if (replicaset == null) "" else "&replicaSet=" + replicaset)
+
+    } else {
+      uri = "mongodb://" + cluster + ":27017/" + database + "." + collection + (if (replicaset == null) "" else "&replicaSet=" + replicaset)
+
     }
 
 
-    val uri: String = "mongodb://" + URLEncoder.encode(vaultLogin, "UTF-8") + ":" + URLEncoder.encode(vaultPassword, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (authenticationDatabase != "") authenticationDatabase else "admin") + (if (replicaset == null) "" else "&replicaSet=" + replicaset)
 
     var sparkOptions = Map("uri" -> uri, "replaceDocument" -> replaceDocuments.toString, "ordered" -> ordered.toString)
 
@@ -789,7 +803,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongoRunCommand(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, vaultEnv: String, addlSparkOptions: JSONObject, runCommand: String,secretStore:String): Unit = {
+  def mongoRunCommand(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, vaultEnv: String, addlSparkOptions: JSONObject, runCommand: String, secretStore: String, authenticationEnabled: String): Unit = {
 
 
     val consul = new Consul(cluster, appConfig)
@@ -799,26 +813,24 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       clusterName = consul.serviceName
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",")
     }
-    //if password isn't set, attempt to get from Vault
-    var vaultPassword = password
-    var vaultLogin = login
-    if (vaultPassword == "") {
-      val secretService = new SecretService(secretStore,appConfig)
-      val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
-      vaultLogin = vaultCreds("username")
-      vaultPassword = vaultCreds("password")
+    val authenticationEnabledLocal = authenticationEnabled
+    var uri: MongoClientURI = null
+    //if password isn't set, attempt to get from security.Vault
+    if (authenticationEnabledLocal == "true") {
+      //if password isn't set, attempt to get from Vault
+      var vaultPassword = password
+      var vaultLogin = login
+      if (vaultPassword == "") {
+        val secretService = new SecretService(secretStore, appConfig)
+        val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
+        vaultLogin = vaultCreds("username")
+        vaultPassword = vaultCreds("password")
+      }
+      uri = new MongoClientURI(s"mongodb://$vaultLogin:$vaultPassword@$clusterNodes/?authSource=$authenticationDatabase&authMechanism=SCRAM-SHA-1")
+    } else {
+      uri = new MongoClientURI(s"mongodb://$clusterNodes:27017/")
     }
 
-    val mongoCredential = {
-      MongoCredential.createPlainCredential(authenticationDatabase, login, vaultPassword.toCharArray)
-    }
-
-    var authList = new util.ArrayList[MongoCredential]()
-    authList.add(mongoCredential)
-
-    var connectionString = new ServerAddress(cluster, 27017)
-
-    val uri = new MongoClientURI(s"mongodb://$vaultLogin:$vaultPassword@$clusterNodes/?authSource=$authenticationDatabase&authMechanism=SCRAM-SHA-1")
     val mongoClient = new MongoClient(uri)
     var data = mongoClient.getDatabase(database)
 
