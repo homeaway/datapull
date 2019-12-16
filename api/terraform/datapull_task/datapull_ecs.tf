@@ -1,13 +1,13 @@
 locals{
   datapull_ecs_tags  = {
-    owner                = "datatools@groups.homeawaycorp.com"
-    creator              = "datatools@groups.homeawaycorp.com"
+    owner                = "email@domain.com"
+    creator              = "email@domain.com"
     team                 = "DataTools"
     purpose   		     = "Datapull installation"
-    product              = "data engineering data tools"
-    portfolio            = "data engineering services"
+    product              = "data Pull"
+    portfolio            = "data infra"
     service              = "datapull"
-    brand                = "HomeAway"
+    brand                = "VRBO"
     asset_protection_level = "99"
     component_info        = "33daf877-db67-43ca-b61b-ec6596a4af81"
     application           = "Datapull"
