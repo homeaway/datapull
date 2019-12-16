@@ -30,7 +30,7 @@ resource "aws_iam_user" "datapull_user" {
   # Service - sso
   # Resulting Path - /technicaloperations/iam/sso/
   path = "/dataengineeringservices/datatools/datapull/"
-  tags = "${local.common_tags}"
+  tags = local.common_tags
 
 }
 
@@ -161,7 +161,7 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split2" {
                  "ecr:BatchDeletImage",
                  "ecr:ListImages",
                  "ecr:DescribeImages",
-                "ecs:StopTask"
+                 "ecs:StopTask"
             ],
             "Resource": "*"
         }
@@ -218,23 +218,23 @@ EOF
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_passrole_policy" {
-  user = "${aws_iam_user.datapull_user.name}"
-  policy_arn = "${aws_iam_policy.datapull_passrole_policy.arn}"
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_passrole_policy.arn
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_emr_policy" {
-  user = "${aws_iam_user.datapull_user.name}"
-  policy_arn = "${aws_iam_policy.datapull_emr_policy.arn}"
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_emr_policy.arn
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_user_infra_policy_split1" {
-  user = "${aws_iam_user.datapull_user.name}"
-  policy_arn = "${aws_iam_policy.datapull_user_infra_policy_split1.arn}"
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_user_infra_policy_split1.arn
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_user_infra_policy_split2" {
-  user = "${aws_iam_user.datapull_user.name}"
-  policy_arn = "${aws_iam_policy.datapull_user_infra_policy_split2.arn}"
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_user_infra_policy_split2.arn
 }
 
 resource "aws_iam_policy" "datapull_cloudwatch_logs_policy" {
@@ -304,13 +304,13 @@ EOF
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_loadbalancer_policy_attachment" {
-  user = "${aws_iam_user.datapull_user.name}"
-  policy_arn = "${aws_iam_policy.datapull_loadbalancer_logs_policy.arn}"
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_loadbalancer_logs_policy.arn
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_cloudwatch_logs_policy_attachment" {
-  user       = "${aws_iam_user.datapull_user.name}"
-  policy_arn = "${aws_iam_policy.datapull_cloudwatch_logs_policy.arn}"
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
 }
 
 resource "aws_iam_policy" "datapull_ServiceLinkedRole_policy" {
@@ -334,14 +334,14 @@ EOF
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_ServiceLinkedRole_policy_attachment" {
-  user       = "${aws_iam_user.datapull_user.name}"
-  policy_arn = "${aws_iam_policy.datapull_ServiceLinkedRole_policy.arn}"
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_ServiceLinkedRole_policy.arn
 }
 
 # IAM role for datapullapi ecs task
 resource "aws_iam_role" "datapull_task_role" {
   name = "datapull_task_role"
-  tags = "${local.common_tags}"
+  tags = local.common_tags
 
   assume_role_policy = <<EOF
 {
@@ -362,20 +362,20 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "taskrole_emr_policy" {
-  role = "${aws_iam_role.datapull_task_role.name}"
+  role = aws_iam_role.datapull_task_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess"
 
 }
 
 resource "aws_iam_role_policy_attachment" "emr_ec2_role_emr_policy" {
-  role = "${aws_iam_role.emr_ec2_datapull_role.name}"
+  role = aws_iam_role.emr_ec2_datapull_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess"
 
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_logs_policy" {
-  role = "${aws_iam_role.datapull_task_role.name}"
-  policy_arn = "${aws_iam_policy.datapull_cloudwatch_logs_policy.arn}"
+  role = aws_iam_role.datapull_task_role.name
+  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
 
 }
 
@@ -404,21 +404,21 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_s3_policy_attachment" {
-  role = "${aws_iam_role.datapull_task_role.name}"
-  policy_arn = "${aws_iam_policy.datapull_s3_policy.arn}"
+  role = aws_iam_role.datapull_task_role.name
+  policy_arn = aws_iam_policy.datapull_s3_policy.arn
 
 }
 
 resource "aws_iam_instance_profile" "datapull_instance_profile" {
   name = "datapull_task_role"
-  role = "${aws_iam_role.datapull_task_role.name}"
+  role = aws_iam_role.datapull_task_role.name
 
 }
 
 # IAM role for datapullapi ecs task
 resource "aws_iam_role" "datapull_task_execution_role" {
   name = "datapull_task_execution_role"
-  tags = "${local.common_tags}"
+  tags = local.common_tags
 
   assume_role_policy = <<EOF
 {
@@ -440,7 +440,7 @@ EOF
 
 resource "aws_iam_role" "emr_ec2_datapull_role" {
   name = "emr_ec2_datapull_role"
-  tags = "${local.common_tags}"
+  tags = local.common_tags
 
   assume_role_policy = <<EOF
 {
@@ -462,40 +462,40 @@ EOF
 
 
 resource "aws_iam_role_policy_attachment" "datapull_s3_attachment" {
-  role = "${aws_iam_role.emr_ec2_datapull_role.name}"
-  policy_arn = "${aws_iam_policy.datapull_s3_policy.arn}"
+  role = aws_iam_role.emr_ec2_datapull_role.name
+  policy_arn = aws_iam_policy.datapull_s3_policy.arn
 
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_emr_ec2_attachment" {
-  role = "${aws_iam_role.emr_ec2_datapull_role.name}"
+  role = aws_iam_role.emr_ec2_datapull_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role"
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_emr_cloudwatch_attachment" {
-  role = "${aws_iam_role.emr_ec2_datapull_role.name}"
-  policy_arn = "${aws_iam_policy.datapull_cloudwatch_logs_policy.arn}"
+  role = aws_iam_role.emr_ec2_datapull_role.name
+  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_task_execution_policy" {
-  role = "${aws_iam_role.datapull_task_execution_role.name}"
+  role = aws_iam_role.datapull_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
 resource "aws_iam_instance_profile" "datapull_default_instance_profile" {
   name = "emr_ec2_datapull_role"
-  role = "${aws_iam_role.emr_ec2_datapull_role.name}"
+  role = aws_iam_role.emr_ec2_datapull_role.name
 
 }
 
 resource "aws_iam_access_key" "datapull_iam_access_key" {
- user    = "${aws_iam_user.datapull_user.name}"
+  user = aws_iam_user.datapull_user.name
 }
 
 output "datapull_user_access_key" {
- value = "${aws_iam_access_key.datapull_iam_access_key.id}"
+  value = aws_iam_access_key.datapull_iam_access_key.id
 }
 
 output "datapull_user_secret_key" {
- value = "${aws_iam_access_key.datapull_iam_access_key.secret}"
+  value = aws_iam_access_key.datapull_iam_access_key.secret
 }

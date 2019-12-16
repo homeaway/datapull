@@ -16,7 +16,8 @@
 
 package com.homeaway.datapullclient.config;
 
-import com.amazonaws.auth.*;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
@@ -33,10 +34,7 @@ import org.springframework.core.env.Environment;
 @Slf4j
 @Data
 @Configuration("dataPullConfig")
-@PropertySources({
-        @PropertySource("classpath:application.yml"),
-        @PropertySource("classpath:application.yml")
-})
+@PropertySources(@PropertySource("classpath:application.yml"))
 public class DataPullClientConfig {
 
     @Autowired
@@ -50,26 +48,17 @@ public class DataPullClientConfig {
 
     @Bean
     @Scope("prototype")
-    public DataPullTask getTask(String taskId, String json){
+    public DataPullTask getTask(String taskId, String json) {
         return new DataPullTask(taskId, json);
     }
 
     @Bean
     public AmazonS3 getS3Client(){
-//        AmazonS3 s3Client = null;
-
-
-        DataPullProperties properties = getDataPullProperties();
-        String s3Region   =  appRegion ;
-        log.info("the region got here is"+s3Region);
-        System.out.println("the region got here is"+s3Region);
         AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
-
-        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-                .withRegion(Regions.fromName((s3Region)))
+        return (AmazonS3ClientBuilder.standard()
+                .withRegion(Regions.fromName((appRegion)))
                 .withCredentials(credentialsProvider)
-                .build();
-        return s3Client;
+                .build());
     }
 
     @Bean
@@ -84,28 +73,10 @@ public class DataPullClientConfig {
 
     @Bean
     public AmazonElasticMapReduce getEMRClient(){
-        AmazonElasticMapReduce emrClient = null;
-        DataPullProperties properties = getDataPullProperties();
-        String region   =  appRegion ;
-
         AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
-
-        emrClient =  AmazonElasticMapReduceClientBuilder.standard()
-                .withRegion(Regions.fromName(region))
+        return (AmazonElasticMapReduceClientBuilder.standard()
+                .withRegion(Regions.fromName(appRegion))
                 .withCredentials(credentialsProvider)
-                .build();
-
-        return emrClient;
+                .build());
     }
-
-//    @Bean
-//    public CloudWatchLog getCloudWatchLogConfiguration(){
-//        if(cloudWatchGrpName.isEmpty() || cloudWatchStreamName.isEmpty())
-//            return null;
-//
-//        CloudWatchLog log = new CloudWatchLog(cloudWatchGrpName, cloudWatchStreamName, cloudWatchRegion == null ? appRegion : cloudWatchRegion);
-//        log.setAccessKey(accessKey);
-//        log.setSecretKey(secretKey);
-//        return log;
-//    }
 }

@@ -12,7 +12,7 @@ datapull:
     emr_security_group_service_access:
     tags:
       Brand:
-      category:
+      Category:
       Owner:
       Purpose:
       Service:

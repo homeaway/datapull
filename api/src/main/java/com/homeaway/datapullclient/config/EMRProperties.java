@@ -34,16 +34,16 @@ import java.util.Map;
 public class EMRProperties {
 
     @Value("${ec2_key_name:}")
-    private String keyName;
+    private String ec2KeyName;
 
     @Value("${emr_security_group_master:}")
-    private String masterSg;
+    private String emrSecurityGroupMaster;
 
     @Value("${emr_security_group_slave:}")
-    private String slaveSg;
+    private String emrSecurityGroupSlave;
 
     @Value("${emr_security_group_service_access:}")
-    private String serviceAccessSg;
+    private String emrSecurityGroupServiceAccess;
 
     @Value("${instance_count:3}")
     private int instanceCount;
@@ -61,7 +61,7 @@ public class EMRProperties {
     private String jobFlowRole;
 
     @Value( "${emr_release:emr-5.15.0}" )
-    private String emrReleaseVersion;
+    private String emrRelease;
 
     @Value( "${bootstrap_folder_path:}" )
     private String bootstrapFolderPath;

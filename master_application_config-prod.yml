@@ -36,9 +36,9 @@ datapull:
     emr_security_group_slave:
     emr_security_group_service_access:
     tags:
-      Brand: HomeAway
-      category: EMRPipeline
-      Owner: HOMEAWAY
+      Brand:
+      Category: EMRPipeline
+      Owner:
       Purpose: EMRPipeline
       Service: emr
       Platform: EMRPipeline

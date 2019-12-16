@@ -21,7 +21,10 @@ import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.homeaway.datapullclient.config.*;
+import com.homeaway.datapullclient.config.DataPullClientConfig;
+import com.homeaway.datapullclient.config.DataPullContext;
+import com.homeaway.datapullclient.config.DataPullContextHolder;
+import com.homeaway.datapullclient.config.DataPullProperties;
 import com.homeaway.datapullclient.exception.InvalidPointedJsonException;
 import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.input.ClusterProperties;
@@ -45,7 +48,10 @@ import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -68,18 +74,14 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private static final String TERMINATE_CLUSTER_AFTER_EXECUTION = "terminateclusterafterexecution";
     private static final String EMR = "emr";
     private static final String CREATOR = "useremailaddress";
-    private Schema inputJsonSchema = null;
+    private Schema inputJsonSchema;
     @Autowired
     private DataPullClientConfig config;
-//    @Autowired
-//    private EMRProperties emrProperties;
 
     @Value( "${env:dev}" )
     private String env;
 
     private static final String DATAPULL_HISTORY_FOLDER = "datapull-opensource/history";
-
-    private static final String BOOTSTRAP_FOLDER = "datapull-opensource/bootstrapfiles";
 
     private final Map<String, Future<?>> tasksMap = new ConcurrentHashMap<>();
 
@@ -98,7 +100,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
         try{
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
             Resource[] resources = resolver.getResources("classpath*:/input_json_schema.json");
-            BufferedReader reader  = new BufferedReader(new InputStreamReader(resources[0].getInputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(resources[0].getInputStream()));
             JSONObject jsonSchema = new JSONObject(
                     new JSONTokener(resources[0].getInputStream()));
             inputJsonSchema = SchemaLoader.load(jsonSchema);
@@ -109,12 +111,12 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     @Override
     public void runDataPull(String json) throws ProcessingException {
-        if(log.isDebugEnabled())
-            log.debug("runDataPull -> json = "+json);
+        if (log.isDebugEnabled())
+            log.debug("runDataPull -> json = " + json);
 
-        runDataPull(json , false, true);
+        runDataPull(json, false, true);
 
-        if(log.isDebugEnabled())
+        if (log.isDebugEnabled())
             log.debug("runDataPull <- return");
     }
 
@@ -126,18 +128,18 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private void runDataPull(String json, boolean isStart, boolean validateJson) throws ProcessingException {
         String originalInputJson = json;
         json = extractUserJsonFromS3IfProvided(json, isStart);
-        if(log.isDebugEnabled())
-            log.debug("runDataPull -> json = "+json+" isStart = "+isStart);
+        if (log.isDebugEnabled())
+            log.debug("runDataPull -> json = " + json + " isStart = " + isStart);
 
         try{
             if(validateJson){
                 json = validateAndEnrich(json);
             }
 
-            log.info("Running datapull for json : "+json+" cron expression = "+isStart+"env ="+env);
+            log.info("Running datapull for json : " + json + " cron expression = " + isStart + "env =" + env);
             final ObjectNode node = new ObjectMapper().readValue(json, ObjectNode.class);
             List<Map.Entry<String, JsonNode>> result = new LinkedList<Map.Entry<String, JsonNode>>();
-            Iterator<Map.Entry<String, JsonNode>> nodes  = node.fields();
+            Iterator<Map.Entry<String, JsonNode>> nodes = node.fields();
             while(nodes.hasNext()){
                 result.add(nodes.next());
             }
@@ -163,42 +165,41 @@ public class DataPullRequestProcessor implements DataPullClientService {
             String applicationHistoryFolder = dataPullProperties.getApplicationHistoryFolder();
             String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
 
-            String jobName = pipelineEnv+ PIPELINE_NAME_DELIMITER+ EMR +PIPELINE_NAME_DELIMITER +pipeline+ PIPELINE_NAME_DELIMITER + PIPELINE_NAME_SUFFIX;
-            String applicationHistoryFolderPath = applicationHistoryFolder == null || applicationHistoryFolder.isEmpty()  ?
-                    s3RepositoryBucketName+"/"+ DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
-            String filePath = applicationHistoryFolderPath+"/"+jobName;
-            String bootstrapFile= jobName+".sh";
+            String jobName = pipelineEnv + PIPELINE_NAME_DELIMITER + EMR + PIPELINE_NAME_DELIMITER + pipeline + PIPELINE_NAME_DELIMITER + PIPELINE_NAME_SUFFIX;
+            String applicationHistoryFolderPath = applicationHistoryFolder == null || applicationHistoryFolder.isEmpty() ?
+                    s3RepositoryBucketName + "/" + DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
+            String filePath = applicationHistoryFolderPath + "/" + jobName;
+            String bootstrapFile = jobName + ".sh";
             boolean addBootStrapAction = false;
             if(myObjects != null && myObjects.length > 0){
-                addBootStrapAction = createBootstrapScript(myObjects,bootstrapFile,applicationHistoryFolderPath);
+                addBootStrapAction = createBootstrapScript(myObjects, bootstrapFile, applicationHistoryFolderPath);
             }
 
-            DataPullTask task = createDataPullTask(filePath, reader, jobName,creator, addBootStrapAction, node.path("sparkjarfile").asText());
+            DataPullTask task = createDataPullTask(filePath, reader, jobName, creator, addBootStrapAction, node.path("sparkjarfile").asText());
             if(!isStart) {
                 json = originalInputJson.equals(json) ? json : originalInputJson;
                 saveConfig(applicationHistoryFolderPath, jobName + ".json", json);
             }
-            if(!isStart && tasksMap.containsKey(jobName))
+            if (!isStart && tasksMap.containsKey(jobName))
                 cancelExistingTask(jobName);
             if(!(isStart  && cronExp.isEmpty())){
                 Future<?> future = !cronExp.isEmpty() ? scheduler.schedule(task, new CronTrigger(cronExp))
-                        : scheduler.schedule(task, new Date(System.currentTimeMillis()+1*1000));
+                        : scheduler.schedule(task, new Date(System.currentTimeMillis() + 1 * 1000));
                 tasksMap.put(jobName, future);
             }
-        }
-        catch(IOException e){
+        } catch (IOException e) {
             throw new ProcessingException("exception while starting datapull "+e.getLocalizedMessage());
         }
 
-        if(log.isDebugEnabled())
+        if (log.isDebugEnabled())
             log.debug("runDataPull <- return");
     }
 
-    private boolean createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException{
+    private boolean createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException {
         boolean isFileCreated = false;
 
         StringBuilder stringBuilder = new StringBuilder();
-        for(Migration mig:myObjects){
+        for (Migration mig : myObjects) {
             if(mig.getSource()!=null) {
                 if (mig.getSource().getJksfilepath() != null && !mig.getSource().getJksfilepath().isEmpty()) {
                     stringBuilder.append(String.format(JKS_FILE_STRING, mig.getSource().getJksfilepath()));
@@ -216,7 +217,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 }
             }
             if(mig.getDestination().getJksfilepath()!=null && !mig.getDestination().getJksfilepath().isEmpty()){
-                stringBuilder.append(String.format(JKS_FILE_STRING,mig.getDestination().getJksfilepath()));
+                stringBuilder.append(String.format(JKS_FILE_STRING, mig.getDestination().getJksfilepath()));
             }
         }
         if(stringBuilder.length() > 0){
@@ -228,8 +229,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private DataPullTask createDataPullTask(String fileS3Path, ClusterProperties properties, String jobName, String creator, boolean bootstrapAction, String customJarFilePath) {
         String creatorTag = String.join(" ", Arrays.asList(creator.split(",|;")));
-        DataPullTask task =  config.getTask(jobName, fileS3Path).withClusterProperties(properties).withCustomJar(customJarFilePath).addBootStrapAction(bootstrapAction)
-            .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
+        DataPullTask task = config.getTask(jobName, fileS3Path).withClusterProperties(properties).withCustomJar(customJarFilePath).addBootStrapAction(bootstrapAction)
+                .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
             .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull");
 
@@ -241,7 +242,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
     }
 
     private String validateAndProcessCronExpression(String cronExp) throws ProcessingException {
-        String [] cronTokens = cronExp.split(" ");
+        String[] cronTokens = cronExp.split(" ");
         long numeralCharCount = Arrays.stream(cronTokens).filter(x -> !x.equals("*")).count();
         if(cronTokens.length > 0 && cronTokens.length != 5){
             throw new ProcessingException("Invalid Cron Expression");
@@ -257,28 +258,23 @@ public class DataPullRequestProcessor implements DataPullClientService {
         tasksMap.remove(taskName);
     }
 
-    private void saveConfig(String path, String fileName, String json) throws ProcessingException{
+    private void saveConfig(String path, String fileName, String json) throws ProcessingException {
 
-        if(log.isDebugEnabled())
-            log.debug("saveConfig -> fileName="+fileName+" json="+json);
+        if (log.isDebugEnabled())
+            log.debug("saveConfig -> fileName=" + fileName + " json=" + json);
 
-        AmazonS3 s3Client  = config.getS3Client();
+        AmazonS3 s3Client = config.getS3Client();
 
-        try{
-            byte[] contentAsBytes = json.getBytes("UTF-8");
-            ByteArrayInputStream contentsAsStream = new ByteArrayInputStream(contentAsBytes);
-            ObjectMetadata metadata = new ObjectMetadata();
-            metadata.setContentType("application/json");
-            metadata.addUserMetadata("x-amz-meta-title", fileName);
+        final byte[] contentAsBytes = json.getBytes(StandardCharsets.UTF_8);
+        ByteArrayInputStream contentsAsStream = new ByteArrayInputStream(contentAsBytes);
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentType("application/json");
+        metadata.addUserMetadata("x-amz-meta-title", fileName);
 
-            PutObjectRequest request = new PutObjectRequest(path, fileName, contentsAsStream, metadata);
-            s3Client.putObject(request);
-            if(log.isDebugEnabled())
-                log.debug("saveConfig <- return = "+path);
-        }
-        catch(UnsupportedEncodingException e){
-            throw new ProcessingException("Cannot persist json object");
-        }
+        PutObjectRequest request = new PutObjectRequest(path, fileName, contentsAsStream, metadata);
+        s3Client.putObject(request);
+        if (log.isDebugEnabled())
+            log.debug("saveConfig <- return = " + path);
     }
 
     private void readExistingDataPullInputs() throws ProcessingException {
@@ -293,7 +289,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
     }
 
     private List<String> getPendingTaskNames(){
-        if(log.isDebugEnabled())
+        if (log.isDebugEnabled())
             log.debug("getPendingTaskNames -> ");
 
         AmazonS3 s3Client = config.getS3Client();
@@ -302,15 +298,15 @@ public class DataPullRequestProcessor implements DataPullClientService {
         String applicationHistoryFolder = dataPullProperties.getApplicationHistoryFolder();
         String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
 
-        String applicationHistoryFolderPath  = applicationHistoryFolder == null || applicationHistoryFolder.equals("")  ?
-                s3RepositoryBucketName+"/"+ DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
+        String applicationHistoryFolderPath = applicationHistoryFolder == null || applicationHistoryFolder.equals("") ?
+                s3RepositoryBucketName + "/" + DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
 
-        String historyFolderPrefix  = applicationHistoryFolderPath.substring(applicationHistoryFolderPath.indexOf("/")+1);
+        String historyFolderPrefix = applicationHistoryFolderPath.substring(applicationHistoryFolderPath.indexOf("/") + 1);
         ListObjectsRequest listObjectsRequest = new ListObjectsRequest().withBucketName(s3RepositoryBucketName)
                 .withPrefix(historyFolderPrefix+"/").withDelimiter("/");
         ObjectListing objectListing = s3Client.listObjects(listObjectsRequest);
         //ObjectListing objectListing = s3Client.listObjects(s3RepositoryBucketName);
-        List<String> fileNames =  new ArrayList<>();
+        List<String> fileNames = new ArrayList<>();
         while (true) {
             List<String> fn = objectListing.getObjectSummaries().stream().filter(x -> !x.getKey().isEmpty() && x.getKey().endsWith(".json"))
                     .map(x -> x.getKey().substring(x.getKey().indexOf("/")+1)).collect(Collectors.toList());
@@ -322,29 +318,29 @@ public class DataPullRequestProcessor implements DataPullClientService {
             }
         }
 
-        log.info("pending task names  = "+fileNames);
+        log.info("pending task names  = " + fileNames);
 
-        if(log.isDebugEnabled())
-            log.debug("getPendingTaskNames <- return "+fileNames);
+        if (log.isDebugEnabled())
+            log.debug("getPendingTaskNames <- return " + fileNames);
         return fileNames;
     }
 
-    private String readAndExcecuteInputJson(String fileName) throws ProcessingException{
-        if(log.isDebugEnabled())
-            log.debug("readAndExcecuteInputJson -> fileName="+fileName);
+    private String readAndExcecuteInputJson(String fileName) throws ProcessingException {
+        if (log.isDebugEnabled())
+            log.debug("readAndExcecuteInputJson -> fileName=" + fileName);
 
         DataPullProperties dataPullProperties = config.getDataPullProperties();
         String applicationHistoryFolder = dataPullProperties.getApplicationHistoryFolder();
         String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
 
         AmazonS3 s3Client = config.getS3Client();
-        String applicationHistoryFolderPath  =  applicationHistoryFolder == null || applicationHistoryFolder.equals("")  ?
-                s3RepositoryBucketName+"/"+ DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
-        String result = readFileFromS3(s3Client, applicationHistoryFolderPath, fileName.substring(fileName.indexOf("/")+1));
+        String applicationHistoryFolderPath = applicationHistoryFolder == null || applicationHistoryFolder.equals("") ?
+                s3RepositoryBucketName + "/" + DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
+        String result = readFileFromS3(s3Client, applicationHistoryFolderPath, fileName.substring(fileName.indexOf("/") + 1));
         runDataPull(result, true, false);
 
-        if(log.isDebugEnabled())
-            log.debug("readAndExcecuteInputJson <- return="+result);
+        if (log.isDebugEnabled())
+            log.debug("readAndExcecuteInputJson <- return=" + result);
 
         return result;
     }
@@ -352,19 +348,18 @@ public class DataPullRequestProcessor implements DataPullClientService {
     public String readFileFromS3(AmazonS3 s3Client, String bucketName, String path) throws ProcessingException {
         S3Object object = s3Client.getObject(new GetObjectRequest(bucketName, path));
         StringBuilder out = new StringBuilder();
-        try(BufferedReader reader = new BufferedReader(new InputStreamReader(object.getObjectContent()))){
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(object.getObjectContent()))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 out.append(line);
             }
-        }
-        catch(IOException exception){
+        } catch (IOException exception) {
             throw new ProcessingException("Input json file invalid");
         }
         return out.toString();
     }
 
-    private String validateAndEnrich(String json) throws ProcessingException{
+    private String validateAndEnrich(String json) throws ProcessingException {
         JSONObject jsonString = new JSONObject(new JSONTokener(new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8))));
 
         try{
@@ -378,8 +373,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
             inputJsonSchema.validate(jsonString);
             return jsonString.toString();
-        }
-        catch(ValidationException exception){
+        } catch (ValidationException exception) {
             throw new ProcessingException("Json Validation failed "+exception.getMessage(), exception);
         }
     }
@@ -397,8 +391,6 @@ public class DataPullRequestProcessor implements DataPullClientService {
                     throw new ProcessingException("JSON is pointing to same JSON.");
                 }
                 jsonS3PathList.add(s3path);
-                String userAccessKey = jsonInputFile.getAwsAccessKeyId();
-                String userSecretKey = jsonInputFile.getAwsSecretAccessKey();
                 AmazonS3 s3Client = config.getS3Client();
                 String bucketName = s3path.substring(0, s3path.indexOf("/"));
                 String path = s3path.substring(s3path.indexOf("/") + 1);

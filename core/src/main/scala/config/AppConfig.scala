@@ -87,17 +87,13 @@ case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, s
     )
   }
 
-  def getCloudWatchClient(accessKey : String, secretKey : String, region : String) : AWSLogs ={
-    val credentialsProvider = if(accessKey != null && !accessKey.trim.isEmpty() && secretKey != null && !secretKey.trim.isEmpty()) new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey))
-    else new DefaultAWSCredentialsProviderChain();
-    val cloudWatchClient = AWSLogsClientBuilder.standard()
+  def getCloudWatchClient(region: String): AWSLogs = {
+    val credentialsProvider = new DefaultAWSCredentialsProviderChain();
+    return (AWSLogsClientBuilder.standard()
       .withRegion(Regions.fromName((region)))
       .withCredentials(credentialsProvider)
-      .build();
-
-    return cloudWatchClient;
+      .build());
   }
-
 
   def getSecretsManagerClient(): AWSSecretsManager ={
     val credentialsProvider = if(secretsManagerAccessKey != null && !secretsManagerAccessKey.trim.isEmpty()) new AWSStaticCredentialsProvider(new BasicAWSCredentials(secretsManagerAccessKey, secretsManagerSecretKey))
