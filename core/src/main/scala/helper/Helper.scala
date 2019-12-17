@@ -17,10 +17,11 @@
 package helper
 
 import java.io.{PrintWriter, StringWriter}
+import java.net.URLEncoder
 import java.security.cert.X509Certificate
-import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 
 import config.AppConfig
+import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 
 class Helper(appConfig: AppConfig) {
 
@@ -163,6 +164,14 @@ class Helper(appConfig: AppConfig) {
   def GetEC2Role(): String = {
     var role = getHttpResponse("http://169.254.169.254/latest/meta-data/iam/security-credentials/", 100000, 10000, "GET").ResponseBody
     role
+  }
+
+  def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean): String = {
+    if (authenticationEnabled) {
+      "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
+    } else {
+      "mongodb://" + cluster + ":27017/" + database + "." + collection + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
+    }
   }
 
   // Bypasses both client and server validation.

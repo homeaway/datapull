@@ -688,7 +688,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String): org.apache.spark.sql.DataFrame = {
+  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: Boolean): org.apache.spark.sql.DataFrame = {
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
@@ -699,7 +699,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     var uri: String = null
     val authenticationEnabledLocal = authenticationEnabled
     //if password isn't set, attempt to get from security.Vault
-    if (authenticationEnabledLocal == "true") {
+    if (authenticationEnabled) {
       var vaultPassword = password
       var vaultLogin = login
       if (vaultPassword == "") {
@@ -710,7 +710,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       }
 
       uri = "mongodb://" + URLEncoder.encode(vaultLogin, "UTF-8") + ":" + URLEncoder.encode(vaultPassword, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (authenticationDatabase != "") authenticationDatabase else "admin")
-    } else {
+
+      def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean): String = {
+
+
+      }
+
+      else
+      {
       uri = "mongodb://" + cluster + ":27017/" + database + "." + collection
 
     }
@@ -750,7 +757,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: String): Unit = {
+    def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: Boolean): Unit = {
 
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
@@ -758,9 +765,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       clusterName = consul.serviceName
     }
     var uri: String = null
-    val authenticationEnabledLocal = authenticationEnabled
     //if password isn't set, attempt to get from security.Vault
-    if (authenticationEnabledLocal == "true") {
+      if (authenticationEnabled) {
       var vaultPassword = password
       var vaultLogin = login
       if (vaultPassword == "") {
@@ -803,8 +809,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongoRunCommand(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, vaultEnv: String, addlSparkOptions: JSONObject, runCommand: String, secretStore: String, authenticationEnabled: String): Unit = {
-
+    def mongoRunCommand(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, vaultEnv: String, addlSparkOptions: JSONObject, runCommand: String, secretStore: String, authenticationEnabled: Boolean): Unit = {
 
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
@@ -813,10 +818,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       clusterName = consul.serviceName
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",")
     }
-    val authenticationEnabledLocal = authenticationEnabled
     var uri: MongoClientURI = null
     //if password isn't set, attempt to get from security.Vault
-    if (authenticationEnabledLocal == "true") {
+      if (authenticationEnabled) {
       //if password isn't set, attempt to get from Vault
       var vaultPassword = password
       var vaultLogin = login
