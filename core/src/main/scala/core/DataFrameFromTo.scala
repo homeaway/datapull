@@ -709,10 +709,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         vaultLogin = vaultCreds("username")
         vaultPassword = vaultCreds("password")
       }
+    }
       uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled)
-    } else {
-      uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled)
-      }
     if (overrideconnector.toBoolean) {
       var mongoClient: MongoClient = new MongoClient(new MongoClientURI(uri))
       var mdatabase: MongoDatabase = mongoClient.getDatabase("" + database);
@@ -762,10 +760,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
           vaultLogin = vaultCreds("username")
           vaultPassword = vaultCreds("password")
         }
-        uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, replicaset, authenticationDatabase, database, collection, authenticationEnabled)
-      } else {
-        uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, replicaset, authenticationDatabase, database, collection, authenticationEnabled)
       }
+        uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, replicaset, authenticationDatabase, database, collection, authenticationEnabled)
+
       var sparkOptions = Map("uri" -> uri, "replaceDocument" -> replaceDocuments.toString, "ordered" -> ordered.toString)
       if (maxBatchSize != null)
         sparkOptions = sparkOptions ++ Map("maxBatchSize" -> maxBatchSize)
@@ -813,10 +810,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
           vaultLogin = vaultCreds("username")
           vaultPassword = vaultCreds("password")
         }
-        uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled).asInstanceOf[MongoClientURI]
-      } else {
-        uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled).asInstanceOf[MongoClientURI]
       }
+        uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled).asInstanceOf[MongoClientURI]
       val mongoClient = new MongoClient(uri)
       val data = mongoClient.getDatabase(database)
       val response = data.runCommand(org.bson.Document.parse(runCommand))
