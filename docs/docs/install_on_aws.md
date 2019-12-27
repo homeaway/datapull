@@ -1,4 +1,6 @@
 # Deploying DataPull on AWS Fargate and AWS EMR
+This document helps you install DataPull on an Amazon AWS account, and run your first DataPull job of converting CSV data in AWS S3 to JSON data in AWS S3. 
+
 In a nutshell, deploying DataPull to an AWS Account
 - creates three IAM Roles
     - `datapull_task_role`, `datapull_task_execution_role` for running the DataPull REST API on AWS Fargate
