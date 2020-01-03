@@ -2,32 +2,47 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
      <loc>https://homeaway.github.io/datapull/</loc>
-     <lastmod>2019-04-25</lastmod>
+     <lastmod>2020-01-02</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://homeaway.github.io/datapull/architecture/</loc>
-     <lastmod>2019-04-25</lastmod>
+     <lastmod>2020-01-02</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://homeaway.github.io/datapull/install_on_aws/</loc>
-     <lastmod>2019-04-25</lastmod>
+     <lastmod>2020-01-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/aws_account_setup/</loc>
+     <lastmod>2020-01-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/oracle_teradata_support/</loc>
+     <lastmod>2020-01-02</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://homeaway.github.io/datapull/emr_runbook/</loc>
-     <lastmod>2019-04-25</lastmod>
+     <lastmod>2020-01-02</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://homeaway.github.io/datapull/transformation/</loc>
-     <lastmod>2019-04-25</lastmod>
+     <lastmod>2020-01-02</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+    <url>
+     <loc>https://homeaway.github.io/datapull/monitor_spark_ui/</loc>
+     <lastmod>2020-01-02</lastmod>
      <changefreq>daily</changefreq>
     </url>
     <url>
      <loc>https://homeaway.github.io/datapull/faq/</loc>
-     <lastmod>2019-04-25</lastmod>
+     <lastmod>2020-01-02</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>
