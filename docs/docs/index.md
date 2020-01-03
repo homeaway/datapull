@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="222" height="207" src="logo.png">
+  <img width="222" height="207" src="./media/logo.png">
 </p>
 
 # DataPull
