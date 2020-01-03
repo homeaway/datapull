@@ -18,7 +18,7 @@ In a nutshell, deploying DataPull to an AWS Account
 - Have available a VPC with ID `<vpc_id>` in the AWS region `<region>`
 - Have available, two AWS VPC subnet ids `<application_subnet_1>`,  `<application_subnet_2>` in the region VPC with ID `<vpc_id>` accessible to your clients. These subnets should ideally be private subnets, for the sake of security.
 - Have available a security group with ID `<application_security_group>` that either your bastion node is a part of (for SSH-forwarding ports to your client network), or your client network has access to TCP ports 443 (if you wish to serve DataPull API over HTTPS), 8080 (if you wish to serve DataPull API over HTTP), 8088 (to access Spark Application Manager for monitoring DataPull), 20888 (to access Spark UI on EMR master for monitoring DataPull)
-    - if you are using DataPull in a dedicated/new VPC created by following [these instructions](aws_account_setup), please use the ID of the security group `ElasticMapReduce-Master-Private`
+    - if you are using DataPull in a dedicated/new VPC created by following [these instructions](/aws_account_setup), please use the ID of the security group `ElasticMapReduce-Master-Private`
 - Have Docker installed on the machine used for deployment
 - If you wish to serve the DataPull API over HTTPS (say, at https://datapull.yourdomain.com), have available 
     - the ARN `<load_balancer_certificate_arn>` of an existing Certificate stored in AWS Certificate Manager that is valid for `datapull.yourdomain.com`
@@ -110,7 +110,7 @@ The following attributes need to be set if you wish to run the EMR clusters for 
 - datapull.emr.emr_security_group_service_access: Put `<emr_security_group_service_access>` here
 
 ### (optional) Oracle and Teradata support
-Please follow the instructions on [this wiki](oracle_teradata_support) to use Oracle and/or Teradata as data sources/destinations for DataPull.
+Please follow the instructions on [this wiki](/oracle_teradata_support) to use Oracle and/or Teradata as data sources/destinations for DataPull.
 
 ### Create DataPull Infrastructure
 
@@ -148,7 +148,7 @@ Please follow the instructions on [this wiki](oracle_teradata_support) to use Or
 - On your browser, open the API endpoint URL `http://<datpull_alb_internal_name>:8080/swagger-ui.html#!/data45pull45request45handler/startDataPullUsingPOST`
     - If you have selected private subnets for `<application_subnet_1>`,  `<application_subnet_2>`, or if these subnets are accessible only through a bastion host, please port-forward  `<datpull_alb_internal_name>:8080` using the terminal command `ssh -i "<pem file for your ssh key>" -N -L 8080:<datpull_alb_internal_name>:8080 <bastion user>@<bastion host address>` and then open the API endpoint URL `http://localhost:8080/swagger-ui.html#!/data45pull45request45handler/startDataPullUsingPOST`
         - if you are using a bastion host, please ensure that bastion host is a part of `<application_security_group>` (along with other security groups it might need for access from your client network)
-        - if you are a EC2 instance in your public subnet as a poor man's bastion host as described in the [AWS Account Setup](aws_account_setup) wiki, then `<bastion user>` is `ec2-user` and `<bastion host address>` is the public IP of the EC2 instance
+        - if you are a EC2 instance in your public subnet as a poor man's bastion host as described in the [AWS Account Setup](/aws_account_setup) wiki, then `<bastion user>` is `ec2-user` and `<bastion host address>` is the public IP of the EC2 instance
         
 ## Do your first DataPull
 - Create a csv file at the S3 location ```s3://<s3_bucket_name>/datapull-opensource/data/firstdatapull/source/helloworld.csv``` with the following data
