@@ -7,8 +7,6 @@ DataPull internally uses Spark to move data across platforms. DataPull jobs can 
 ## Prerequisite for environments outside of Vrbo and EG Data Platform
 
 The Spark UI is a website that is hosted on the master node of the EMR cluster running DataPull. If most cases, the IP/DNS Name of the EMR cluster's master is inaccessible from the client machine of the user; since there is no peering/VPN/Direct Connect set up from the user's network to the VPC of the EMR Cluster. Hence, it is necessary to use [SSH Tunnelling](https://www.ssh.com/ssh/tunneling/) to access this website on the user's client machine.
-![SSH Tunnelling diagram](https://www.ssh.com/s/ssh-tunneling-1920x585-zRyzToN_.png)
-
 
 ### Option 1 (recommended for more technical users)
 Use an SSH client to connect to the master node, configure SSH tunneling with local port forwarding, and use an Internet browser to open web interfaces hosted on the master node. This method allows you to configure web interface access without using a SOCKS proxy. For more information, refer to https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-ssh-tunnel-local.html
