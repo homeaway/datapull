@@ -19,6 +19,7 @@ package com.homeaway.datapullclient.process;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.model.*;
 import com.homeaway.datapullclient.config.DataPullClientConfig;
+import com.homeaway.datapullclient.config.DataPullProperties;
 import com.homeaway.datapullclient.config.EMRProperties;
 import com.homeaway.datapullclient.input.ClusterProperties;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import com.homeaway.datapullclient.config.DataPullProperties;
 
 @Slf4j
 public class DataPullTask implements Runnable {
@@ -49,98 +49,88 @@ public class DataPullTask implements Runnable {
     @Autowired
     private DataPullClientConfig config;
 
-    private List<String> masterSecurityGroup;
-    private List<String> slaveSecurityGroup;
-
     private static final String JSON_WITH_INPUT_FILE_PATH = "{\r\n  \"jsoninputfile\": {\r\n    \"s3path\": \"%s\"\r\n  }\r\n}";
-    private Map<String, Tag> emrTags = new HashMap<>();
+    private final Map<String, Tag> emrTags = new HashMap<>();
     private ClusterProperties clusterProperties;
-    private boolean hasBootStrapAction = false;
+    private boolean hasBootStrapAction;
 
-    public DataPullTask(String taskId, String s3File){
-        this.s3FilePath = s3File;
+    public DataPullTask(final String taskId, final String s3File) {
+        s3FilePath = s3File;
         this.taskId = taskId;
-        this.jsonS3Path= s3FilePath+".json";
-        this.jksS3Path= s3File+".sh";
+        jsonS3Path = this.s3FilePath + ".json";
+        jksS3Path = s3File + ".sh";
     }
 
-    @Override
-    public void run(){
-        runSparkCluster();
-    }
-
-    private void runSparkCluster(){
-        if(log.isDebugEnabled())
-            log.debug("runSparkCluster ->");
-
-        log.info("Started cluster config taskId = "+taskId);
-
-        AmazonElasticMapReduce emr  = config.getEMRClient();
-
-        ListClustersResult res  = emr.listClusters();
-
-        List<ClusterSummary> clusters  = res.getClusters().stream().filter(x -> x.getName().equals(taskId) &&
-                (ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.RUNNING) || ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.WAITING) || ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.STARTING))).
-                collect(Collectors.toList());
-
-        DataPullProperties dataPullProperties = config.getDataPullProperties();
-        String logFilePath = dataPullProperties.getLogFilePath();
-        String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
-        s3JarPath = s3JarPath.equals("") ? dataPullProperties.getS3JarPath() : s3JarPath;
-        String logPath = logFilePath == null || logFilePath.equals("") ?
-                "s3://"+s3RepositoryBucketName+"/" + "datapull-opensource/logs/SparkLogs" : logFilePath;
-
-        String jarPath = s3JarPath == null || s3JarPath.equals("")  ?
-                "s3://"+s3RepositoryBucketName+"/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar" : s3JarPath;
-
-        if(!clusters.isEmpty()){
-            ClusterSummary summary  = clusters.get(0);
-
-            if(summary != null){
-                runTaskOnExistingCluster(summary.getId(), jarPath, Boolean.valueOf(Objects.toString(clusterProperties.getTerminateClusterAfterExecution(),"false")),Objects.toString(clusterProperties.getSparksubmitparams(), ""));
-            }
-        }
-        else{
-            RunJobFlowResult result = runTaskInNewCluster(emr,logPath, jarPath,Objects.toString(clusterProperties.getSparksubmitparams(), ""));
-        }
-
-        log.info("Task "+taskId+" submitted to EMR cluster");
-
-        if(log.isDebugEnabled())
-            log.debug("runSparkCluster <- return");
-    }
-
-    public static List<String> toList(String[] array) {
-        if (array==null) {
+    public static List<String> toList(final String[] array) {
+        if (array == null) {
             return new ArrayList(0);
         } else {
-            int size = array.length;
-            List<String> list = new ArrayList(size);
-            for(int i = 0; i < size; i++) {
+            final int size = array.length;
+            final List<String> list = new ArrayList(size);
+            for (int i = 0; i < size; i++) {
                 list.add(array[i]);
             }
             return list;
         }
     }
 
-    private List<String> prepareSparkSubmitParams(String SparkSubmitParams){
-        List<String> sparkSubmitParamsList=new ArrayList<>();
+    @Override
+    public void run(){
+        this.runSparkCluster();
+    }
+
+    private void runSparkCluster(){
+
+        DataPullTask.log.info("Started cluster config taskId = " + this.taskId);
+
+        final AmazonElasticMapReduce emr = this.config.getEMRClient();
+
+        final ListClustersResult res = emr.listClusters();
+
+        final List<ClusterSummary> clusters = res.getClusters().stream().filter(x -> x.getName().equals(this.taskId) &&
+                (ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.RUNNING) || ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.WAITING) || ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.STARTING))).
+                collect(Collectors.toList());
+
+        final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
+        final String logFilePath = dataPullProperties.getLogFilePath();
+        final String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
+        final String logPath = logFilePath == null || logFilePath.equals("") ?
+                "s3://"+s3RepositoryBucketName+"/" + "datapull-opensource/logs/SparkLogs" : logFilePath;
+
+        s3JarPath = "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar";
+
+        if(!clusters.isEmpty()){
+            final ClusterSummary summary = clusters.get(0);
+
+            if(summary != null){
+                this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""));
+            }
+        }
+        else{
+            final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""));
+        }
+
+        DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
+    }
+
+    private List<String> prepareSparkSubmitParams(final String SparkSubmitParams) {
+        final List<String> sparkSubmitParamsList = new ArrayList<>();
         String[] sparkSubmitParamsArray=null;
         if(SparkSubmitParams !=""){
             sparkSubmitParamsArray= SparkSubmitParams.split("\\s+");
 
             sparkSubmitParamsList.add("spark-submit");
 
-            sparkSubmitParamsList.addAll(toList(sparkSubmitParamsArray));
-            sparkSubmitParamsList.add(String.format(JSON_WITH_INPUT_FILE_PATH, jsonS3Path));
+            sparkSubmitParamsList.addAll(DataPullTask.toList(sparkSubmitParamsArray));
+            sparkSubmitParamsList.add(String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
         }
 
         return sparkSubmitParamsList;
     }
 
-    private RunJobFlowResult runTaskInNewCluster(AmazonElasticMapReduce emr, String logPath, String jarPath,String sparkSubmitParams) {
+    private RunJobFlowResult runTaskInNewCluster(final AmazonElasticMapReduce emr, final String logPath, final String jarPath, final String sparkSubmitParams) {
 
-        List<String> sparkSubmitParamsList= prepareSparkSubmitParams(sparkSubmitParams);
+        final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
 
         HadoopJarStepConfig runExampleConfig= null;
 
@@ -152,37 +142,36 @@ public class DataPullTask implements Runnable {
         else{
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
-                    .withArgs("spark-submit", "--class", MAIN_CLASS, jarPath, String.format(JSON_WITH_INPUT_FILE_PATH, jsonS3Path));
+                    .withArgs("spark-submit", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
         }
-        StepConfig customExampleStep = new StepConfig()
-                .withName(taskId)
+        final StepConfig customExampleStep = new StepConfig()
+                .withName(this.taskId)
                 .withActionOnFailure("CONTINUE")
                 .withHadoopJarStep(runExampleConfig);
 
-        Application spark = new Application().withName("Spark");
+        final Application spark = new Application().withName("Spark");
 
-        EMRProperties emrProperties = config.getEmrProperties();
-        int instanceCount = emrProperties.getInstanceCount();
-        String masterType = emrProperties.getMasterType();
-        String emrSubnet = emrProperties.getSubnet();
-        DataPullProperties datapullProperties = config.getDataPullProperties();
+        final EMRProperties emrProperties = this.config.getEmrProperties();
+        final int instanceCount = emrProperties.getInstanceCount();
+        final String masterType = emrProperties.getMasterType();
+        final DataPullProperties datapullProperties = this.config.getDataPullProperties();
 
-        String applicationSubnet = datapullProperties.getApplicationSubnetId();
-        emrSubnet  = emrSubnet != null && !emrSubnet.trim().isEmpty() ? emrSubnet : applicationSubnet;
-        int count = Integer.valueOf(Objects.toString(clusterProperties.getEmrInstanceCount(), Integer.toString(instanceCount)));
-        JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2KeyName(Objects.toString(clusterProperties.getEc2KeyName(), emrProperties.getKeyName())) //passing invalid key will make the process terminate
+        final String applicationSubnet = datapullProperties.getApplicationSubnet1();
+
+        final int count = Integer.valueOf(Objects.toString(this.clusterProperties.getEmrInstanceCount(), Integer.toString(instanceCount)));
+        final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
+                .withEc2KeyName(Objects.toString(this.clusterProperties.getEc2KeyName(), emrProperties.getEc2KeyName())) //passing invalid key will make the process terminate
                 //can be removed in case of default vpc
-                .withEc2SubnetId(emrSubnet).withMasterInstanceType(Objects.toString(clusterProperties.getMasterInstanceType(), masterType))
+                .withEc2SubnetId(applicationSubnet).withMasterInstanceType(Objects.toString(this.clusterProperties.getMasterInstanceType(), masterType))
                 .withInstanceCount(count)
-                .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString(clusterProperties.getTerminateClusterAfterExecution(), "true")));
+                .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
 
-        String masterSG = emrProperties.getMasterSg();
-        String slaveSG = emrProperties.getSlaveSg();
-        String serviceAccesss = emrProperties.getServiceAccessSg();
-        String masterSecurityGroup = Objects.toString(clusterProperties.getMasterSecurityGroup(), masterSG != null ? masterSG : "");
-        String slaveSecurityGroup = Objects.toString(clusterProperties.getSlaveSecurityGroup(), slaveSG != null ?slaveSG : "");
-        String serviceAccessSecurityGroup = Objects.toString(clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
+        final String masterSG = emrProperties.getEmrSecurityGroupMaster();
+        final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
+        final String serviceAccesss = emrProperties.getEmrSecurityGroupServiceAccess();
+        final String masterSecurityGroup = Objects.toString(this.clusterProperties.getMasterSecurityGroup(), masterSG != null ? masterSG : "");
+        final String slaveSecurityGroup = Objects.toString(this.clusterProperties.getSlaveSecurityGroup(), slaveSG != null ? slaveSG : "");
+        final String serviceAccessSecurityGroup = Objects.toString(this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
 
         if(!masterSecurityGroup.isEmpty()){
             jobConfig.withEmrManagedMasterSecurityGroup(masterSecurityGroup);
@@ -193,36 +182,36 @@ public class DataPullTask implements Runnable {
         if(!serviceAccessSecurityGroup.isEmpty()){
             jobConfig.withServiceAccessSecurityGroup(serviceAccessSecurityGroup);
         }
-        String slaveType = emrProperties.getSlaveType();
+        final String slaveType = emrProperties.getSlaveType();
         if(count > 1) {
-            jobConfig.withSlaveInstanceType(Objects.toString(clusterProperties.getSlaveInstanceType(),slaveType));
+            jobConfig.withSlaveInstanceType(Objects.toString(this.clusterProperties.getSlaveInstanceType(), slaveType));
         }
 
-        addTagsToEMRCluster();
+        this.addTagsToEMRCluster();
 
-        Map<String, String> sparkProperties = new HashMap<>();
+        final Map<String, String> sparkProperties = new HashMap<>();
         sparkProperties.put("maximizeResourceAllocation", "true");
 
-        String emrReleaseVersion = emrProperties.getEmrReleaseVersion();
-        String serviceRole = emrProperties.getServiceRole();
-        String jobFlowRole = emrProperties.getJobFlowRole();
+        final String emrReleaseVersion = emrProperties.getEmrRelease();
+        final String serviceRole = emrProperties.getServiceRole();
+        final String jobFlowRole = emrProperties.getJobFlowRole();
 
-        RunJobFlowRequest request = new RunJobFlowRequest()
-                .withName(taskId)
-                .withReleaseLabel(Objects.toString(clusterProperties.getEmrReleaseVersion(), emrReleaseVersion))
+        final RunJobFlowRequest request = new RunJobFlowRequest()
+                .withName(this.taskId)
+                .withReleaseLabel(Objects.toString(this.clusterProperties.getEmrReleaseVersion(), emrReleaseVersion))
                 .withSteps(customExampleStep)
                 .withApplications(spark)
                 .withLogUri(logPath)
                 .withServiceRole(serviceRole)
-                .withJobFlowRole(Objects.toString(clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
+                .withJobFlowRole(Objects.toString(this.clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
                 .withVisibleToAllUsers(true)
-                .withTags(emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties))
+                .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties))
                 .withInstances(jobConfig);
 
-        if(hasBootStrapAction){
-            BootstrapActionConfig bsConfig = new BootstrapActionConfig();
+        if (this.hasBootStrapAction) {
+            final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
             bsConfig.setName("bootstrapaction");
-            bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath("s3://"+jksS3Path));
+            bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath("s3://" + this.jksS3Path));
             request.withBootstrapActions(bsConfig);
         }
 
@@ -230,14 +219,14 @@ public class DataPullTask implements Runnable {
     }
 
     private void addTagsToEMRCluster() {
-        EMRProperties emrProperties = config.getEmrProperties();
-        Map<String, String> tags = config.getEmrProperties().getTags();
-        addTags(tags);
+        final EMRProperties emrProperties = this.config.getEmrProperties();
+        final Map<String, String> tags = this.config.getEmrProperties().getTags();
+        this.addTags(tags);
     }
 
-    private void runTaskOnExistingCluster(String id, String jarPath, boolean terminateClusterAfterExecution,String sparkSubmitParams) {
+    private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
 
-        List<String> sparkSubmitParamsList= prepareSparkSubmitParams(sparkSubmitParams);
+        final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
 
         HadoopJarStepConfig runExampleConfig= null;
 
@@ -249,42 +238,43 @@ public class DataPullTask implements Runnable {
         else{
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
-                    .withArgs("spark-submit", "--class", MAIN_CLASS, jarPath, String.format(JSON_WITH_INPUT_FILE_PATH, jsonS3Path));
+                    .withArgs("spark-submit", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
         }
 
-        StepConfig step = new StepConfig()
-                .withName(taskId)
+        final StepConfig step = new StepConfig()
+                .withName(this.taskId)
                 .withHadoopJarStep(runExampleConfig).withActionOnFailure("CONTINUE");
 
-        AddJobFlowStepsRequest req = new AddJobFlowStepsRequest();
+        final AddJobFlowStepsRequest req = new AddJobFlowStepsRequest();
         req.withJobFlowId(id);
         req.withSteps(step);
-        config.getEMRClient().addJobFlowSteps(req);
+        this.config.getEMRClient().addJobFlowSteps(req);
         if(terminateClusterAfterExecution){
-            addTerminateStep(id);
+            this.addTerminateStep(id);
         }
     }
 
-    private void addTerminateStep(String clusterId) {
-        HadoopJarStepConfig runExampleConfig = new HadoopJarStepConfig()
+    private void addTerminateStep(final String clusterId) {
+        final HadoopJarStepConfig runExampleConfig = new HadoopJarStepConfig()
                 .withJar("command-runner.jar")
-                .withArgs("spark-submit", "--executor-memory", "2g", "--class", MAIN_CLASS, "TerminateCluster.jar", String.format(JSON_WITH_INPUT_FILE_PATH, jsonS3Path));
+                .withArgs("spark-submit", "--executor-memory", "2g", "--class", DataPullTask.MAIN_CLASS, "TerminateCluster.jar", String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
 
-        StepConfig terminateClusterStep = new StepConfig()
+        final StepConfig terminateClusterStep = new StepConfig()
                 .withName("TerminateCluster")
                 .withHadoopJarStep(runExampleConfig).withActionOnFailure("TERMINATE_CLUSTER");
 
-        AddJobFlowStepsRequest req = new AddJobFlowStepsRequest();
+        final AddJobFlowStepsRequest req = new AddJobFlowStepsRequest();
         req.withJobFlowId(clusterId);
         req.withSteps(terminateClusterStep);
-        config.getEMRClient().addJobFlowSteps(req);
+        this.config.getEMRClient().addJobFlowSteps(req);
     }
 
-    public DataPullTask addTag(String tagName, String value) {
-        if(tagName != null && value != null && !emrTags.containsKey(tagName)){
-            Tag tag = new Tag();tag.setKey(tagName);
+    public DataPullTask addTag(final String tagName, final String value) {
+        if (tagName != null && value != null && !this.emrTags.containsKey(tagName)) {
+            final Tag tag = new Tag();
+            tag.setKey(tagName);
             tag.setValue(value);
-            emrTags.put(tagName, tag);
+            this.emrTags.put(tagName, tag);
         }
 
         return this;
@@ -292,43 +282,43 @@ public class DataPullTask implements Runnable {
 
     @Override
     public String toString() {
-        DataPullProperties dataPullProperties = config.getDataPullProperties();
-        EMRProperties emrProperties = config.getEmrProperties();
+        final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
+        final EMRProperties emrProperties = this.config.getEmrProperties();
         return "DataPullTask{" +
-                "taskId='" + taskId + '\'' +
-                ", jsonS3Path='" + jsonS3Path + '\'' +
+                "taskId='" + this.taskId + '\'' +
+                ", jsonS3Path='" + this.jsonS3Path + '\'' +
                 ", logFilePath='" + dataPullProperties.getLogFilePath() + '\'' +
                 ", s3RepositoryBucketName='" + dataPullProperties.getS3BucketName() + '\'' +
-                ", s3JarPath='" + dataPullProperties.getS3JarPath() + '\'' +
+                ", s3JarPath='" + this.s3JarPath + '\'' +
                 ", instanceCount=" + emrProperties.getInstanceCount() +
                 ", masterType='" + emrProperties.getMasterType() + '\'' +
                 ", slaveType='" + emrProperties.getSlaveType() + '\'' +
                 ", serviceRole='" + emrProperties.getServiceRole() + '\'' +
                 ", jobFlowRole='" + emrProperties.getJobFlowRole() + '\'' +
-                ", emrReleaseVersion='" + emrProperties.getEmrReleaseVersion() + '\'' +
-                ", config=" + config +
+                ", emrReleaseVersion='" + emrProperties.getEmrRelease() + '\'' +
+                ", config=" + this.config +
                 '}';
     }
 
 
-    public DataPullTask withClusterProperties(ClusterProperties properties) {
-        this.clusterProperties = properties;
+    public DataPullTask withClusterProperties(final ClusterProperties properties) {
+        clusterProperties = properties;
         return this;
     }
 
-    public DataPullTask addBootStrapAction(boolean hasBootStrapAction) {
+    public DataPullTask addBootStrapAction(final boolean hasBootStrapAction) {
         this.hasBootStrapAction = hasBootStrapAction;
         return this;
     }
 
-    public DataPullTask withCustomJar(String customJarPath){
-        this.s3JarPath = customJarPath;
+    public DataPullTask withCustomJar(final String customJarPath) {
+        s3JarPath = customJarPath;
         return this;
     }
-    
-    public DataPullTask addTags(Map<String,String> tags) {
+
+    public DataPullTask addTags(final Map<String, String> tags) {
         tags.forEach((tagName,value) -> {
-            addTag(tagName, value);
+            this.addTag(tagName, value);
         });
         return this;
     }

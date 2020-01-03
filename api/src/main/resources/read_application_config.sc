@@ -25,7 +25,7 @@ def mainA(args: String*) = {
   val env  = args(0)
   println("Running script for env = "+env)
   val yamlMapper = new ObjectMapper(new YAMLFactory().enable(Feature.MINIMIZE_QUOTES));
-  val apiConfigFile = String.format("application-%s.yml", env)
+  val apiConfigFile = String.format("application.yml", env)
   val apiconfig = yamlMapper.readTree(new File(apiConfigFile))
   var paths = new java.util.ArrayList[String]()
   findpath(apiconfig, "",  paths);

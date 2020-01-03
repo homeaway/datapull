@@ -17,18 +17,10 @@
 package com.homeaway.datapullclient.config;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.annotation.PropertySources;
-import org.springframework.stereotype.Component;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 @Configuration
@@ -37,14 +29,8 @@ import java.util.Map;
 @Data
 public class DataPullProperties {
 
-    @Value("${s3_bucket_region:}")
-    private String s3BucketRegion;
-
     @Value("${s3_bucket_name:}")
     private String s3BucketName;
-
-    @Value("${s3_jar_path:}")
-    private String s3JarPath;
 
     @Value("${application_security_group:}")
     private String applicationSecurityGroup;
@@ -55,12 +41,10 @@ public class DataPullProperties {
     @Value( "${history_folder:}" )
     private String applicationHistoryFolder;
 
-    @Value("${application_subnet:}")
-    private String applicationSubnetId;
+    @Value("${application_subnet_1:}")
+    private String applicationSubnet1;
 
-    @Value( "${accessKey:}" )
-    private String accessKey;
+    @Value("${application_subnet_2:}")
+    private String applicationSubnet2;
 
-    @Value( "${secretKey:}" )
-    private String secretKey;
 }
