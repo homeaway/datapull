@@ -598,17 +598,24 @@
                 
                 <h1 id="deploying-datapull-on-aws-fargate-and-aws-emr">Deploying DataPull on AWS Fargate and AWS EMR</h1>
 <p>This document helps you install DataPull on an Amazon AWS account, and run your first DataPull job of converting CSV data in AWS S3 to JSON data. </p>
-<p>In a nutshell, deploying DataPull to an AWS Account
-- creates three IAM Roles
-    - <code>datapull_task_role</code>, <code>datapull_task_execution_role</code> for running the DataPull REST API on AWS Fargate
-    - <code>emr_ec2_datapull_role</code> for running ephemeral AWS EMR clusters
-- creates an IAM User <code>datapull_user</code> temporarily for the purpose of installing the following DataPull components
-    - an AWS Fargate service <code>datapull-web-api</code> with an associated image in AWS ECR, and AWS Application Load Balancer (ALB)
-    - an AWS CloudWatch Log Group <code>datapull_cloudwatch_log_group</code> and associated log stream
-- stores DataPull JAR for EMR, job history, EMR logs in an existing AWS S3 bucket</p>
-<blockquote>
+<p><img alt="DataPull installation on AWS" src="../media/datapull_installation.png" /></p>
+<p>In a nutshell, deploying DataPull to an AWS Account</p>
+<ul>
+<li>creates three IAM Roles<ul>
+<li><code>datapull_task_role</code>, <code>datapull_task_execution_role</code> for running the DataPull REST API on AWS Fargate</li>
+<li><code>emr_ec2_datapull_role</code> for running ephemeral AWS EMR clusters</li>
+</ul>
+</li>
+<li>creates an IAM User <code>datapull_user</code> temporarily for the purpose of installing the following DataPull components<ul>
+<li>an AWS Fargate service <code>datapull-web-api</code> with an associated image in AWS ECR, and AWS Application Load Balancer (ALB)</li>
+<li>an AWS CloudWatch Log Group <code>datapull_cloudwatch_log_group</code> and associated log stream</li>
+</ul>
+</li>
+<li>stores DataPull JAR for EMR, job history, EMR logs in an existing AWS S3 bucket<blockquote>
 <p>Note: <code>&lt;xyz&gt;</code> denotes a variable/attribute named <code>xyz</code> in the DataPull configuration file</p>
 </blockquote>
+</li>
+</ul>
 <h2 id="pre-install-steps">Pre-install steps</h2>
 <ul>
 <li>Clone/download the master branch of this repo</li>
@@ -624,7 +631,7 @@
 </ul>
 </li>
 <li>Have Docker installed on the machine used for deployment</li>
-<li>If you wish to serve the DataPull API over HTTPS (say, at https://datapull.yourdomain.com), have available <ul>
+<li>If you wish to serve the DataPull API over HTTPS (say, at <a href="https://datapull.yourdomain.com">https://datapull.yourdomain.com</a> ), have available <ul>
 <li>the ARN <code>&lt;load_balancer_certificate_arn&gt;</code> of an existing Certificate stored in AWS Certificate Manager that is valid for <code>datapull.yourdomain.com</code></li>
 <li>the ability to create/modify a CNAME record for <code>datapull.yourdomain.com</code> to point to the load balancer URL for the DataPull API that will be created later in these instructions.</li>
 </ul>
@@ -638,8 +645,9 @@
 </li>
 </ul>
 <blockquote>
-<p>Pro-tip: Record the values of the variables in the pre-install steps, as a text file. Here is an example (with fake values)...
-<code>&lt;aws_admin_profile&gt; : default
+<p>Pro-tip: Record the values of the variables in the pre-install steps, as a text file. Here is an example (with fake values)...</p>
+</blockquote>
+<pre><code>&lt;aws_admin_profile&gt; : default
 &lt;s3_bucket_name&gt; : datatools-datapull
 &lt;vpc_id&gt; : vpc-071957e514a1fbd73
 &lt;region&gt; : us-west-2
@@ -647,8 +655,9 @@
 &lt;application_subnet_2&gt; : subnet-0e10783af0de2513e
 &lt;application_security_group&gt; : sg-08beb77f882d5d2a2
 &lt;load_balancer_certificate_arn&gt; : arn:aws:acm:us-west-2:771905877783:certificate/2b1d3729-aa6d-47d5-8902-d0f9e75b35a8
-&lt;env&gt; : stage</code></p>
-</blockquote>
+&lt;env&gt; : stage
+</code></pre>
+
 <h2 id="installation-steps">Installation Steps</h2>
 <h3 id="edit-master_application_config-env62yml">Edit master_application_config-\&lt;env>.yml</h3>
 <p>This file is present in the root directory of the repo.</p>
@@ -665,10 +674,12 @@
 <p>The following attributes need to be specified if you need DataPull to retrieve credentials from Hashicorp Vault to connect to your data stores. </p>
 <blockquote>
 <p>For this functionality to work, you need 
-- DataPull to run on AWS EMR (this is the default behaviour), or on a Spark cluster whose node(s) run on AWS EC2.
-- a Hashicorp Vault cluster whose API is accessible at <vault_url> (e.g. https://myvault.mydomain.com:8200)
-- credentials for the database cluster <cluster> in the format <code>{ "username": "&lt;username&gt;", "password": "&lt;password&gt;" }</code> stored as a static secret at the location <code>&lt;vault_url&gt;/&lt;static_secret_path_prefix&gt;/&lt;cluster&gt;/&lt;username&gt;</code> . For example, if you need DataPull to retrieve the credentials for the user <code>mydbuser</code> of the MySql cluster <code>mycluster</code> from the Vault cluster static secret path https://myvaultcluster:8200/v1/secret/mycluster/mydbuser , you will need to store the credentials using the cUrl command <code>curl -X POST https://myvaultcluster:8200/v1/secret/mycluster/mydbuser -H 'X-Vault-Token: &lt;valid Vault token&gt;' -d '{ "username": "mydbuser", "password": "&lt;password&gt;" }'</code>
-- <a href="https://www.vaultproject.io/docs/auth/aws.html#ec2-auth-method">AWS EC2 Auth method</a> set up on the Vault cluster, and the IAM Role of the Spark cluster mapped to a Vault policy that allows it to read the secret at the location <code>&lt;vault_url&gt;/&lt;static_secret_path_prefix&gt;/&lt;cluster&gt;/&lt;username&gt;</code></p>
+<ul>
+    <li> DataPull to run on AWS EMR (this is the default behaviour), or on a Spark cluster whose node(s) run on AWS EC2.
+    <li> a Hashicorp Vault cluster whose API is accessible at <vault_url> (e.g. https://myvault.mydomain.com:8200)
+    <li> credentials for the database cluster <cluster> in the format <code>{ "username": "&lt;username&gt;", "password": "&lt;password&gt;" }</code> stored as a static secret at the location <code>&lt;vault_url&gt;/&lt;static_secret_path_prefix&gt;/&lt;cluster&gt;/&lt;username&gt;</code> . For example, if you need DataPull to retrieve the credentials for the user <code>mydbuser</code> of the MySql cluster <code>mycluster</code> from the Vault cluster static secret path https://myvaultcluster:8200/v1/secret/mycluster/mydbuser , you will need to store the credentials using the cUrl command <code>curl -X POST https://myvaultcluster:8200/v1/secret/mycluster/mydbuser -H 'X-Vault-Token: &lt;valid Vault token&gt;' -d '{ "username": "mydbuser", "password": "&lt;password&gt;" }'</code>
+    <li> <a href="https://www.vaultproject.io/docs/auth/aws.html#ec2-auth-method">AWS EC2 Auth method</a> set up on the Vault cluster, and the IAM Role of the Spark cluster mapped to a Vault policy that allows it to read the secret at the location <code>&lt;vault_url&gt;/&lt;static_secret_path_prefix&gt;/&lt;cluster&gt;/&lt;username&gt;</code>
+</ul></p>
 </blockquote>
 <ul>
 <li>datapull.secretstore.vault.vault_url: Put <code>&lt;vault_url&gt;</code> here</li>
@@ -680,41 +691,51 @@
 - datapull.api.load_balancer_certificate_arn: Put <code>&lt;load_balancer_certificate_arn&gt;</code> here</p>
 <p>The following attributes need to be set if you need DataPull to alert you if a job runs for too little time or if it runs too long. </p>
 <blockquote>
-<p>For this functionality, DataPull needs a SQL Server table <code>&lt;table&gt;</code> in the database <code>&lt;database&gt;</code> on the SQL Server instance <code>&lt;server&gt;</code>; and an SQL Server login <code>&lt;login&gt;</code> with password <code>&lt;password&gt;</code> that can write to this table. If this table does not exist, please create this table with the following schema
-<code>CREATE TABLE [&lt;table&gt;](
-   [JobId] [nvarchar](max) NULL,
-   [Portfolio] [nvarchar](max) NULL,
-   [Product] [nvarchar](max) NULL,
-   [MasterNode] [nvarchar](max) NULL,
-   [Ec2Role] [nvarchar](max) NULL,
-   [elapsedtime] [float] NOT NULL,
-   [minexecutiontime] [bigint] NOT NULL,
-   [maxexecutiontime] [bigint] NOT NULL,
-   [status] [nvarchar](max) NULL,
-   [InstantNow] [nvarchar](max) NULL,
-   [processedflag] [bigint] NOT NULL,
-   [EmailAddress] [nvarchar](max) NULL,
-   [pipelineName] [nvarchar](max) NULL,
-   [awsenv] [nvarchar](max) NULL,
-   [BccEmailAddress] [nvarchar](max) NULL
-)</code>
-- datapull.logger.mssql.server: Put <code>&lt;server&gt;</code> here
-- datapull.logger.mssql.database: Put <code>&lt;database&gt;</code> here
-- datapull.logger.mssql.login: Put <code>&lt;login&gt;</code> here
-- datapull.logger.mssql.password: Put <code>&lt;password&gt;</code> here
-- datapull.logger.mssql.table: Put <code>&lt;table&gt;</code> here</p>
+<p>For this functionality, DataPull needs a SQL Server table <code>&lt;table&gt;</code> in the database <code>&lt;database&gt;</code> on the SQL Server instance <code>&lt;server&gt;</code>; and an SQL Server login <code>&lt;login&gt;</code> with password <code>&lt;password&gt;</code> that can write to this table. If this table does not exist, please create this table with the following schema... </p>
 </blockquote>
-<p>The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address <code>&lt;emailaddress&gt;</code> through the SMTP server/relay <code>&lt;smtpserveraddress&gt;</code>
-- datapull.logger.smtp.emailaddress: Put <code>&lt;emailaddress&gt;</code> here
-- datapull.logger.smtp.smtpserveraddress: Put <code>&lt;smtpserveraddress&gt;</code> here</p>
-<p>The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address <code>&lt;email&gt;</code>  using an existing SES instance that is accessiable using the AWS credentials <code>&lt;access_key&gt;</code>/<code>&lt;secret_key&gt;</code>
-- datapull.logger.ses.email: Put <code>&lt;email&gt;</code> here
-- datapull.logger.ses.access_key: Put <code>&lt;access_key&gt;</code> here
-- datapull.logger.ses.secret_key: Put <code>&lt;secret_key&gt;</code> here</p>
-<p>The following attributes need to be set if you wish to run the EMR clusters for DataPull in any other security groups than the default EMR security groups that are created by AWS automatically when an EMR cluster is created, ref https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-man-sec-groups.html
-- datapull.emr.emr_security_group_master: Put <code>&lt;emr_security_group_master&gt;</code> here
-- datapull.emr.emr_security_group_slave: Put <code>&lt;emr_security_group_slave&gt;</code> here
-- datapull.emr.emr_security_group_service_access: Put <code>&lt;emr_security_group_service_access&gt;</code> here</p>
+<pre><code>CREATE TABLE [&lt;table&gt;](
+    [JobId] [nvarchar](max) NULL,
+    [Portfolio] [nvarchar](max) NULL,
+    [Product] [nvarchar](max) NULL,
+    [MasterNode] [nvarchar](max) NULL,
+    [Ec2Role] [nvarchar](max) NULL,
+    [elapsedtime] [float] NOT NULL,
+    [minexecutiontime] [bigint] NOT NULL,
+    [maxexecutiontime] [bigint] NOT NULL,
+    [status] [nvarchar](max) NULL,
+    [InstantNow] [nvarchar](max) NULL,
+    [processedflag] [bigint] NOT NULL,
+    [EmailAddress] [nvarchar](max) NULL,
+    [pipelineName] [nvarchar](max) NULL,
+    [awsenv] [nvarchar](max) NULL,
+    [BccEmailAddress] [nvarchar](max) NULL
+)
+</code></pre>
+
+<ul>
+<li>datapull.logger.mssql.server: Put <code>&lt;server&gt;</code> here</li>
+<li>datapull.logger.mssql.database: Put <code>&lt;database&gt;</code> here</li>
+<li>datapull.logger.mssql.login: Put <code>&lt;login&gt;</code> here</li>
+<li>datapull.logger.mssql.password: Put <code>&lt;password&gt;</code> here</li>
+<li>datapull.logger.mssql.table: Put <code>&lt;table&gt;</code> here</li>
+</ul>
+<p>The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address <code>&lt;emailaddress&gt;</code> through the SMTP server/relay <code>&lt;smtpserveraddress&gt;</code></p>
+<ul>
+<li>datapull.logger.smtp.emailaddress: Put <code>&lt;emailaddress&gt;</code> here</li>
+<li>datapull.logger.smtp.smtpserveraddress: Put <code>&lt;smtpserveraddress&gt;</code> here</li>
+</ul>
+<p>The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address <code>&lt;email&gt;</code>  using an existing SES instance that is accessiable using the AWS credentials <code>&lt;access_key&gt;</code>/<code>&lt;secret_key&gt;</code></p>
+<ul>
+<li>datapull.logger.ses.email: Put <code>&lt;email&gt;</code> here</li>
+<li>datapull.logger.ses.access_key: Put <code>&lt;access_key&gt;</code> here</li>
+<li>datapull.logger.ses.secret_key: Put <code>&lt;secret_key&gt;</code> here</li>
+</ul>
+<p>The following attributes need to be set if you wish to run the EMR clusters for DataPull in any other security groups than the <a href="https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-man-sec-groups.html">default EMR security groups</a> that are created by AWS automatically when an EMR cluster is created</p>
+<ul>
+<li>datapull.emr.emr_security_group_master: Put <code>&lt;emr_security_group_master&gt;</code> here</li>
+<li>datapull.emr.emr_security_group_slave: Put <code>&lt;emr_security_group_slave&gt;</code> here</li>
+<li>datapull.emr.emr_security_group_service_access: Put <code>&lt;emr_security_group_service_access&gt;</code> here</li>
+</ul>
 <h3 id="optional-oracle-and-teradata-support">(optional) Oracle and Teradata support</h3>
 <p>Please follow the instructions on <a href="/oracle_teradata_support">this wiki</a> to use Oracle and/or Teradata as data sources/destinations for DataPull.</p>
 <h3 id="create-datapull-infrastructure">Create DataPull Infrastructure</h3>
@@ -731,17 +752,32 @@
 </ul>
 <h4 id="create-iam-user-and-roles-with-policies">Create IAM User and Roles, with policies</h4>
 <blockquote>
-<p>It is recommended that this script be run by the team managing the AWS account from a terminal that has the AWS administrator credentials available as a profile <code>&lt;aws_admin_profile&gt;</code> in Credential Profile Chain, ref https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html i.e. you should have the AWS credentials set in 
-   - either your <code>~/.aws/credentials</code> file if you're on a Mac
-   - or in your environment variables, 
-   - or you are running this script from an AWS instance with an IAM Role that has administrator privileges 
-- From the terminal at the root of the repo, run 
-    - <code>cd api/terraform/datapull_iam/</code>
-    - <code>chmod +x create_user_and_roles.sh</code>
-    -<code>./create_user_and_roles.sh &lt;aws_admin_profile&gt; &lt;s3_bucket_name&gt; &lt;region&gt;</code> . The script will create 
-    - IAM Roles needed to run AWS Fargate and EMR
-    - an IAM User <code>datapull_user</code> whose access key and secret key are created as a new AWS profile <code>datapull_user</code> using <a href="https://docs.aws.amazon.com/cli/latest/reference/configure/">aws configure CLI</a> 
-        &gt; The IAM User <code>datapull_user</code> is used to install the remaining DataPull components like the AWS Fargate Cluster, the API load balancer, etc., so we recommend using <code>datapull_user</code> to set up a CI/CD pipeline for the next step. </p>
+<p>We recommend team managing the AWS account run this script from a terminal that has the AWS administrator credentials available as a profile <code>&lt;aws_admin_profile&gt;</code> in the <a href="https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html">Credential Profile Chain</a> i.e. you should have the AWS credentials set in
+<ul>
+    <li>either your <code>~/.aws/credentials</code> file if you're on a Mac
+    <li>or in your environment variables, 
+    <li>or you are running this script from an AWS instance with an IAM Role that has administrator privileges 
+&lt;/ul</p>
+</blockquote>
+<ul>
+<li>
+<p>From the terminal at the root of the repo, run </p>
+<ul>
+<li><code>cd api/terraform/datapull_iam/</code></li>
+<li><code>chmod +x create_user_and_roles.sh</code></li>
+<li><code>./create_user_and_roles.sh &lt;aws_admin_profile&gt; &lt;s3_bucket_name&gt; &lt;region&gt;</code></li>
+</ul>
+</li>
+<li>
+<p>The script will create </p>
+<ul>
+<li>IAM Roles needed to run AWS Fargate and EMR</li>
+<li>an IAM User <code>datapull_user</code> whose access key and secret key are created as a new AWS profile <code>datapull_user</code> using <a href="https://docs.aws.amazon.com/cli/latest/reference/configure/">aws configure CLI</a> </li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>The IAM User <code>datapull_user</code> is used to install the remaining DataPull components like the AWS Fargate Cluster, the API load balancer, etc., so we recommend using <code>datapull_user</code> to set up a CI/CD pipeline for the next step. </p>
 </blockquote>
 <h4 id="create-aws-fargate-api-app-and-other-aws-resources">Create AWS Fargate API App and other AWS resources</h4>
 <ul>
@@ -819,8 +855,8 @@ hello,world
 <li>In approximately 8 minutes (to account for the time taken for the ephemeral EMR cluster to spin up), you should get the data from the CSV converted into JSON and written to the S3 folder <code>s3://&lt;s3_bucket_name&gt;/datapull-opensource/data/firstdatapull/destination/</code></li>
 <li>The logs for each DataPull invocation are available at <code>s3://&lt;s3_bucket_name&gt;/datapull-opensource/logs/DataPullHistory</code>. The logs for each migration with DataPull invocations are available at <code>s3://&lt;s3_bucket_name&gt;/datapull-opensource/logs/MigrationHistory</code></li>
 <li>If you had configured the anonymous SMTP server for DataPull to send you email reports, you would get an email report with the subject <code>DataPull Report - firstdatapull (application_&lt;random_numbers&gt;)</code></li>
-<li>While the ephemeral EMR cluster is in the <code>Running</code> status, you can monitor the progress of the Spark job by browing to the Spark UI at <code>http://&lt;ip of master node of EMR cluster&gt;:8088</code><ul>
-<li>If you have selected a private subnet for <code>&lt;application_subnet_1&gt;</code> or if this subnet is accessible only through a bastion host, please port-forward  <code>&lt;ip of master node of EMR cluster&gt;:8088</code> and <code>&lt;ip of master node of EMR cluster&gt;:20888</code> using the terminal command <code>ssh -i "&lt;pem file for your ssh key&gt;" -N -L 8088:&lt;ip of master node of EMR cluster&gt;:8088 -L 20888:&lt;ip of master node of EMR cluster&gt;:20888 &lt;bastion user&gt;@&lt;bastion host address&gt;</code> and then open the API endpoint URL <code>http://localhost:8088</code></li>
+<li>While the ephemeral EMR cluster is in the <code>Running</code> status, you can monitor the progress of the Spark job by browsing to the Spark UI at <code>http://&lt;ip of master node of EMR cluster&gt;:8088</code> . Please <a href="/monitor_spark_ui">read this wiki</a> for more information<ul>
+<li>If you have selected a private subnet for <code>&lt;application_subnet_1&gt;</code> or if this subnet is accessible only through a bastion host, please port-forward  <code>&lt;ip of master node of EMR cluster&gt;:8088</code> and <code>&lt;ip of master node of EMR cluster&gt;:20888</code> using the terminal command <code>ssh -i "&lt;pem file for your ssh key&gt;" -N -L 8088:&lt;ip of master node of EMR cluster&gt;:8088 -L 20888:&lt;ip of master node of EMR cluster&gt;:20888 &lt;bastion user&gt;@&lt;bastion host address&gt;</code> and then open the API endpoint URL <a href="http://localhost:8088">http://localhost:8088</a></li>
 </ul>
 </li>
 </ul>
