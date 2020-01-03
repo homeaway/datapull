@@ -1210,7 +1210,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       streamName == null || streamName.trim.isEmpty )
       return;
 
-    val awsLogsClient  = appConfig.getCloudWatchClient(accessKey, secretKey, region);
+    val awsLogsClient  = appConfig.getCloudWatchClient(region);
     val calendar = Calendar.getInstance
     val logStreamsRequest = new DescribeLogStreamsRequest().withLogGroupName(groupName).withLimit(5)
     val logStreamList = awsLogsClient.describeLogStreams(logStreamsRequest).getLogStreams

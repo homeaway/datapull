@@ -1,8 +1,8 @@
 datapull:
   application:
-    region:
+    region: 
   secretstore:
-    vault:
+    vault: 
       vault_url:
       static_secret_path_prefix:
       vault_nonce:
@@ -25,11 +25,11 @@ datapull:
     consul_url:
     sleeptimeout: 60000
   api:
-    s3_bucket_name:
-    application_subnet_1:
-    application_subnet_2:
-    application_security_group:
-    vpc_id:
+    s3_bucket_name: 
+    application_subnet_1: 
+    application_subnet_2: 
+    application_security_group: 
+    vpc_id: 
     load_balancer_certificate_arn:
   emr:
     emr_security_group_master:
@@ -44,7 +44,7 @@ datapull:
       Platform: EMRPipeline
   logger:
     cloudwatch:
-      groupName: /ecs/datapull-web-api
+      groupName: /ecs/datatools-datapull-api
       streamName: datapull-stream
     mssql:
       server:

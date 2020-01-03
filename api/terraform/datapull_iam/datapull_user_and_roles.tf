@@ -106,8 +106,8 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split1" {
                 "arn:aws:s3:::${var.datapull_s3_bucket}",
                 "arn:aws:s3:::${var.datapull_s3_bucket}/*",
                 "arn:aws:iam::*:role/emr_ec2_datapull_role",
-                "arn:aws:ecr:*:*:repository/*datapull*",
-                "arn:aws:ecs:*:*:cluster/*datapull*"
+                "arn:aws:ecr:*:*:repository/${var.docker_image_name}*",
+                "arn:aws:ecs:*:*:cluster/${var.docker_image_name}*"
             ]
         }
     ]
@@ -137,8 +137,8 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split2" {
                 "ecs:DescribeServices"
             ],
             "Resource": [
-              "arn:aws:ecr:*:*:repository/*datapull*",
-              "arn:aws:ecs:*:*:cluster/*datapull*"
+              "arn:aws:ecr:*:*:repository/${var.docker_image_name}*",
+              "arn:aws:ecs:*:*:cluster/${var.docker_image_name}*"
             ]
         },
         {
@@ -210,7 +210,7 @@ resource "aws_iam_policy" "datapull_passrole_policy" {
         "Action": "iam:PassRole",
         "Resource": [
             "arn:aws:iam::*:role/EMR_DefaultRole",
-            "arn:aws:iam::*:role/user_iam_role"
+            "arn:aws:iam::*:role/emr_ec2_datapull_role"
         ]
     } ]
 }
@@ -243,20 +243,31 @@ resource "aws_iam_policy" "datapull_cloudwatch_logs_policy" {
   policy = <<EOF
 {
     "Version": "2012-10-17",
-    "Statement": [ {
+    "Statement": [ 
+      {
           "Effect": "Allow",
           "Action": [
             "logs:PutRetentionPolicy",
             "logs:ListTagsLogGroup",
             "logs:TagLogGroup",
-            "logs:PutLogEvents",
-            "logs:GetLogEvents"
+            "logs:DeleteLogGroup"
           ],
           "Resource": [
-             "arn:aws:logs:*:*:log-group:/ecs/datapull*:*",
-             "arn:aws:logs:*:*:log-group:/ecs/datapull*:*",
-              "arn:aws:logs:*:*:log-group:/ecs/datapull*",
-             "arn:aws:logs:*:*:log-group:/ecs/datapull*"
+             "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*:*",
+             "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*:*",
+              "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*",
+             "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*"
+          ]
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:PutLogEvents",
+            "logs:GetLogEvents",
+            "logs:DeleteLogStream"
+          ],
+          "Resource": [
+            "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}:log-stream:*"
           ]
         },
         {
@@ -494,8 +505,10 @@ resource "aws_iam_access_key" "datapull_iam_access_key" {
 
 output "datapull_user_access_key" {
   value = aws_iam_access_key.datapull_iam_access_key.id
+  sensitive = true
 }
 
 output "datapull_user_secret_key" {
   value = aws_iam_access_key.datapull_iam_access_key.secret
+  sensitive = true
 }

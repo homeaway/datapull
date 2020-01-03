@@ -144,7 +144,7 @@ resource "aws_ecs_service" "datapull-web-api_service" {
     security_groups = [
       var.security_grp]
     subnets         = [var.application_subnet_1,var.application_subnet_2]
-    assign_public_ip = "false"
+    assign_public_ip = false
   }
 
   load_balancer {

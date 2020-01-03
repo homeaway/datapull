@@ -39,3 +39,7 @@ api/*.iml
 *.jar
 *.class
 docs/site/
+core/m2/*
+api/m2/*
+api/src/main/resources/application.yml
+core/src/main/resources/application.yml
