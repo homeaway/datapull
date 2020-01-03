@@ -39,6 +39,11 @@ api/*.iml
 *.jar
 *.class
 docs/site/
+functional-test/.classpath
+functional-test/.factorypath
+functional-test/.project
+functional-test/.settings/org.eclipse.jdt.apt.core.prefs
+functional-test/.settings/org.eclipse.jdt.core.prefs
 core/m2/*
 api/m2/*
 api/src/main/resources/application.yml

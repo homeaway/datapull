@@ -15,4 +15,5 @@ nav:
     - Add support for Oracle and Teradata: oracle_teradata_support.md
     - Running DataPull on AWS EMR: emr_runbook.md
     - Sample input JSON: transformation.md
+    - Monitor DataPull jobs using Spark UI: monitor_spark_ui.md
     - FAQs: faq.md
