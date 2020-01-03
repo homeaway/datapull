@@ -13,7 +13,7 @@
         <meta name="description" content="Open Source Docs and Community Standards">
       
       
-        <link rel="canonical" href="https://homeaway.github.io/datapull/emr_runbook/">
+        <link rel="canonical" href="https://homeaway.github.io/datapull/aws_account_setup/">
       
       
         <meta name="author" content="Data Tools">
@@ -42,7 +42,7 @@
     
     
       
-        <title>Running DataPull on AWS EMR - DataPull Documentation</title>
+        <title>Setup VPC etc. in AWS Account for DataPull install - DataPull Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#runbook-for-using-datapull-deployed-on-aws-emr" tabindex="1" class="md-skip">
+      <a href="#setup-vpc-etc-in-aws-account-for-datapull-install" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -109,7 +109,7 @@
             </span>
             <span class="md-header-nav__topic">
               
-                Running DataPull on AWS EMR
+                Setup VPC etc. in AWS Account for DataPull install
               
             </span>
           
@@ -254,11 +254,63 @@
       
       
 
+  
 
-  <li class="md-nav__item">
-    <a href="../aws_account_setup/" title="Setup VPC etc. in AWS Account for DataPull install" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Setup VPC etc. in AWS Account for DataPull install
+      </label>
+    
+    <a href="./" title="Setup VPC etc. in AWS Account for DataPull install" class="md-nav__link md-nav__link--active">
       Setup VPC etc. in AWS Account for DataPull install
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#vpc-with-two-public-subnets" class="md-nav__link">
+    VPC with two public subnets
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#vpc-with-two-private-subnets-and-a-public-subnet" class="md-nav__link">
+    VPC with two private subnets and a public subnet
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#additional-steps-common-to-both-vpc-types-above" class="md-nav__link">
+    Additional Steps (common to both VPC types above)
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
     
@@ -278,77 +330,11 @@
       
       
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="__toc">
-        Running DataPull on AWS EMR
-      </label>
-    
-    <a href="./" title="Running DataPull on AWS EMR" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
       Running DataPull on AWS EMR
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#1-prepare-the-pipeline-json" class="md-nav__link">
-    1. Prepare the Pipeline JSON
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-submit-the-json-to-the-api" class="md-nav__link">
-    2. Submit the JSON to the API
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-check-status-of-the-job" class="md-nav__link">
-    3. Check status of the job
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-get-the-email-confirmation" class="md-nav__link">
-    4. Get the email confirmation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-check-s3-for-your-data" class="md-nav__link">
-    5. Check S3 for your data
-  </a>
-  
-</li>
-      
-      
-      
-      
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
     
@@ -409,36 +395,22 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-prepare-the-pipeline-json" class="md-nav__link">
-    1. Prepare the Pipeline JSON
+  <a href="#vpc-with-two-public-subnets" class="md-nav__link">
+    VPC with two public subnets
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-submit-the-json-to-the-api" class="md-nav__link">
-    2. Submit the JSON to the API
+  <a href="#vpc-with-two-private-subnets-and-a-public-subnet" class="md-nav__link">
+    VPC with two private subnets and a public subnet
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-check-status-of-the-job" class="md-nav__link">
-    3. Check status of the job
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#4-get-the-email-confirmation" class="md-nav__link">
-    4. Get the email confirmation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-check-s3-for-your-data" class="md-nav__link">
-    5. Check S3 for your data
+  <a href="#additional-steps-common-to-both-vpc-types-above" class="md-nav__link">
+    Additional Steps (common to both VPC types above)
   </a>
   
 </li>
@@ -459,76 +431,72 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/emr_runbook.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/aws_account_setup.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <h1 id="runbook-for-using-datapull-deployed-on-aws-emr">Runbook for using DataPull deployed on AWS EMR</h1>
-<h2 id="1-prepare-the-pipeline-json">1. Prepare the Pipeline JSON</h2>
-<p>1.1 Here's a sample JSON that joins Property information from SQL Server with units in cassandra and moves to s3. Please copy this to your favorite text editor</p>
-<pre><code class="json">{
-    &quot;useremailaddress&quot;: &quot;&lt;EMAIL_ADDRESS&gt;&quot;,
-    &quot;migrations&quot;: [
-        {
-            &quot;sources&quot;: [
-                {
-                    &quot;platform&quot;: &quot;mssql&quot;,
-                    &quot;server&quot;: &quot;server_name&quot;,
-                    &quot;database&quot;: &quot;db_name&quot;,
-                    &quot;table&quot;: &quot;properties_table&quot;,
-                    &quot;login&quot;: &quot;user_id&quot;,
-                    &quot;password&quot;: &quot;password&quot;,
-                    &quot;alias&quot;: &quot;properties&quot;
-                },
-                {
-                    &quot;platform&quot;: &quot;cassandra&quot;,
-                    &quot;cluster&quot;: &quot;cassandra_server_name&quot;,
-                    &quot;keyspace&quot;: &quot;keyspace_name&quot;,
-                    &quot;table&quot;: &quot;units&quot;,
-                    &quot;login&quot;: &quot;user_id&quot;,
-                    &quot;password&quot;: &quot;password&quot;,
-                    &quot;alias&quot;: &quot;units&quot;
-                }
-            ],
-            &quot;destination&quot;: {
-                &quot;platform&quot;: &quot;s3&quot;,
-                &quot;s3path&quot;: &quot;bucket_name/path/&quot;,
-                &quot;fileformat&quot;: &quot;csv&quot;
-            },
-            &quot;sql&quot;: {
-                &quot;query&quot;: &quot;select properties.pro_id, properties.pro_city, units.unituuid from properties JOIN units ON properties.pro_id = units.propertyid limit 100&quot;
-            }
-        }
-    ],
-    &quot;cluster&quot;: {
-        &quot;pipelinename&quot;: &quot;emr_cluster_name&quot;,
-        &quot;awsenv&quot;: &quot;dev&quot;,
-        &quot;portfolio&quot;: &quot;portfolio_name&quot;,
-        &quot;product&quot;: &quot;product_name&quot;,
-        &quot;ec2instanceprofile&quot;: &quot;ec2_instance_profile&quot;,
-        &quot;terminateclusterafterexecution&quot;: &quot;false&quot;,
-        &quot;ComponentInfo&quot;:&quot;YOUR_Component-UUID_dominion&quot;
-    }
-}
-</code></pre>
-
-<p>1.2 In the JSON in your text editor, please replace</p>
+                <h1 id="setup-vpc-etc-in-aws-account-for-datapull-install">Setup VPC etc. in AWS Account for DataPull install</h1>
+<p>The instructions for <a href="/install_on_aws">deploying DataPull on AWS Fargate and AWS EMR</a> assume that you already have available an S3 bucket, a VPC, subnets, etc. If you do not have these, or if you want to install DataPull in a new VPC dedicated to DataPull, please follow the following instructions. </p>
+<blockquote>
+<p>It is generally recommended to use your existing VPC, subnets, etc. since they are most likely already setup to access the data you want DatPull to work on, have access to other services like S3, etc. </p>
+</blockquote>
+<p>When creating a VPC for DataPull, you need at least two subnets in different availability zones, since AWS Application Load Balancer requires a minimum of two availability zones. You can create a VPC with two public subnets (approach modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html) or a VPC with two private subnets and a public subnet (modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html)</p>
+<h2 id="vpc-with-two-public-subnets">VPC with two public subnets</h2>
 <ul>
-<li><code>&lt;EMAIL_ADDRESS&gt;</code> with your email address.</li>
-<li>database  and cluster details with your database and cluster details.</li>
+<li>create VPC <code>datatools</code> with 2 IPv4 ranges <code>10.0.0.0/24</code><ul>
+<li>this creates a security group named <code>default</code> for this VPC</li>
+<li>this also creates a main route table with no name</li>
 </ul>
-<h2 id="2-submit-the-json-to-the-api">2. Submit the JSON to the API</h2>
-<p>2.1 Copy the modified JSON from your text editor, and paste it into the swagger API inputJson.
- Swagger API can be accessed through URL - http://IP-Address:8080/swagger-ui.html#!/data45pull45request45handler/startDatapull . If api is deployed in ECS FARGATE, replace the IP-Address with IP address of task of FARGATE app. If it is deployed in local, replace IP-Address with localhost. </p>
-<p>2.2 Click the "Try it out!" button to queue the data pull.</p>
-<h2 id="3-check-status-of-the-job">3. Check status of the job</h2>
-<p>We can check the status of the job in spark UI. Spark UI runs on the master node of the EMR cluster. URL of the Spark UI will be http://master-node-IP:8088/cluster So, to find the master node IP address ,login into your AWS console, navigate to EMR service and find your cluster. If pipelinename is datapull and awsenv is dev, the cluster name will be dev-emr-datapull-pipeline. Find the IP address of the master node from hardware tab. </p>
-<h2 id="4-get-the-email-confirmation">4. Get the email confirmation</h2>
-<p>Wait for a few minutes, and check your email to get a confirmation when your data pull job is complete.</p>
-<h2 id="5-check-s3-for-your-data">5. Check S3 for your data</h2>
+</li>
+<li>add a rule to security group <code>default</code>: to allow inbound traffic to tcp port 22 (SSH) from your client<ul>
+<li>This assumes that you will have a Bastion node or equivalent to access DataPull's API and Spark UI. If you trust your client network's public IP to be static or not be spoofed, you can allow all inbound traffic from your client, and thus obviate the need for a Bastion node or equivalent</li>
+</ul>
+</li>
+<li>this also creates a main route table with no name</li>
+<li>create two subnets in the VPC, each one in a different availability zone in your region.<ul>
+<li>subnet <code>datatools-external-1</code> with IPv4 range <code>10.0.0.0/25</code></li>
+<li>subnet <code>datatools-external-2</code> with IPv4 range <code>10.0.0.128/25</code></li>
+</ul>
+</li>
+<li>create internet gateway <code>datatools</code> for vpc <code>datatools</code></li>
+<li>create route for destination <code>0.0.0.0/0</code> to internet gateway <code>datatools</code> for default the route table for the VPC</li>
+</ul>
+<h2 id="vpc-with-two-private-subnets-and-a-public-subnet">VPC with two private subnets and a public subnet</h2>
 <ul>
-<li>Log into your AWS console.</li>
-<li>Navigate to your S3 bucket.</li>
-<li>Check the data under s3 path provided in the input json.</li>
+<li>create VPC <code>datatools</code> with 2 IPv4 ranges <code>10.0.0.0/24</code>, <code>10.1.0.0/24</code><ul>
+<li>this creates a security group named <code>default</code> for this VPC</li>
+<li>this also creates a main route table with no name</li>
+</ul>
+</li>
+<li>add a rule to security group <code>default</code>: to allow inbound traffic to tcp port 22 (SSH) from your client network (or from your public IP as a last resort)</li>
+<li>create three subnets in the VPC, each one in a different availability zone in your region.<ul>
+<li>subnet <code>datatools-internal-1</code> with IPv4 range <code>10.0.0.0/25</code></li>
+<li>subnet <code>datatools-internal-2</code> with IPv4 range <code>10.0.0.128/25</code></li>
+<li>subnet <code>datatools-external-1</code> with IPv4 range <code>10.1.0.0/24</code></li>
+</ul>
+</li>
+<li>create internet gateway <code>datatools</code> for vpc <code>datatools</code></li>
+<li>create route table <code>datatools-external</code> in vpc <code>datatools</code></li>
+<li>create route for detination <code>0.0.0.0/0</code> to internet gateway <code>datatools</code> for route table <code>datatools-external</code></li>
+<li>associate subnet <code>datatools-external-1</code> to route table <code>datatools-external</code><ul>
+<li>subnets <code>datatools-internal-[1-2]</code> will remain associated to the main/default route table (not route table <code>datatools-external</code>) for the VPC <code>datatools</code></li>
+</ul>
+</li>
+<li>create NAT gateway in the subnet <code>datatools-external-1</code> and with a new/existing elastic IP. </li>
+<li>add an entry to the default route table with destination as <code>0.0.0.0/0</code>  and Target as the NAT gateway</li>
+</ul>
+<h2 id="additional-steps-common-to-both-vpc-types-above">Additional Steps (common to both VPC types above)</h2>
+<ul>
+<li>create S3 bucket <code>datatools-datapull</code> with SSE-S3 encryption in the same region as the VPC</li>
+<li>create gateway endpoint for S3, associated with VPC <code>datatools</code> and the default route table (not route table <code>datatools-external</code>). The policy should be <code>Full Access</code></li>
+<li>create a bastion host by following https://aws.amazon.com/blogs/security/how-to-record-ssh-sessions-established-through-a-bastion-host/ with<ul>
+<li>existing keypair, else no SSH possible</li>
+<li>security groups <code>default</code> (that allows SSH connections from your client network) and <code>ElasticMapReduce-Master-Private</code> (to allow bastion node to connect to EMR master)<blockquote>
+<p>For simplicity (at the cost of auditing and security features like 2FA), you can spin up a <code>t2.micro</code> EC2 instance with AWS Linux 2 AMI as an alternative to a bastion host; it will allow ssh tunneling. 
+If you are using a VPC with only public subnets, and if you trust your client network's public IP to be static or not be spoofed, you can allow all inbound traffic from your client, and thus obviate the need for a Bastion node or equivalent</p>
+</blockquote>
+</li>
+</ul>
+</li>
 </ul>
                 
                   
@@ -550,7 +518,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../oracle_teradata_support/" title="Add support for Oracle and Teradata" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../install_on_aws/" title="Installing DataPull on AWS Fargate and S3" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -559,19 +527,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Add support for Oracle and Teradata
+                Installing DataPull on AWS Fargate and S3
               </span>
             </div>
           </a>
         
         
-          <a href="../transformation/" title="Sample input JSON" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../oracle_teradata_support/" title="Add support for Oracle and Teradata" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Sample input JSON
+                Add support for Oracle and Teradata
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">

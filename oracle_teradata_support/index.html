@@ -13,7 +13,7 @@
         <meta name="description" content="Open Source Docs and Community Standards">
       
       
-        <link rel="canonical" href="https://homeaway.github.io/datapull/emr_runbook/">
+        <link rel="canonical" href="https://homeaway.github.io/datapull/oracle_teradata_support/">
       
       
         <meta name="author" content="Data Tools">
@@ -42,7 +42,7 @@
     
     
       
-        <title>Running DataPull on AWS EMR - DataPull Documentation</title>
+        <title>Add support for Oracle and Teradata - DataPull Documentation</title>
       
     
     
@@ -83,7 +83,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="__drawer"></label>
     
-      <a href="#runbook-for-using-datapull-deployed-on-aws-emr" tabindex="1" class="md-skip">
+      <a href="#support-for-oracle-and-teradata-sourcesdestinations-for-datapull" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -109,7 +109,7 @@
             </span>
             <span class="md-header-nav__topic">
               
-                Running DataPull on AWS EMR
+                Add support for Oracle and Teradata
               
             </span>
           
@@ -266,18 +266,6 @@
       
       
 
-
-  <li class="md-nav__item">
-    <a href="../oracle_teradata_support/" title="Add support for Oracle and Teradata" class="md-nav__link">
-      Add support for Oracle and Teradata
-    </a>
-  </li>
-
-    
-      
-      
-      
-
   
 
 
@@ -289,11 +277,11 @@
     
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
-        Running DataPull on AWS EMR
+        Add support for Oracle and Teradata
       </label>
     
-    <a href="./" title="Running DataPull on AWS EMR" class="md-nav__link md-nav__link--active">
-      Running DataPull on AWS EMR
+    <a href="./" title="Add support for Oracle and Teradata" class="md-nav__link md-nav__link--active">
+      Add support for Oracle and Teradata
     </a>
     
       
@@ -307,36 +295,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-prepare-the-pipeline-json" class="md-nav__link">
-    1. Prepare the Pipeline JSON
+  <a href="#steps-to-download-oracle-ojdbc-jar" class="md-nav__link">
+    Steps to download Oracle ojdbc jar
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-submit-the-json-to-the-api" class="md-nav__link">
-    2. Submit the JSON to the API
+  <a href="#steps-to-download-teradata-jar" class="md-nav__link">
+    Steps to download Teradata jar
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-check-status-of-the-job" class="md-nav__link">
-    3. Check status of the job
+  <a href="#steps-to-include-oracle-into-the-project" class="md-nav__link">
+    Steps to include Oracle into the project
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-get-the-email-confirmation" class="md-nav__link">
-    4. Get the email confirmation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-check-s3-for-your-data" class="md-nav__link">
-    5. Check S3 for your data
+  <a href="#steps-to-include-teradata-into-the-project" class="md-nav__link">
+    Steps to include Teradata into the project
   </a>
   
 </li>
@@ -349,6 +330,18 @@
   
 </nav>
     
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
+      Running DataPull on AWS EMR
+    </a>
   </li>
 
     
@@ -409,36 +402,29 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-prepare-the-pipeline-json" class="md-nav__link">
-    1. Prepare the Pipeline JSON
+  <a href="#steps-to-download-oracle-ojdbc-jar" class="md-nav__link">
+    Steps to download Oracle ojdbc jar
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-submit-the-json-to-the-api" class="md-nav__link">
-    2. Submit the JSON to the API
+  <a href="#steps-to-download-teradata-jar" class="md-nav__link">
+    Steps to download Teradata jar
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#3-check-status-of-the-job" class="md-nav__link">
-    3. Check status of the job
+  <a href="#steps-to-include-oracle-into-the-project" class="md-nav__link">
+    Steps to include Oracle into the project
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-get-the-email-confirmation" class="md-nav__link">
-    4. Get the email confirmation
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-check-s3-for-your-data" class="md-nav__link">
-    5. Check S3 for your data
+  <a href="#steps-to-include-teradata-into-the-project" class="md-nav__link">
+    Steps to include Teradata into the project
   </a>
   
 </li>
@@ -459,77 +445,65 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/emr_runbook.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/oracle_teradata_support.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <h1 id="runbook-for-using-datapull-deployed-on-aws-emr">Runbook for using DataPull deployed on AWS EMR</h1>
-<h2 id="1-prepare-the-pipeline-json">1. Prepare the Pipeline JSON</h2>
-<p>1.1 Here's a sample JSON that joins Property information from SQL Server with units in cassandra and moves to s3. Please copy this to your favorite text editor</p>
-<pre><code class="json">{
-    &quot;useremailaddress&quot;: &quot;&lt;EMAIL_ADDRESS&gt;&quot;,
-    &quot;migrations&quot;: [
-        {
-            &quot;sources&quot;: [
-                {
-                    &quot;platform&quot;: &quot;mssql&quot;,
-                    &quot;server&quot;: &quot;server_name&quot;,
-                    &quot;database&quot;: &quot;db_name&quot;,
-                    &quot;table&quot;: &quot;properties_table&quot;,
-                    &quot;login&quot;: &quot;user_id&quot;,
-                    &quot;password&quot;: &quot;password&quot;,
-                    &quot;alias&quot;: &quot;properties&quot;
-                },
-                {
-                    &quot;platform&quot;: &quot;cassandra&quot;,
-                    &quot;cluster&quot;: &quot;cassandra_server_name&quot;,
-                    &quot;keyspace&quot;: &quot;keyspace_name&quot;,
-                    &quot;table&quot;: &quot;units&quot;,
-                    &quot;login&quot;: &quot;user_id&quot;,
-                    &quot;password&quot;: &quot;password&quot;,
-                    &quot;alias&quot;: &quot;units&quot;
-                }
-            ],
-            &quot;destination&quot;: {
-                &quot;platform&quot;: &quot;s3&quot;,
-                &quot;s3path&quot;: &quot;bucket_name/path/&quot;,
-                &quot;fileformat&quot;: &quot;csv&quot;
-            },
-            &quot;sql&quot;: {
-                &quot;query&quot;: &quot;select properties.pro_id, properties.pro_city, units.unituuid from properties JOIN units ON properties.pro_id = units.propertyid limit 100&quot;
-            }
-        }
-    ],
-    &quot;cluster&quot;: {
-        &quot;pipelinename&quot;: &quot;emr_cluster_name&quot;,
-        &quot;awsenv&quot;: &quot;dev&quot;,
-        &quot;portfolio&quot;: &quot;portfolio_name&quot;,
-        &quot;product&quot;: &quot;product_name&quot;,
-        &quot;ec2instanceprofile&quot;: &quot;ec2_instance_profile&quot;,
-        &quot;terminateclusterafterexecution&quot;: &quot;false&quot;,
-        &quot;ComponentInfo&quot;:&quot;YOUR_Component-UUID_dominion&quot;
-    }
-}
+                <h1 id="support-for-oracle-and-teradata-sourcesdestinations-for-datapull">Support for Oracle and Teradata sources/destinations for DataPull</h1>
+<p>To use Oracle and Teradata as sources/destinations for DataPull, you need to manually download their driver JARs from their companys' websites and add them as dependencies in the <code>/core/pom.xml</code> file of this repo. </p>
+<h2 id="steps-to-download-oracle-ojdbc-jar">Steps to download Oracle ojdbc jar</h2>
+<ul>
+<li>Go to the URL https://www.oracle.com/database/technologies/appdev/jdbc-ucp-19c-downloads.html </li>
+<li>Accept the license agreement<ul>
+<li>Oracle will ask you to create an account if you don't have one already</li>
+</ul>
+</li>
+<li>Download the latest version of the ojdbc JAR (<code>ojdbc10.jar</code> as of 12/30/2019) </li>
+</ul>
+<h2 id="steps-to-download-teradata-jar">Steps to download Teradata jar</h2>
+<ul>
+<li>Go to the URL https://downloads.teradata.com/download/connectivity/jdbc-driver.</li>
+<li>For downloading Teradata jar, you will need to create an account on the Teradata website</li>
+<li>The download will be available in either .tar or .zip format. Download the latest archive file whose name will be in the format <code>TeraJDBC__indep_indep_{version}.zip</code><ul>
+<li>The archive file will contain two jar files <code>terajdbc4.jar</code> and <code>tdgssconfig.jar</code>. Both jars are needed for Teradata jdbc functionality</li>
+</ul>
+</li>
+</ul>
+<h2 id="steps-to-include-oracle-into-the-project">Steps to include Oracle into the project</h2>
+<ul>
+<li>Run this command to include Oracle jar into maven repo. Run this command from folder where Oracle jars are present. Change the value of <code>-Dversion=11.2.0.3</code> in the command according to downloaded jar version.</li>
+<li><b>Command</b>  :<code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=ojdbc6.jar -DgroupId=com.oracle -DartifactId=ojdbc6 -Dversion=11.2.0.3 -Dpackaging=jar</code></li>
+<li>Add below mentioned dependency to pom.xml(core/pom.xml) in DataPull core. Replace {version} with the downloaded jar version.</li>
+</ul>
+<pre><code>&lt;dependency&gt; 
+    &lt;groupId&gt;com.oracle&lt;/groupId&gt;
+    &lt;artifactId&gt;ojdbc6&lt;/artifactId&gt;
+    &lt;version&gt;{version}&lt;/version&gt;
+&lt;/dependency&gt;
 </code></pre>
 
-<p>1.2 In the JSON in your text editor, please replace</p>
+<h2 id="steps-to-include-teradata-into-the-project">Steps to include Teradata into the project</h2>
 <ul>
-<li><code>&lt;EMAIL_ADDRESS&gt;</code> with your email address.</li>
-<li>database  and cluster details with your database and cluster details.</li>
+<li>Run these commands to include Teradata jars into maven repo. Run this command from folder where Teradata jars are present. Change the value of <code>-Dversion=16.20.00.10</code> in the command according to downloaded jar version.</li>
+<li>
+<p><b>Commands</b>  : <code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=terajdbc4.jar -DgroupId=com.teradata -DartifactId=terajdbc4 -Dversion=16.20.00.10 -Dpackaging=jar</code></p>
+<p><code>docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=tdgssconfig.jar -DgroupId=com.teradata -DartifactId=tdgssconfig -Dversion=16.20.00.10 -Dpackaging=jar</code></p>
+</li>
+<li>
+<p>Add below mentioned dependency to pom.xml(core/pom.xml) in DataPull core. Replace {version} with the downloaded jar version.</p>
+</li>
 </ul>
-<h2 id="2-submit-the-json-to-the-api">2. Submit the JSON to the API</h2>
-<p>2.1 Copy the modified JSON from your text editor, and paste it into the swagger API inputJson.
- Swagger API can be accessed through URL - http://IP-Address:8080/swagger-ui.html#!/data45pull45request45handler/startDatapull . If api is deployed in ECS FARGATE, replace the IP-Address with IP address of task of FARGATE app. If it is deployed in local, replace IP-Address with localhost. </p>
-<p>2.2 Click the "Try it out!" button to queue the data pull.</p>
-<h2 id="3-check-status-of-the-job">3. Check status of the job</h2>
-<p>We can check the status of the job in spark UI. Spark UI runs on the master node of the EMR cluster. URL of the Spark UI will be http://master-node-IP:8088/cluster So, to find the master node IP address ,login into your AWS console, navigate to EMR service and find your cluster. If pipelinename is datapull and awsenv is dev, the cluster name will be dev-emr-datapull-pipeline. Find the IP address of the master node from hardware tab. </p>
-<h2 id="4-get-the-email-confirmation">4. Get the email confirmation</h2>
-<p>Wait for a few minutes, and check your email to get a confirmation when your data pull job is complete.</p>
-<h2 id="5-check-s3-for-your-data">5. Check S3 for your data</h2>
-<ul>
-<li>Log into your AWS console.</li>
-<li>Navigate to your S3 bucket.</li>
-<li>Check the data under s3 path provided in the input json.</li>
-</ul>
+<pre><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.teradata&lt;/groupId&gt;
+    &lt;artifactId&gt;terajdbc4&lt;/artifactId&gt;
+    &lt;version&gt;{version}&lt;/version&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;com.teradata&lt;/groupId&gt;
+    &lt;artifactId&gt;tdgssconfig&lt;/artifactId&gt;
+    &lt;version&gt;{version}&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
                 
                   
                 
@@ -550,7 +524,7 @@
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../oracle_teradata_support/" title="Add support for Oracle and Teradata" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../aws_account_setup/" title="Setup VPC etc. in AWS Account for DataPull install" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -559,19 +533,19 @@
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Add support for Oracle and Teradata
+                Setup VPC etc. in AWS Account for DataPull install
               </span>
             </div>
           </a>
         
         
-          <a href="../transformation/" title="Sample input JSON" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Sample input JSON
+                Running DataPull on AWS EMR
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">
