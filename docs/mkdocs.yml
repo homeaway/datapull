@@ -13,4 +13,5 @@ nav:
     - Installing DataPull on AWS Fargate and S3: install_on_aws.md
     - Running DataPull on AWS EMR: emr_runbook.md
     - Sample input JSON: transformation.md
+    - Monitor DataPull jobs using Spark UI: monitor_spark_ui.md
     - FAQs: faq.md
