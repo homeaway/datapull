@@ -191,7 +191,7 @@ class Migration extends  SparkListener {
       if (destinationMap("platform") == "cassandra") {
         destinationMap = destinationMap ++ deriveClusterIPFromConsul(destinationMap)
         dataframeFromTo.dataFrameToCassandra(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("keyspace"), destinationMap("table"), destinationMap("login"), destinationMap("password"), destinationMap("local_dc"), destination.optJSONObject("sparkoptions"), dft, reportRowHtml, destinationMap("vaultenv"),destinationMap.getOrElse("secretstore","vault"))
-      } else if (destinationMap("platform") == "mssql" || destinationMap("platform") == "mysql" || destinationMap("platform") == "postgres") {
+      } else if (destinationMap("platform") == "mssql" || destinationMap("platform") == "mysql" || destinationMap("platform") == "postgres" || destinationMap("platform") == "oracle" || destinationMap("platform") == "teradata") {
         dataframeFromTo.dataFrameToRdbms(destinationMap("platform"), destinationMap("awsenv"), destinationMap("server"), destinationMap("database"), destinationMap("table"), destinationMap("login"), destinationMap("password"), dft, destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destinationMap.getOrElse("sslenabled", "false"), destinationMap.getOrElse("vault", null), destination.optJSONObject("jdbcoptions"))
       } else if (destinationMap("platform") == "s3") {
         setAWSCredentials(sparkSession, destinationMap)
@@ -399,7 +399,7 @@ class Migration extends  SparkListener {
     var platform = propertiesMap("platform")
     var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
 
-    if (platform == "mssql" || platform =="mysql" ||  platform== "postgres") {
+    if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
       val sqlQuery = mssqlPlatformQueryFromS3File(sparkSession, platformObject)
       dataframeFromTo.rdbmsToDataFrame(platform,propertiesMap("awsenv"), propertiesMap("server"), propertiesMap("database"), if (sqlQuery == "") {
         propertiesMap("table")
@@ -511,18 +511,12 @@ class Migration extends  SparkListener {
       for (i <- 0 to lengthOfArray - 1) {
 
         var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
-        if (platform == "mssql") {
-          dataframeFromTo.rdbmsRunCommand(platform,propertiesMap("awsenv"), propertiesMap("server"),propertiesMap.getOrElse("port", null), propertiesMap.getOrElse("sslenabled", null), propertiesMap("database"), command.getJSONObject(i).getString("query"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"),propertiesMap.getOrElse("secretstore","vault"))
-        }
-        else if (platform == "mysql") {
+        if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
           dataframeFromTo.rdbmsRunCommand(platform,propertiesMap("awsenv"), propertiesMap("server"),propertiesMap.getOrElse("port", null), propertiesMap.getOrElse("sslenabled", null), propertiesMap("database"), command.getJSONObject(i).getString("query"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"),propertiesMap.getOrElse("secretstore","vault"))
         }
         else if (platform == "cassandra") {
           propertiesMap = propertiesMap ++ deriveClusterIPFromConsul(jsonObjectPropertiesToMap(List("cluster", "cluster_key", "consul_dc"), platformObject))
           dataframeFromTo.cassandraRunCommand(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap("keyspace"), propertiesMap("login"), propertiesMap("password"), propertiesMap("local_dc"), platformObject.optJSONObject("sparkoptions"), command.getJSONObject(i).getString("query"), reportbodyHtml, propertiesMap("vaultenv"),propertiesMap.getOrElse("secretstore","vault"))
-        } else if (platform == "postgres") {
-          println(command.getJSONObject(i).getString("query"))
-          dataframeFromTo.rdbmsRunCommand(platform,propertiesMap("awsenv"), propertiesMap("server"),propertiesMap.getOrElse("port", null), propertiesMap.getOrElse("sslenabled", null), propertiesMap("database"), command.getJSONObject(i).getString("query"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"),propertiesMap.getOrElse("secretstore","vault"))
         } else if (platform == "mongodb") {
           propertiesMap = propertiesMap ++ deriveClusterIPFromConsul(jsonObjectPropertiesToMap(List("clustername", "cluster_key", "consul_dc"), platformObject))
           dataframeFromTo.mongoRunCommand(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), command.getJSONObject(i).getString("query"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean])
