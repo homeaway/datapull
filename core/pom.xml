@@ -14,8 +14,13 @@
             <url>http://packages.confluent.io/maven/</url>
         </repository>
         <repository>
+            <id>SparkPackagesRepo</id>
+            <url>http://dl.bintray.com/spark-packages/maven</url>
+        </repository>
+        <repository>
             <id>Neo4J</id>
             <url>https://m2.neo4j.org/content/repositories/releases/</url>
+
         </repository>
     </repositories>
     <!--<MAVEN SCALA Plugins with JAR PLUGIN TO BUILD PROJECT WITH DEPENDENCIES>-->
@@ -254,9 +259,9 @@
             <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>org.neo4j.spark</groupId>
-            <artifactId>neo4j-spark-connector_2.11</artifactId>
-            <version>1.0.0-RC1</version>
+            <groupId>neo4j-contrib</groupId>
+            <artifactId>neo4j-spark-connector</artifactId>
+            <version>2.1.0-M4</version>
         </dependency>
         <dependency>
             <groupId>com.typesafe</groupId>

@@ -36,7 +36,6 @@ import org.springframework.core.env.Environment;
 import java.util.Arrays;
 
 @SpringBootApplication
-@EnableAutoConfiguration
 @ComponentScan(basePackages = "com.homeaway.datapullclient")
 @Slf4j
 public class DatapullclientApplication{

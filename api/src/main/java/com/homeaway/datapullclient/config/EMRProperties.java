@@ -20,32 +20,30 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 import java.util.HashMap;
 import java.util.Map;
 
-@EnableConfigurationProperties
+@Configuration
 @ConfigurationProperties(prefix = "datapull.emr")
+@EnableConfigurationProperties
 @Data
+
+
 public class EMRProperties {
 
     @Value("${ec2_key_name:}")
-    private String keyName;
-
-    @Value("${subnet_id:}")
-    private String subnet;
+    private String ec2KeyName;
 
     @Value("${emr_security_group_master:}")
-    private String masterSg;
+    private String emrSecurityGroupMaster;
 
     @Value("${emr_security_group_slave:}")
-    private String slaveSg;
+    private String emrSecurityGroupSlave;
 
     @Value("${emr_security_group_service_access:}")
-    private String serviceAccessSg;
-
-    @Value("${emr_region:}")
-    private String emrRegion;
+    private String emrSecurityGroupServiceAccess;
 
     @Value("${instance_count:3}")
     private int instanceCount;
@@ -63,7 +61,7 @@ public class EMRProperties {
     private String jobFlowRole;
 
     @Value( "${emr_release:emr-5.15.0}" )
-    private String emrReleaseVersion;
+    private String emrRelease;
 
     @Value( "${bootstrap_folder_path:}" )
     private String bootstrapFolderPath;

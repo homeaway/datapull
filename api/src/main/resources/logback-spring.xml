@@ -1,8 +1,8 @@
 <!-- turn debug=true on for logback-test.xml to help debug logging configurations. -->
 <configuration scan="true">
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
-    <property resource="application-${env}.yml" />
-    <property name="LOG_PATH" value="/Users/srao/logs"/>
+    <property resource="application.yml" />
+    <property name="LOG_PATH" value="/Users/srigajjala/logs"/>
     <springProperty scope="context" name="CLOUDWATCH_GROUP_NAME" source="datapull.logger.cloudwatch.groupName"/>
     <springProperty scope="context" name="CLOUDWATCH_STREAM_NAME" source="datapull.logger.cloudwatch.streamName"/>
     <!--<springProperty scope="context" name="ACCESS_KEY" source="ACCESS_KEY"/>

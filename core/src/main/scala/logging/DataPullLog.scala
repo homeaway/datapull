@@ -88,8 +88,9 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
     * Persists the log in the form of a dataframe , to disk. If running locally, this is the filesystem; else it is S3
     */
   def persistLog(df: org.apache.spark.sql.DataFrame, logSubFolder: String, sparkSession: SparkSession):Unit = {
-    var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
-    dataframeFromTo.dataFrameToFile(appConfig.s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal),null, sparkSession,false,null,null,null,null,null)
+    val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
+    val s3loggingfolder= appConfig.s3bucket+"/datapull-opensource/logs/"
+    dataframeFromTo.dataFrameToFile(s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal),null, sparkSession,false,null,null,null,null,null)
 
     if (sparkSession.sparkContext.isLocal == false) {
       logDataFrameToCloudWatch(appConfig.cloudWatchLogGroup, appConfig.cloudWatchLogStream, appConfig.cloudWatchLogRegion, appConfig.accessKeyForCloudWatchLog, appConfig.secretKeyForCloudWatchLog, df, sparkSession);
@@ -101,7 +102,7 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
       streamName == null || streamName.trim.isEmpty )
       return;
 
-    val awsLogsClient  = appConfig.getCloudWatchClient(accessKey, secretKey, region);
+    val awsLogsClient = appConfig.getCloudWatchClient(region);
     val logEvents = new java.util.ArrayList[InputLogEvent]
     import sparkSession.implicits._
     val logStreamsRequest = new DescribeLogStreamsRequest().withLogGroupName(groupName)

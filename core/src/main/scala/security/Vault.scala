@@ -28,8 +28,8 @@ class Vault(appConfig: AppConfig) extends SecretStore {
     var usernameAndPassword: Map[String, String] = Map()
     var vaultEnv_effective = if (vaultEnv == "") awsEnv else vaultEnv
     val token = GetVaultToken(awsEnv, vaultEnv_effective)
-    val url = appConfig.vault_url.replaceFirst("VAULTENV", vaultEnv_effective) + ""+appConfig.vault_path_env + awsEnv+appConfig.vault_path_clus + clusterName + "/" + userName
-    val credsString = helper.getHttpResponse(url, 10000, 10000, "GET", Map("Content-Type" -> "application/x-www-form-urlencoded", "X-Vault-Token" -> token)).ResponseBody
+    val url = appConfig.vault_url + "/" + appConfig.static_secret_path_prefix + "/" + clusterName + "/" + userName
+    val credsString = getCredsString(url, token)
     val credJSON = new JSONObject(credsString)
     val username = credJSON.getJSONObject("data").getString("username")
     val password = credJSON.getJSONObject("data").getString("password")
@@ -37,19 +37,21 @@ class Vault(appConfig: AppConfig) extends SecretStore {
     usernameAndPassword
   }
 
+  private def getCredsString(url: String, token: String): String = {
+    return (helper.getHttpResponse(url, 10000, 10000, "GET", Map("Content-Type" -> "application/x-www-form-urlencoded", "X-Vault-Token" -> token)).ResponseBody)
+  }
+
   override def getSecret(vaultPath: String, vaultKey: String,env:String):String={
     var usernameAndPassword: Map[String, String] = Map()
     var vaultEnv_effective = env
     val token = GetVaultToken(env, vaultEnv_effective)
     val url = appConfig.vault_url.replaceFirst("VAULTENV", vaultEnv_effective)+ ""+vaultPath
-    val credsString = helper.getHttpResponse(url, 10000, 10000, "GET", Map("Content-Type" -> "application/x-www-form-urlencoded", "X-Vault-Token" -> token)).ResponseBody
+    val credsString = getCredsString(url, token)
     val credJSON = new JSONObject(credsString)
     credJSON.getJSONObject("data").getString(vaultKey)
   }
 
   def GetVaultToken(awsEnv: String, vaultEnv: String): String = {
-
-
     var jsonBody = new JSONObject()
      jsonBody.put("role", helper.GetEC2Role())
     jsonBody.put("pkcs7", helper.GetEC2pkcs7())

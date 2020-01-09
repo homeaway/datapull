@@ -1,3 +1,4 @@
+
 # Compiled class file
 *.class
 
@@ -29,3 +30,7 @@ target/*
 
 .idea/workspace.xml
 report/extent-report.html
+.classpath
+.factorypath
+.project
+.settings/*
