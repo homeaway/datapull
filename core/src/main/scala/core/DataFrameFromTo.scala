@@ -989,6 +989,15 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
       url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
     }
+    else if (platform == "oracle") {
+      driver = "oracle.jdbc.driver.OracleDriver"
+      url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+    }
+    else if (platform == "teradata") {
+      driver = "com.teradata.jdbc.TeraDriver"
+      url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+    }
+
     else if (platform == "mysql") {
       driver = "com.mysql.jdbc.Driver"
       url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
@@ -1060,6 +1069,15 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     if (platform == "mssql") {
       driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
       url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
+    }
+    else if (platform == "oracle") {
+      driver = "oracle.jdbc.driver.OracleDriver"
+      url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+
+    }
+    else if (platform == "teradata") {
+      driver = "com.teradata.jdbc.TeraDriver"
+      url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
     }
     else if (platform == "mysql") {
       driver = "com.mysql.jdbc.Driver"
@@ -1154,6 +1172,15 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       else if (platform == "mysql") {
         driver = "com.mysql.jdbc.Driver"
         url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
+      }
+      else if (platform == "oracle") {
+        driver = "oracle.jdbc.driver.OracleDriver"
+        url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+
+      }
+      else if (platform == "teradata") {
+        driver = "com.teradata.jdbc.TeraDriver"
+        url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
       }
 
       val consul = new Consul(server, appConfig)
