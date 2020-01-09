@@ -1,8 +1,8 @@
 # DataPull #
 <p align="center">
-  <img width="222" height="207" src="docs/docs/logo.png">
+  <img width="222" height="207" src="./docs/docs/media/logo.png">
 </p>
-DataPull is a self service Distributed ETL tool to join and transform data from heterogeneous datastores. It provides users an easy and consistent way to move data from one datastore to another. Supported datastores include, but are not limited to, SQLServer, MySql, Postgres, Cassandra, MongoDB and Kafka.
+DataPull is a self-service Distributed ETL tool to join and transform data from heterogeneous datastores. It provides users an easy and consistent way to move data from one datastore to another. Supported datastores include, but are not limited to, SQLServer, MySql, Postgres, Cassandra, MongoDB, and Kafka.
 
 ## Features
 1. JSON configuration-driven data movement - no Java/Scala knowledge needed
@@ -18,7 +18,7 @@ DataPull is a self service Distributed ETL tool to join and transform data from 
 > Note: DataPull consists of two services, an API written in Java Spring Boot, and a Spark app written in Scala. Although Scala apps can run on JDK 11, per [official docs](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-11-compatibility-notes) it is recommended that Java 8 be used for compiling Scala code. The effort to upgrade to OpenJDK 11+ is tracked [here](https://github.com/homeaway/datapull/issues/2)
 ### Build and execute within a Dockerised Spark environment
 > Pre-requisite: Docker Desktop
-* Clone this repo locally and checkout the master branch
+* Clone this repo locally and check out the master branch
   ```
   git clone git@github.com:homeaway/datapull.git
   ```
@@ -34,7 +34,7 @@ DataPull is a self service Distributed ETL tool to join and transform data from 
 * Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld.csv transformed into JSON.
 ### Build and debug within an IDE (IntelliJ) ###
 > Pre-requisite: IntelliJ with Scala plugin configured. Check out this [Help page](https://docs.scala-lang.org/getting-started-intellij-track/getting-started-with-scala-in-intellij.html) if this plugin is not installed.
-* Clone this repo locally and checkout the master branch
+* Clone this repo locally and check out the master branch
 * Open the folder [core](core) in IntelliJ IDE.
 * When prompted, add this project as a maven project.
 * By default, this source code is designed to execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.
@@ -60,11 +60,11 @@ Please create an issue in this git repo, using the bug report or feature request
 ### Documentation
 DataPull documentation is available at https://homeaway.github.io/datapull/ . To update this documentation, please do the following steps...
 - Create a [Feature Request](https://github.com/homeaway/datapull/issues/new?template=feature_request.md) issue
-  - Please fill in the title and the body of the issue. Our suggested title is "Documentation for `<what this documention is for>`". 
+  - Please fill in the title and the body of the issue. Our suggested title is "Documentation for `<what this documentation is for>`"
 - Fork the [DataPull](https://github.com/homeaway/datapull) repo
 - Install [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)
 - Clone your forked repo locally, and run `mkdocs serve` in Terminal from the `docs` folder of the repo
 - Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
-- Once you're done updating the documnentation, please commit and push your local master branch to your fork. Also, run `mkdocs gh-deploy` at the terminal to update and push your `gh-pages` branch. 
-- Create 2 PRs (one for master branch, one for gh-pges branch); and we'll review and approve them. 
+- Once you're done updating the documentation, please commit and push your local master branch to your fork. Also, run `mkdocs gh-deploy` at the terminal to update and push your `gh-pages` branch. 
+- Create 2 PRs (one for `master` branch, one for `gh-pages` branch) and we'll review and approve them. 
 - Thanks again, for helping make DataPull better!
