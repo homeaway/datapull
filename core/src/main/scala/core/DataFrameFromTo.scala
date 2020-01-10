@@ -84,7 +84,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     var filePrefix = ""
 
     if (isS3) {
-      filePrefix = "s3a://"
+      filePrefix = "s3://"
+      sparkSession.conf.set("fs.s3a.connection.maximum", 100)
     }
     def createOrReplaceTempViewOnDF(df: org.apache.spark.sql.DataFrame): org.apache.spark.sql.DataFrame = {
       df
@@ -148,7 +149,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     var groupByFieldsArray = groupByFields.split(",")
     var filePrefix = ""
     if (isS3) {
-      filePrefix = "s3a://"
+      filePrefix = "s3://"
+      sparkSession.conf.set("fs.s3a.connection.maximum", 100)
     }
     if(isSFTP)
     {
@@ -815,7 +817,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       val response = data.runCommand(org.bson.Document.parse(runCommand))
     }
 
-  def kafkaToDataFrame(bootstrapServers: String, topic: String, offset: String, schemaRegistries: String, deSerializer: String, s3Location: String, groupId: String, migrationId: String, jobId: String, sparkSession: org.apache.spark.sql.SparkSession, s3TempFolderDeletionError: mutable.StringBuilder): org.apache.spark.sql.DataFrame = {
+  def kafkaToDataFrame(bootstrapServers: String, topic: String, offset: String, schemaRegistries: String, keyDeserializer: String, deSerializer: String, s3Location: String, groupId: String, requiredOnlyValue: String, payloadColumnName: String, migrationId: String, jobId: String, sparkSession: org.apache.spark.sql.SparkSession, s3TempFolderDeletionError: mutable.StringBuilder): org.apache.spark.sql.DataFrame = {
 
     var groupId_temp = groupId
 
@@ -826,7 +828,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
 
     val props = new Properties()
     props.put("bootstrap.servers", bootstrapServers)
-    props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+    props.put("key.deserializer", keyDeserializer)
     props.put("value.deserializer", deSerializer)
     props.put("group.id", groupId_temp)
     props.put("auto.offset.reset", offset)
@@ -846,12 +848,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     var df: org.apache.spark.sql.DataFrame = null
     var count = 0
 
-    if (s3Location == null) {
-      tmp_s3 = "s3a://ha-dev-datamigration/test-data/" + topic + "_" + UUID.randomUUID().toString
-    }
-    else {
-      tmp_s3 = s3Location + "/migrationId=" + migrationId + "/jobId=" + jobId
-    }
+    tmp_s3 = s3Location + "/migrationId=" + migrationId + "/jobId=" + jobId
 
     val currentTime_Unix = System.currentTimeMillis()
 
@@ -897,7 +894,40 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
               break()
             }
 
-            list += consumerRecord.value().get("body").toString
+
+            if (requiredOnlyValue == "true") {
+
+              list += consumerRecord.value().get(payloadColumnName).toString
+
+            }
+            else {
+
+              val fullJSONObject: JSONObject = new JSONObject()
+              var key: JSONObject = null
+              var value: JSONObject = null
+              var valueString: String = null
+
+              var keyString: String = null
+
+              valueString = consumerRecord.value().toString
+              keyString = consumerRecord.key().toString
+
+              if (isJSONString(keyString)) {
+                key = new JSONObject(keyString)
+                fullJSONObject.put("key", key)
+              }
+              else {
+                fullJSONObject.put("key", consumerRecord.key())
+              }
+
+              value = new JSONObject(valueString)
+              if (value != null && value != "") {
+
+                fullJSONObject.put("value", value)
+              }
+              list += fullJSONObject.toString()
+
+            }
 
             if (list.length >= 80000) {
               df_temp = sparkSession.read.json(sparkSession.sparkContext.parallelize(list))
@@ -926,6 +956,17 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     df
   }
 
+  def isJSONString(jsonString: String): Boolean = {
+
+    try {
+      val json = new JSONObject(jsonString)
+    } catch {
+      case e: Exception => {
+        return false
+      }
+    }
+    return true
+  }
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
@@ -946,23 +987,19 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       val parser = new Schema.Parser()
       val schema = parser.parse(userSchema)
 
-      val producer = new KafkaProducer[Object,GenericRecord](props)
+      val producer = new KafkaProducer[Object, GenericRecord](props)
       val jsonParser = new JSONParser()
 
       partition.foreach((item: String) => {
         try {
           val jsonObject = jsonParser.parse(item).asInstanceOf[org.json.simple.JSONObject]
           val key = jsonObject.get(keyField).toString()
-
+          val value = jsonObject.get("value").toString
+          val header = jsonObject.get("header").toString
           val avroRecord = new GenericData.Record(schema)
 
-          //header == time, threadId, env, service, requestMarker, server
-
-          // val specificData = new SpecificData.SchemaConstructable {schema}
-
-          avroRecord.put("body", item)
-
-          //  println(avroRecord)
+          avroRecord.put("body", value)
+          avroRecord.put("header", header)
 
           val message = new ProducerRecord[Object, GenericRecord](topic, key, avroRecord)
           producer.send(message)
