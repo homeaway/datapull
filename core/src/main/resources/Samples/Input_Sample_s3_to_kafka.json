@@ -1,0 +1,35 @@
+{
+  "useremailaddress": "YOUR_ID@DOMAIN.com",
+  "migrations": [
+    {
+      "sources": [
+        {
+          "platform": "s3",
+          "s3path": "BUCKET_NAME/FOLDER_PATH",
+          "fileformat": "json",
+          "alias": "stage"
+        }
+      ],
+      "destination": {
+        "platform": "kafka",
+        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9091",
+        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
+        "topic": "TOPIC_NAME",
+        "Serializer": "io.confluent.kafka.serializers.KafkaAvroSerializer",
+        "keyField": "some_keyfield"
+      },
+      "sql": {
+        "query": "select some_keyfield, struct(startIpNum, endIpNum, locId, isp, organization) as value, struct(unix_timestamp() as time) as header from stage"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression": "21 * * * *",
+    "ComponentInfo": "YOUR_Component-UUID_dominion"
+  }
+}
