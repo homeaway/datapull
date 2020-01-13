@@ -124,7 +124,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean,secretstore:String, sparkSession: SparkSession,isSFTP: Boolean,login:String,host:String,password:String,awsEnv:String,vaultEnv:String): Unit = {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: String, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): Unit = {
 
     if( filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null )
     {
@@ -148,6 +148,24 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
 
     var groupByFieldsArray = groupByFields.split(",")
     var filePrefix = ""
+
+    var dft = sparkSession.emptyDataFrame
+
+    if (coalescefilecount == "") {
+      if (fileFormat == "csv") {
+        dft = df.coalesce(1)
+      }
+      else {
+        dft = df
+      }
+    }
+    else {
+      if (coalescefilecount.toInt < df.rdd.partitions.size)
+        dft = df.coalesce(coalescefilecount.toInt)
+      else if (coalescefilecount.toInt > df.rdd.partitions.size)
+        dft = df.repartition(coalescefilecount.toInt)
+    }
+
     if (isS3) {
       filePrefix = "s3://"
       sparkSession.conf.set("fs.s3a.connection.maximum", 100)
@@ -169,24 +187,24 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       if (fileFormat == "json") {
         if (groupByFields == "") {
 
-          df
+          dft
             .write
             .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
         } else {
-          df
+          dft
             .write
             .partitionBy(groupByFieldsArray: _*)
             .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
         }
       } else if (fileFormat == "csv") {
         if (groupByFields == "") {
-          df.coalesce(1)
+          dft.coalesce(1)
             .write
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
             .csv(s"$filePrefix$filePath")
         } else {
-          df.coalesce(1)
+          dft.coalesce(1)
             .write
             .partitionBy(groupByFieldsArray: _*)
             .option("header", "true")
@@ -195,14 +213,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         }
       } else if (fileFormat == "avro") {
         if (groupByFields == "") {
-          df.coalesce(1)
+          dft.coalesce(1)
             .write
             .format("com.databricks.avro")
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
             .save(s"$filePrefix$filePath")
         } else {
-          df.coalesce(1)
+          dft.coalesce(1)
             .write
             .format("com.databricks.avro")
             .partitionBy(groupByFieldsArray: _*)
@@ -214,11 +232,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       else {
         //parquet
         if (groupByFields == "") {
-          Option(df
+          Option(dft
             .write
             .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
         } else {
-          Option(df
+          Option(dft
             .write
             .partitionBy(groupByFieldsArray: _*)
             .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
