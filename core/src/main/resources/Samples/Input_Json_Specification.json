@@ -54,6 +54,8 @@
         "delimiter": "\t",
         "comment_mergeschema": "Optional, this is to merge different schemas when reading parquet files. the default value for this is false",
         "mergeschema": false,
+        "comment_coalescefilecount": "Optional, Specify the number of partitions, which determine the number of files in the destination folder. Applies only to destinations, not sources",
+        "coalescefilecount": null,
         "comment_post_migrate_command": "This is to execute copy/delete operation after the desired migration to s3",
         "post_migrate_command": {
           "comment_operation": "This field will take options either copy/delete.",
