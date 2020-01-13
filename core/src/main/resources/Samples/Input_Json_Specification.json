@@ -218,7 +218,11 @@
         "comment_s3location": "we stage s3 data in a s3 location as we poll the topic many times. giving a location in the same env as the kafka topic is required and we append two UUID's(we have migration id and job id for each run, so we will appending these two UUID's at the end of the s3location to the user input)",
         "s3location": "s3a://BUCKET_NAME/FOLDER_PATH",
         "comment_groupid":"Optional, using this option will read the data where you are left off in the previous run with the same group id",
-        "groupid": "KAFKA_GROUPID"
+        "groupid": "KAFKA_GROUPID",
+        "comment_requiredonlyvalue": "Optional, by default we will read both the key and value objects. if you want to get the only value then keep this option to true",
+        "requiredonlyvalue": "false",
+        "comment_payloadcolumnname": "this is the name of the payload column for the topic. for eg, value, body etc. default value for this option is `body` and this option only will have an effect when you have the option `requiredonlyvalue` to true",
+        "payloadcolumnname": "body"
       },
       "source_influxdb": {
         "platform": "influxdb",
