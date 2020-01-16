@@ -124,7 +124,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Int, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): Unit = {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): Unit = {
 
     if( filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null )
     {
