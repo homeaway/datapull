@@ -1116,7 +1116,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject): Unit = {
+  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject,savemode:String): Unit = {
 
     var driver: String = null
     var url: String = null
@@ -1176,7 +1176,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
 
     connectionProperties.setProperty("driver", driver)
 
-    df.write.mode("append").options(jdbcOptions).jdbc(url, table, connectionProperties)
+    df.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
   }
 
   def hiveToDataFrame(cluster: String, clusterType: String, database: String, table: String): org.apache.spark.sql.DataFrame = {
