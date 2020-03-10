@@ -1179,17 +1179,23 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     df.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
   }
 
-  def hiveToDataFrame(cluster: String, clusterType: String, database: String, table: String): org.apache.spark.sql.DataFrame = {
-    var sparkSession = SparkSession.builder //.master("local")
-      .config("dfs.ha.namenodes." + clusterType, "nn1")
-      .config("dfs.nameservices", clusterType)
-      .config("dfs.namenode.rpc-address." + clusterType + ".nn1", cluster + ":8020")
-      .config("dfs.client.failover.proxy.provider." + clusterType, "dfs.client.failover.proxy.provider." + clusterType)
-      .config("hive.metastore.uris", "thrift://" + cluster + ":9083")
-      .appName("data migration")
+  def hiveToDataFrame(table: String, sparkSession: SparkSession): org.apache.spark.sql.DataFrame = {
+
+    val spark = SparkSession.builder //.master("local[*]")
+      .config("spark.scheduler.mode", "FAIR")
+      .appName("DataPull")
+      .config("spark.network.timeout", "10000s")
+      .config("spark.executor.heartbeatInterval", "1000s")
+      .config("spark.sql.broadcastTimeout", 36000)
+      .config("spark.task.maxFailures", 16)
+      .config("fs.s3a.multiobjectdelete.enable", false)
+      .config("spark.sql.hive.metastore.version", "1.2.1")
+      .config("spark.sql.hive.metastore.jars", "builtin")
+      .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
       .enableHiveSupport()
       .getOrCreate()
-    val df = sparkSession.sql("Select * FROM " + database + "." + table)
+
+    val df = spark.sql("Select * FROM " + table)
     df
   }
 

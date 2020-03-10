@@ -66,6 +66,10 @@ class Migration extends  SparkListener {
         .config("spark.sql.broadcastTimeout", 36000)
         .config("spark.task.maxFailures",no_of_retries)
         .config("fs.s3a.multiobjectdelete.enable",false)
+        .config("spark.sql.hive.metastore.version", "1.2.1")
+        .config("spark.sql.hive.metastore.jars", "builtin")
+        .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
+        .enableHiveSupport()
         .getOrCreate()
     }
 
@@ -186,6 +190,8 @@ class Migration extends  SparkListener {
         processedTableCount_precise = dft.count()
       }
 
+
+      dft.show()
       var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
 
       if (destinationMap("platform") == "cassandra") {
@@ -423,7 +429,7 @@ class Migration extends  SparkListener {
       dataframeFromTo.fileToDataFrame(propertiesMap("path"), propertiesMap("fileformat"), propertiesMap.getOrElse("delimiter", ","), propertiesMap.getOrElse("charset", "utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, false,propertiesMap.getOrElse("secretstore","vault"),true, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
     }
     else if (platform == "hive") {
-      dataframeFromTo.hiveToDataFrame(propertiesMap("cluster"), propertiesMap("clustertype"), propertiesMap("database"), propertiesMap("table"))
+      dataframeFromTo.hiveToDataFrame(propertiesMap("table"), sparkSession)
     } else if (platform == "mongodb") {
       dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean])
     }
