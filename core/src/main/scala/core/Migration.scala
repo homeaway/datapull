@@ -190,9 +190,7 @@ class Migration extends  SparkListener {
         processedTableCount_precise = dft.count()
       }
 
-
-      dft.show()
-      var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
+      val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
 
       if (destinationMap("platform") == "cassandra") {
         destinationMap = destinationMap ++ deriveClusterIPFromConsul(destinationMap)
