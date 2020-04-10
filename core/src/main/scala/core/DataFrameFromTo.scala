@@ -1181,21 +1181,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
 
   def hiveToDataFrame(table: String, sparkSession: SparkSession): org.apache.spark.sql.DataFrame = {
 
-    val spark = SparkSession.builder //.master("local[*]")
-      .config("spark.scheduler.mode", "FAIR")
-      .appName("DataPull")
-      .config("spark.network.timeout", "10000s")
-      .config("spark.executor.heartbeatInterval", "1000s")
-      .config("spark.sql.broadcastTimeout", 36000)
-      .config("spark.task.maxFailures", 16)
-      .config("fs.s3a.multiobjectdelete.enable", false)
-      .config("spark.sql.hive.metastore.version", "1.2.1")
-      .config("spark.sql.hive.metastore.jars", "builtin")
-      .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
-      .enableHiveSupport()
-      .getOrCreate()
-
-    val df = spark.sql("Select * FROM " + table)
+    val df = sparkSession.sql("Select * FROM " + table)
     df
   }
 

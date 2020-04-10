@@ -20,7 +20,6 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.time._
 import java.util.{Scanner, UUID}
-import javax.net.ssl._
 
 import com.datastax.driver.core.utils.UUIDs
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -28,6 +27,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.mongodb.spark.sql.fieldTypes.Binary
 import config.AppConfig
 import helper._
+import javax.net.ssl._
 import logging._
 import org.apache.commons.codec.binary.{Base64, Hex}
 import org.apache.spark.sql.SparkSession
@@ -123,7 +123,13 @@ object DataPull {
         .config("" + config.broadcasttimeout, "" + config.btimeout)
         .config("" + config.executor, config.interval)
         .config("" + config.failures, no_of_retries)
+        .config("fs.s3a.multiobjectdelete.enable", false)
+        .config("spark.sql.hive.metastore.version", "1.2.1")
+        .config("spark.sql.hive.metastore.jars", "builtin")
+        .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
+        .enableHiveSupport()
         .getOrCreate()
+
 
       val helper = new Helper(config)
       ec2Role = helper.GetEC2Role()
