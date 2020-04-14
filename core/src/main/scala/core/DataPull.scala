@@ -73,6 +73,8 @@ object DataPull {
       isLocal = false
     }
 
+
+
     var reportEmailAddress = ""
     var authenticatedUser = ""
     var precisecounts = false
@@ -252,7 +254,7 @@ object DataPull {
       throw new helper.CustomListOfExceptions(migrationErrors.mkString("\n"))
     }
   }
-
+  
   def getFile(fileName: String, relativeToClass:Boolean = true): String = {
 
     val result = new StringBuilder("")
@@ -288,6 +290,16 @@ object DataPull {
 
   def jsonObjectPropertiesToMap(properties: List[String], jsonObject: JSONObject): Map[String, String] = {
     properties map (property => property -> (if (jsonObject.has(property)) jsonObject.getString(property) else "")) toMap
+  }
+
+  def jsonArrayPropertiesToList(jsonStringArr: String) = {
+    var returnList = List.empty[String]
+    val jsonArray = new JSONArray(jsonStringArr)
+    val length = jsonArray.length()
+    for( i <- 0 to length-1){
+      returnList = returnList :+ jsonArray.get(i).toString()
+    }
+    returnList
   }
 
   def uuid(): String = {

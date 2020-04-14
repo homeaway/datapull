@@ -57,6 +57,11 @@ import scala.collection.immutable.List
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.util.control.Breaks._
+import DataPull.{jsonArrayPropertiesToList, jsonObjectPropertiesToMap}
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import javax.mail.{Message, Session, Transport}
+import javax.mail.internet.{InternetAddress, MimeMessage}
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -124,6 +129,88 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
+
+  /*
+* Get ngram transformation
+*/
+
+  implicit class RichDF(val ds:org.apache.spark.sql.DataFrame) {
+    def showHTML(limit:Int = 100, truncate: Int = 100):String = {
+      import xml.Utility.escape
+      val data = ds.take(limit)
+      val header = ds.schema.fieldNames.toSeq
+      val rows: Seq[Seq[String]] = data.map { row =>
+        row.toSeq.map { cell =>
+          val str = cell match {
+            case null => "null"
+            case binary: Array[Byte] => binary.map("%02X".format(_)).mkString("[", " ", "]")
+            case array: Array[_] => array.mkString("[", ", ", "]")
+            case seq: Seq[_] => seq.mkString("[", ", ", "]")
+            case _ => cell.toString
+          }
+          if (truncate > 0 && str.length > truncate) {
+            // do not show ellipses for strings shorter than 4 characters.
+            if (truncate < 4) str.substring(0, truncate)
+            else str.substring(0, truncate - 3) + "..."
+          } else {
+            str
+          }
+        }: Seq[String]
+      }
+      var bodyHtml = StringBuilder.newBuilder
+      bodyHtml=bodyHtml.append( s"""<style>table, th, td {border: 1px solid black;}</style> <table>
+                <tr>
+                 ${header.map(h => s"<th>${escape(h)}</th>").mkString}
+                </tr>
+                ${rows.map { row =>
+        s"<tr>${row.map{c => s"<td>${escape(c)}</td>" }.mkString}</tr>"
+      }.mkString}
+            </table>
+        """)
+      bodyHtml.toString()
+
+    }
+  }
+
+  def dataFrameToEmail(to: String, subject: String, df: org.apache.spark.sql.DataFrame ,limit :String , truncate :String ): Unit =
+
+  {
+    if(df == null )
+    {
+      throw new Exception("Platform cannot have null values")
+    }
+
+    val bodyHtml= df.showHTML(limit.toInt,truncate.toInt)
+    //DataMigrationFramework.SendEmail(to,bodyHtml,"","",subject)
+    val yamlMapper = new ObjectMapper(new YAMLFactory());
+    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application-dev.yml");
+    val applicationConf = yamlMapper.readTree(inputStream)
+    val config = new AppConfig(applicationConf)
+    val EmailAddress=to;
+    val htmlContent = bodyHtml;
+
+      // Set up the mail object
+      if (EmailAddress != "") {
+        val properties = System.getProperties
+        properties.put("mail.smtp.host", config.smtpServerAddress)
+        val session = Session.getDefaultInstance(properties)
+        val message = new MimeMessage(session)
+        var subject1: String = subject
+
+
+
+        // Set the from, to, subject, body text
+        message.setFrom(new InternetAddress(config.dataToolsEmailAddress))
+        message.setRecipients(Message.RecipientType.TO, "" + EmailAddress)
+        message.setRecipients(Message.RecipientType.BCC, "" + config.dataToolsEmailAddress)
+        message.setSubject(subject1)
+        message.setContent(htmlContent, "text/html; charset=utf-8")
+        // And send it
+        Transport.send(message)
+      }
+
+
+  }
   def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): Unit = {
 
     if( filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null )

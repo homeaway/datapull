@@ -1,0 +1,26 @@
+{
+  "migrations": [
+    {
+      "source": {
+        "platform": "filesystem",
+        "path": "/Users/yourname/Desktop/Sample-Optmeio-report.json",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "Email",
+        "to": "yourname@expediagroup.com",
+        "subject":"Test",
+        "limit":"100",
+        "truncate":"100"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *"
+  }
+}
