@@ -19,11 +19,11 @@ package core
 import java.io.{PrintWriter, StringWriter}
 import java.time.Instant
 import java.util.concurrent.Executors
-import javax.mail._
-import javax.mail.internet.{InternetAddress, MimeMessage}
 
 import com.amazonaws.services.simpleemail.model.{Body, Content, Destination}
 import config.AppConfig
+import javax.mail._
+import javax.mail.internet.{InternetAddress, MimeMessage}
 import logging._
 import org.codehaus.jettison.json.JSONArray
 import security._
@@ -207,7 +207,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
           properties.put("mail.smtp.starttls.enable", "true")
         }
 
-        if (appConfig.smtpPort == "" || appConfig.smtpPort == "") {
+        if (appConfig.smtpPort != "") {
           properties.put("mail.smtp.port", appConfig.smtpPort)
         }
 
