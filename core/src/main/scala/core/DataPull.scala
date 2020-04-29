@@ -28,7 +28,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.mongodb.spark.sql.fieldTypes.Binary
 import config.AppConfig
 import helper._
-import logging._
 import org.apache.commons.codec.binary.{Base64, Hex}
 import org.apache.spark.sql.SparkSession
 import org.bson.codecs.{EncoderContext, UuidCodec}
@@ -45,7 +44,7 @@ object DataPull {
   def main(args: Array[String]): Unit = {
 
     val yamlMapper = new ObjectMapper(new YAMLFactory());
-    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application.yml");
+    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application-dev.yml");
     val applicationConf = yamlMapper.readTree(inputStream)
     val config = new AppConfig(applicationConf)
     val alert = new Alert(config)
@@ -202,20 +201,6 @@ object DataPull {
       if (json.has("verifymigration")) {
         verifymigration = (json.getString("verifymigration") == "true")
       }
-    }
-    if (json.has("cluster")) {
-
-      val cluster = json.getJSONObject("cluster")
-      var dataPullLog = new DataPullLog(config, pipelineName)
-      dataPullLog.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, null, 0, "Started", null, sparkSession)
-
-      portfolio = cluster.getString("portfolio")
-
-      product = cluster.getString("product")
-
-      pipelineName = cluster.getString("pipelinename")
-      awsenv = cluster.getString("awsenv")
-      isScheduled = cluster.has("cronexpression")
     }
     if (minexecutiontime != "" && maxexecutiontime != "") {
       val elapsedtime = System.currentTimeMillis() - start_time_in_milli

@@ -8,7 +8,7 @@ datapull:
       vault_nonce:
       vault_path_login:
   json:
-    inputjson:
+    inputjson: Input_Sample_filesystem-to-Email.json
   spark:
     network:
     timeout:
@@ -28,7 +28,7 @@ datapull:
     region:
   logger:
     s3:
-      loggingfolder:
+      loggingfolder: /Users/nishah/desktop/dsedata
     mssql:
       server:
       database:
