@@ -69,11 +69,8 @@ class Migration extends  SparkListener {
         .getOrCreate()
     }
 
-    var sourceCount = 0L
-    var sql: String = null
     var sources = new JSONArray()
     var destination = new JSONObject()
-    var relationships = new JSONArray()
 
     var tableslist: List[String] = null
     var tables = new ListBuffer[String]()
@@ -82,21 +79,19 @@ class Migration extends  SparkListener {
     var aliaseslist: List[String] = null
     var aliases = new ListBuffer[String]()
     var processedTableCount: Long = 0
-    var mappings = new JSONArray()
     val migrationStartTime = Instant.now()
     var verified = "NA"
     var migrationException: String = null
 
-    var size_of_the_records : Long = 0
+    var size_of_the_records: Long = 0
     var processedTableCount_precise: Long = 0
 
-    var endTime_in_milli: Long = 0
-    var jobId = UUID.randomUUID().toString
+    val jobId = UUID.randomUUID().toString
     var hasExceptions: Boolean = false
-    var startTime_in_milli = System.currentTimeMillis()
-    var size : Long =0
+    val startTime_in_milli = System.currentTimeMillis()
 
-    dataPullLogs.jobLog(migrationLogId,migrationStartTime.toString,null,0,migrationJSONString,0,0,"Started",jobId,sparkSession)
+
+    dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, null, 0, migrationJSONString, 0, 0, "Started", jobId, sparkSession)
 
     if (preciseCounts == false) {
       sparkSession.sparkContext.addSparkListener(new SparkListener() {
@@ -186,7 +181,7 @@ class Migration extends  SparkListener {
         processedTableCount_precise = dft.count()
       }
 
-      var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
+      val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
 
       if (destinationMap("platform") == "cassandra") {
         destinationMap = destinationMap ++ deriveClusterIPFromConsul(destinationMap)
@@ -201,14 +196,14 @@ class Migration extends  SparkListener {
       } else if (destinationMap("platform") == "s3") {
         setAWSCredentials(sparkSession, destinationMap)
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
-        dataframeFromTo.dataFrameToFile(destinationMap("s3path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, true, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"))
+        dataframeFromTo.dataFrameToFile(destinationMap("s3path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, true, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
       } else if (destinationMap("platform") == "filesystem") {
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
-        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"))
+        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
       }
       else if (destinationMap("platform") == "sftp") {
 
-        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], true, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"))
+        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], true, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
       }
       else if (destinationMap("platform") == "hive") {
         dataframeFromTo.dataFrameToHive(destinationMap("cluster"), destinationMap("clustertype"), destinationMap("database"), destinationMap("table"), dft)
