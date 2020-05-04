@@ -64,6 +64,11 @@ import scala.collection.immutable.List
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
+import DataPull.{jsonArrayPropertiesToList, jsonObjectPropertiesToMap}	
+import com.fasterxml.jackson.databind.ObjectMapper	
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory	
+import javax.mail.{Message, Session, Transport}	
+import javax.mail.internet.{InternetAddress, MimeMessage}
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
