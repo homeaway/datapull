@@ -20,7 +20,6 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.time._
 import java.util.{Scanner, UUID}
-import javax.net.ssl._
 
 import com.datastax.driver.core.utils.UUIDs
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -28,6 +27,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.mongodb.spark.sql.fieldTypes.Binary
 import config.AppConfig
 import helper._
+import javax.net.ssl._
 import logging._
 import org.apache.commons.codec.binary.{Base64, Hex}
 import org.apache.spark.sql.SparkSession
@@ -72,8 +72,6 @@ object DataPull {
       jsonString = args(0)
       isLocal = false
     }
-
-
 
     var reportEmailAddress = ""
     var authenticatedUser = ""
@@ -254,7 +252,7 @@ object DataPull {
       throw new helper.CustomListOfExceptions(migrationErrors.mkString("\n"))
     }
   }
-  
+
   def getFile(fileName: String, relativeToClass:Boolean = true): String = {
 
     val result = new StringBuilder("")

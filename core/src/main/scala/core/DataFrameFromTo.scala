@@ -28,6 +28,8 @@ import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.datastax.driver.core.exceptions.TruncateException
 import com.datastax.spark.connector.cql.CassandraConnector
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
@@ -36,6 +38,8 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.{Message, Session, Transport}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -55,13 +59,8 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.immutable.List
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
-import DataPull.{jsonArrayPropertiesToList, jsonObjectPropertiesToMap}
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import javax.mail.{Message, Session, Transport}
-import javax.mail.internet.{InternetAddress, MimeMessage}
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -792,7 +791,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: Boolean): org.apache.spark.sql.DataFrame = {
+  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, s3Location: String, sampleSize: String): org.apache.spark.sql.DataFrame = {
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
@@ -804,8 +803,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
+    var df_return = sparkSession.emptyDataFrame
+    sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     //if password isn't set, attempt to get from security.Vault
-    if (authenticationEnabled) {
+    if (authenticationEnabled.toBoolean) {
       vaultPassword = password
       vaultLogin = login
       if (vaultPassword == "") {
@@ -815,33 +816,46 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         vaultPassword = vaultCreds("password")
       }
     }
-      uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled)
+    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled.toBoolean)
     if (overrideconnector.toBoolean) {
       var mongoClient: MongoClient = new MongoClient(new MongoClientURI(uri))
       var mdatabase: MongoDatabase = mongoClient.getDatabase("" + database);
       var col: MongoCollection[Document] = mdatabase.getCollection(collection);
       var cur: MongoCursor[Document] = col.find().iterator()
       var doc: org.bson.Document = null
-      var jsondocs = new ListBuffer[String]()
+      val list = new ListBuffer[String]()
+      val tmp_s3 = s3Location
+      var df_temp = sparkSession.emptyDataFrame
+      var df_big = sparkSession.emptyDataFrame
+
 
       while (cur.hasNext()) {
         doc = cur.next();
-        jsondocs += doc.toJson()
+        list += (doc.toJson)
+        if (list.length >= 20000) {
+          import sparkSession.implicits._
+          df_temp = list.toList.toDF("jsonfield")
+          // sparkSession.implicits.localSeqToDatasetHolder(list, sparkSession.implicits.newStringEncoder).toDF().MODULE$.wrapRefArray(Array[String]("jsonfield").asInstanceOf[Array[AnyRef]])
+          df_temp.write.mode(SaveMode.Append).json(tmp_s3)
+          df_temp.show()
+          list.clear()
+        }
       }
-      val finaljsondoc = jsondocs.toList
-
-      import sparkSession.implicits._
-      val df = finaljsondoc.toDF().withColumnRenamed("value", "jsonfield")
-      df
+      df_big = sparkSession.read.json(tmp_s3).withColumnRenamed("value", "jsonfield")
+      df_return = df_big
     }
     else {
       var sparkOptions = Map("uri" -> uri)
       if (addlSparkOptions != null) {
         sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
       }
+      if (sampleSize != null) {
+        sparkOptions = sparkOptions ++ Map("spark.mongodb.input.sample.sampleSize" -> sampleSize, "sampleSize" -> sampleSize)
+      }
       val df = sparkSession.loadFromMongoDB(ReadConfig(sparkOptions))
-      df
+      df_return = df
     }
+    return df_return
     }
 
     def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: Boolean): Unit = {

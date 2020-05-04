@@ -42,8 +42,8 @@ class Migration extends  SparkListener {
   def migrate(migrationJSONString: String, reportEmailAddress: String, migrationId: String, verifymigration: Boolean, reportCounts: Boolean, no_of_retries: Int, custom_retries: Boolean, migrationLogId: String, isLocal: Boolean, preciseCounts: Boolean, appConfig: AppConfig, pipeline : String): Map[String, String] = {
     var s3TempFolderDeletionError = StringBuilder.newBuilder
     val reportRowHtml = StringBuilder.newBuilder
-    val migration = new JSONObject(migrationJSONString)
-    var dataPullLogs = new DataPullLog(appConfig, pipeline)
+    val migration: JSONObject = new JSONObject(migrationJSONString)
+    val dataPullLogs = new DataPullLog(appConfig, pipeline)
     this.appConfig = appConfig;
 
     var sparkSession: SparkSession = null
@@ -294,10 +294,9 @@ class Migration extends  SparkListener {
 
       if (reportEmailAddress != "") {
         sparkSession.sparkContext.setJobDescription("Count destination " + migrationId)
-        if (verifymigration)
-        {
-          var dfd = jsonSourceDestinationToDataFrame(sparkSession, destination,migrationLogId,jobId,s3TempFolderDeletionError, pipeline)
-          verified =verifymigrations(df, dfd,sparkSession)
+        if (verifymigration) {
+          var dfd = jsonSourceDestinationToDataFrame(sparkSession, destination, migrationLogId, jobId, s3TempFolderDeletionError, pipeline)
+          verified = verifymigrations(df, dfd, sparkSession)
 
         }
       }
@@ -430,7 +429,7 @@ class Migration extends  SparkListener {
     else if (platform == "hive") {
       dataframeFromTo.hiveToDataFrame(propertiesMap("cluster"), propertiesMap("clustertype"), propertiesMap("database"), propertiesMap("table"))
     } else if (platform == "mongodb") {
-      dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean])
+      dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("s3location", null), propertiesMap.getOrElse("samplesize", null))
     }
     else if (platform == "kafka") {
       dataframeFromTo.kafkaToDataFrame(propertiesMap("bootstrapServers"), propertiesMap("topic"), propertiesMap("offset"), propertiesMap("schemaRegistries"), propertiesMap.getOrElse("keydeserializer", "org.apache.kafka.common.serialization.StringDeserializer"), propertiesMap("deSerializer"), propertiesMap.getOrElse("s3location", appConfig.s3bucket.toString + "/datapull-opensource/logs/"), propertiesMap.getOrElse("groupid", null), propertiesMap.getOrElse("requiredonlyvalue", "false"), propertiesMap.getOrElse("payloadcolumnname", "body"), migrationId, jobId, sparkSession, s3TempFolderDeletionError)
