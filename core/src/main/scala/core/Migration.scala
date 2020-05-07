@@ -40,10 +40,10 @@ class Migration extends  SparkListener {
   var appConfig : AppConfig = null;
 
   def migrate(migrationJSONString: String, reportEmailAddress: String, migrationId: String, verifymigration: Boolean, reportCounts: Boolean, no_of_retries: Int, custom_retries: Boolean, migrationLogId: String, isLocal: Boolean, preciseCounts: Boolean, appConfig: AppConfig, pipeline : String): Map[String, String] = {
-    var s3TempFolderDeletionError = StringBuilder.newBuilder
+    val s3TempFolderDeletionError = StringBuilder.newBuilder
     val reportRowHtml = StringBuilder.newBuilder
-    val migration = new JSONObject(migrationJSONString)
-    var dataPullLogs = new DataPullLog(appConfig, pipeline)
+    val migration: JSONObject = new JSONObject(migrationJSONString)
+    val dataPullLogs = new DataPullLog(appConfig, pipeline)
     this.appConfig = appConfig;
 
     var sparkSession: SparkSession = null
@@ -275,24 +275,45 @@ class Migration extends  SparkListener {
           }
         }
 
-        dataframeFromTo.dataFrameToNeo4j(dft, destinationMap("cluster"),  destinationMap("login"), destinationMap.getOrElse("password", ""),destinationMap("awsenv"), destinationMap("vaultenv"), node1_label, node1_keys, node1_nonKeys,node2_label,node2_keys ,node2_nonKeys ,relation_label, destinationMap.getOrElse("batchsize", "10000").toInt, node1_createOrMerge, node1_createNodeKeyConstraint, node2_createOrMerge, node2_createNodeKeyConstraint, relation_createOrMerge ,destinationMap.getOrElse("secretstore","vault"), sparkSession)
+        dataframeFromTo.dataFrameToNeo4j(dft, destinationMap("cluster"), destinationMap("login"), destinationMap.getOrElse("password", ""), destinationMap("awsenv"), destinationMap("vaultenv"), node1_label, node1_keys, node1_nonKeys, node2_label, node2_keys, node2_nonKeys, relation_label, destinationMap.getOrElse("batchsize", "10000").toInt, node1_createOrMerge, node1_createNodeKeyConstraint, node2_createOrMerge, node2_createNodeKeyConstraint, relation_createOrMerge, destinationMap.getOrElse("secretstore", "vault"), sparkSession)
       }
+
+
+      def prePostFortmpS3(datastore: JSONObject): Unit = {
+        var customized_object = new JSONObject()
+        var post_migrate_command = new JSONObject()
+        if (datastore.get("platform") == "mongodb" || datastore.get("platform") == "kafka") {
+          var region: String = "us-east-1"
+          if (datastore.has("overrideconnector") || datastore.get("platform") == "kafka") {
+
+            if (datastore.has("s3region")) {
+              region = datastore.getString("s3region")
+            }
+            customized_object.put("platform", "s3".toString).put("s3region", region)
+            post_migrate_command.put("operation", "delete").put("s3path", datastore.get("s3location"))
+            customized_object.put("post_migrate_command", post_migrate_command)
+          }
+        }
+        jsonSourceDestinationRunPrePostMigrationCommand(customized_object, false, reportRowHtml, sparkSession, pipeline)
+      }
+
 
       //run the post-migration command for the sources, if any.
       for (a <- 0 to sources.length() - 1) {
         val selectedSource = sources.getJSONObject(a)
         //run the post-migration command for the source, if any
-        jsonSourceDestinationRunPrePostMigrationCommand(selectedSource, false, reportRowHtml,sparkSession, pipeline)
+        jsonSourceDestinationRunPrePostMigrationCommand(selectedSource, false, reportRowHtml, sparkSession, pipeline)
+        prePostFortmpS3(selectedSource)
       }
 
-      jsonSourceDestinationRunPrePostMigrationCommand(destination, false, reportRowHtml,sparkSession, pipeline)
+      jsonSourceDestinationRunPrePostMigrationCommand(destination, false, reportRowHtml, sparkSession, pipeline)
+      prePostFortmpS3(destination)
 
       if (reportEmailAddress != "") {
         sparkSession.sparkContext.setJobDescription("Count destination " + migrationId)
-        if (verifymigration)
-        {
-          var dfd = jsonSourceDestinationToDataFrame(sparkSession, destination,migrationLogId,jobId,s3TempFolderDeletionError, pipeline)
-          verified =verifymigrations(df, dfd,sparkSession)
+        if (verifymigration) {
+          var dfd = jsonSourceDestinationToDataFrame(sparkSession, destination, migrationLogId, jobId, s3TempFolderDeletionError, pipeline)
+          verified = verifymigrations(df, dfd, sparkSession)
 
         }
       }
