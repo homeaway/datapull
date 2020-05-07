@@ -61,11 +61,6 @@ import scala.collection.immutable.List
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
-import DataPull.{jsonArrayPropertiesToList, jsonObjectPropertiesToMap}	
-import com.fasterxml.jackson.databind.ObjectMapper	
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory	
-import javax.mail.{Message, Session, Transport}	
-import javax.mail.internet.{InternetAddress, MimeMessage}
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -796,7 +791,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, s3Location: String, sampleSize: String): org.apache.spark.sql.DataFrame = {
+  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, tmpFileLocation: String, sampleSize: String): org.apache.spark.sql.DataFrame = {
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
@@ -829,24 +824,27 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       var cur: MongoCursor[Document] = col.find().iterator()
       var doc: org.bson.Document = null
       val list = new ListBuffer[String]()
-      val tmp_s3 = s3Location
+      val tmp_location = tmpFileLocation
       var df_temp = sparkSession.emptyDataFrame
       var df_big = sparkSession.emptyDataFrame
 
-
+      import sparkSession.implicits._
       while (cur.hasNext()) {
         doc = cur.next();
         list += (doc.toJson)
         if (list.length >= 20000) {
-          import sparkSession.implicits._
           df_temp = list.toList.toDF("jsonfield")
           // sparkSession.implicits.localSeqToDatasetHolder(list, sparkSession.implicits.newStringEncoder).toDF().MODULE$.wrapRefArray(Array[String]("jsonfield").asInstanceOf[Array[AnyRef]])
-          df_temp.write.mode(SaveMode.Append).json(tmp_s3)
+          df_temp.write.mode(SaveMode.Append).json(tmp_location)
           df_temp.show()
           list.clear()
         }
       }
-      df_big = sparkSession.read.json(tmp_s3).withColumnRenamed("value", "jsonfield")
+      df_temp = list.toList.toDF("jsonfield")
+      // sparkSession.implicits.localSeqToDatasetHolder(list, sparkSession.implicits.newStringEncoder).toDF().MODULE$.wrapRefArray(Array[String]("jsonfield").asInstanceOf[Array[AnyRef]])
+      df_temp.write.mode(SaveMode.Append).json(tmp_location)
+      list.clear()
+      df_big = sparkSession.read.json(tmp_location).withColumnRenamed("value", "jsonfield")
       df_return = df_big
     }
     else {

@@ -429,7 +429,7 @@ class Migration extends  SparkListener {
     else if (platform == "hive") {
       dataframeFromTo.hiveToDataFrame(propertiesMap("cluster"), propertiesMap("clustertype"), propertiesMap("database"), propertiesMap("table"))
     } else if (platform == "mongodb") {
-      dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("s3location", null), propertiesMap.getOrElse("samplesize", null))
+      dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("tmpfilelocation", null), propertiesMap.getOrElse("samplesize", null))
     }
     else if (platform == "kafka") {
       dataframeFromTo.kafkaToDataFrame(propertiesMap("bootstrapServers"), propertiesMap("topic"), propertiesMap("offset"), propertiesMap("schemaRegistries"), propertiesMap.getOrElse("keydeserializer", "org.apache.kafka.common.serialization.StringDeserializer"), propertiesMap("deSerializer"), propertiesMap.getOrElse("s3location", appConfig.s3bucket.toString + "/datapull-opensource/logs/"), propertiesMap.getOrElse("groupid", null), propertiesMap.getOrElse("requiredonlyvalue", "false"), propertiesMap.getOrElse("payloadcolumnname", "body"), migrationId, jobId, sparkSession, s3TempFolderDeletionError)
@@ -498,7 +498,6 @@ class Migration extends  SparkListener {
         tmpJsonObject.put("query",platformObject.get("post_migrate_command"))
         post_migrate_commands.put(tmpJsonObject)
       }
-
     }
 
 
