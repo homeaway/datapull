@@ -803,7 +803,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
-    var df_return = sparkSession.emptyDataFrame
     sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     //if password isn't set, attempt to get from security.Vault
     if (authenticationEnabled.toBoolean) {
@@ -834,18 +833,15 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         list += (doc.toJson)
         if (list.length >= 20000) {
           df_temp = list.toList.toDF("jsonfield")
-          // sparkSession.implicits.localSeqToDatasetHolder(list, sparkSession.implicits.newStringEncoder).toDF().MODULE$.wrapRefArray(Array[String]("jsonfield").asInstanceOf[Array[AnyRef]])
           df_temp.write.mode(SaveMode.Append).json(tmp_location)
-          df_temp.show()
           list.clear()
         }
       }
       df_temp = list.toList.toDF("jsonfield")
-      // sparkSession.implicits.localSeqToDatasetHolder(list, sparkSession.implicits.newStringEncoder).toDF().MODULE$.wrapRefArray(Array[String]("jsonfield").asInstanceOf[Array[AnyRef]])
       df_temp.write.mode(SaveMode.Append).json(tmp_location)
       list.clear()
       df_big = sparkSession.read.json(tmp_location).withColumnRenamed("value", "jsonfield")
-      df_return = df_big
+      return df_big
     }
     else {
       var sparkOptions = Map("uri" -> uri)
@@ -856,10 +852,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         sparkOptions = sparkOptions ++ Map("spark.mongodb.input.sample.sampleSize" -> sampleSize, "sampleSize" -> sampleSize)
       }
       val df = sparkSession.loadFromMongoDB(ReadConfig(sparkOptions))
-      df_return = df
+      return df
     }
-    return df_return
-    }
+
+  }
 
     def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: Boolean): Unit = {
 
