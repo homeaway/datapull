@@ -17,6 +17,7 @@
 package core
 
 import java.io.{File, PrintWriter, StringWriter}
+import java.nio.charset.StandardCharsets
 import java.sql.{Connection, DriverManager, Statement, Timestamp}
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -42,6 +43,8 @@ import javax.mail.internet.{InternetAddress, MimeMessage}
 import javax.mail.{Message, Session, Transport}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.spark.SparkConf
@@ -61,6 +64,13 @@ import scala.collection.immutable.List
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
+
+import DataPull.{jsonArrayPropertiesToList, jsonObjectPropertiesToMap}	
+import com.fasterxml.jackson.databind.ObjectMapper	
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory	
+import javax.mail.{Message, Session, Transport}	
+import javax.mail.internet.{InternetAddress, MimeMessage}
+
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -195,9 +205,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         val session = Session.getDefaultInstance(properties)
         val message = new MimeMessage(session)
         var subject1: String = subject
-
-
-
         // Set the from, to, subject, body text
         message.setFrom(new InternetAddress(config.dataToolsEmailAddress))
         message.setRecipients(Message.RecipientType.TO, "" + EmailAddress)
@@ -208,17 +215,15 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         Transport.send(message)
       }
 
-
   }
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): Unit = {
 
-    if( filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null )
-    {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String, rowFromJsonString: String, jsonFieldName: String): Unit = {
+
+    if (filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null) {
       throw new Exception("Platform cannot have null values")
     }
 
-    if( filePath.isEmpty() == true && fileFormat.isEmpty() == true && groupByFields.isEmpty() == true && s3SaveMode.isEmpty() == true && login.isEmpty() == true  && sparkSession == null)
-    {
+    if (filePath.isEmpty() == true && fileFormat.isEmpty() == true && groupByFields.isEmpty() == true && s3SaveMode.isEmpty() == true && login.isEmpty() == true && sparkSession == null) {
       throw new Exception("Platform cannot have empty values")
     }
 
@@ -231,7 +236,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       vaultLogin = vaultCreds("username")
       vaultPassword = vaultCreds("password")
     }
-
+    sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     var groupByFieldsArray = groupByFields.split(",")
     var filePrefix = ""
 
@@ -268,6 +273,25 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         save(filePath)
 
       df.show()
+    } else if (rowFromJsonString.toBoolean) {
+
+      df.foreachPartition(partition => {
+
+        val partitionList = new util.ArrayList[String]()
+        partition.foreach { Row =>
+          partitionList.add(Row.apply(0).toString)
+        }
+        if (!partitionList.isEmpty) {
+          val conf: Configuration = new Configuration
+          val path_string = filePrefix + filePath + "/" + UUID.randomUUID().toString + ".json"
+          val dest: Path = new Path(path_string)
+          val fs: FileSystem = dest.getFileSystem(conf)
+          val out: FSDataOutputStream = fs.create(dest, true)
+          out.write(partitionList.mkString("\n").getBytes(StandardCharsets.UTF_8))
+          out.close()
+        }
+        partitionList.clear()
+      })
     }
     else {
       if (fileFormat == "json") {
