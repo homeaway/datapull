@@ -252,7 +252,7 @@ object DataPull {
       throw new helper.CustomListOfExceptions(migrationErrors.mkString("\n"))
     }
   }
-  
+
   def getFile(fileName: String, relativeToClass:Boolean = true): String = {
 
     val result = new StringBuilder("")

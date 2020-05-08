@@ -64,11 +64,13 @@ import scala.collection.immutable.List
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
+
 import DataPull.{jsonArrayPropertiesToList, jsonObjectPropertiesToMap}	
 import com.fasterxml.jackson.databind.ObjectMapper	
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory	
 import javax.mail.{Message, Session, Transport}	
 import javax.mail.internet.{InternetAddress, MimeMessage}
+
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -813,7 +815,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: Boolean): org.apache.spark.sql.DataFrame = {
+  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, tmpFileLocation: String, sampleSize: String): org.apache.spark.sql.DataFrame = {
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
@@ -825,8 +827,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
+    sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     //if password isn't set, attempt to get from security.Vault
-    if (authenticationEnabled) {
+    if (authenticationEnabled.toBoolean) {
       vaultPassword = password
       vaultLogin = login
       if (vaultPassword == "") {
@@ -836,34 +839,47 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         vaultPassword = vaultCreds("password")
       }
     }
-      uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled)
+    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled.toBoolean)
     if (overrideconnector.toBoolean) {
       var mongoClient: MongoClient = new MongoClient(new MongoClientURI(uri))
       var mdatabase: MongoDatabase = mongoClient.getDatabase("" + database);
       var col: MongoCollection[Document] = mdatabase.getCollection(collection);
       var cur: MongoCursor[Document] = col.find().iterator()
       var doc: org.bson.Document = null
-      var jsondocs = new ListBuffer[String]()
-
-      while (cur.hasNext()) {
-        doc = cur.next();
-        jsondocs += doc.toJson()
-      }
-      val finaljsondoc = jsondocs.toList
+      val list = new ListBuffer[String]()
+      val tmp_location = tmpFileLocation
+      var df_temp = sparkSession.emptyDataFrame
+      var df_big = sparkSession.emptyDataFrame
 
       import sparkSession.implicits._
-      val df = finaljsondoc.toDF().withColumnRenamed("value", "jsonfield")
-      df
+      while (cur.hasNext()) {
+        doc = cur.next();
+        list += (doc.toJson)
+        if (list.length >= 20000) {
+          df_temp = list.toList.toDF("jsonfield")
+          df_temp.write.mode(SaveMode.Append).json(tmp_location)
+          list.clear()
+        }
+      }
+      df_temp = list.toList.toDF("jsonfield")
+      df_temp.write.mode(SaveMode.Append).json(tmp_location)
+      list.clear()
+      df_big = sparkSession.read.json(tmp_location).withColumnRenamed("value", "jsonfield")
+      return df_big
     }
     else {
       var sparkOptions = Map("uri" -> uri)
       if (addlSparkOptions != null) {
         sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
       }
+      if (sampleSize != null) {
+        sparkOptions = sparkOptions ++ Map("spark.mongodb.input.sample.sampleSize" -> sampleSize, "sampleSize" -> sampleSize)
+      }
       val df = sparkSession.loadFromMongoDB(ReadConfig(sparkOptions))
-      df
+      return df
     }
-    }
+
+  }
 
     def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: Boolean): Unit = {
 

@@ -272,13 +272,17 @@
         "login": "LOGIN_NAME",
         "comment_password": "optional. Required if Vault integration is not used",
         "password": "PASSWORD",
-        "comment_overrideconnector":"Optional;Default value: false. use this flag to have DataPull read each MongoDB Document as a whole JSON into a field called jsonfield in the resultset. This is the recommended approach when reading MongoDB collections that have documents that do not conform to a single schema.",
-        "overrideconnector":false,
-        "comment_sparkoptions":"Optional, this is to enable users to use mongo specific configurations. all options can be found at the official spark mongo documentation: https://docs.mongodb.com/spark-connector/master/configuration/",
-        "sparkoptions":{
-          "replaceDocument":true,
-          "ordered":false,
-          "readPreference.name":"Primary"
+        "comment_overrideconnector": "Optional;Default value: false. use this flag to have DataPull read each MongoDB Document as a whole JSON into a field called jsonfield in the resultset. This is the recommended approach when reading MongoDB collections that have documents that do not conform to a single schema.",
+        "overrideconnector": false,
+        "comment_tmpfilelocation": "this is required when the oveerideconnector option is enabled to store the temp data while reading data from mongo. it can be a s3 location nor any random location in the spark nodes",
+        "tmpfilelocation": "S3_LOCATION_OR_ANY_RANDOM_DIRECTORY",
+        "comment_samplesize": "Optional, this is to set sampling of the mongo driver to fetch the schema for a collection.The default value for this 1000. this can be used if we have varying schemas but not varying data types for a single field",
+        "samplesize": "1000",
+        "comment_sparkoptions": "Optional, this is to enable users to use mongo specific configurations. all options can be found at the official spark mongo documentation: https://docs.mongodb.com/spark-connector/master/configuration/",
+        "sparkoptions": {
+          "replaceDocument": true,
+          "ordered": false,
+          "readPreference.name": "Primary"
         },
         "cpmment_pre_migrate_command": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
         "pre_migrate_command": "{ delete: \"datapull_test\",deletes: [ { q: { user: \"abc123\" }, limit: 1 } ] }",
