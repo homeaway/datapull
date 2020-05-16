@@ -384,8 +384,8 @@ class Migration extends  SparkListener {
     val mm = collection.mutable.Map[String, String]() ++= destinationMap
     if (secretName != null && !secretName.isEmpty) {
       val secretCredentials = secretManager.getSecret(secretName)
-      if (secretCredentials.contains(secretName)) {
-        mm.put("password", secretCredentials.get(secretName).get)
+      if (secretCredentials.contains("password")) {
+        mm.put("password", secretCredentials.get("password").get)
       }
       else {
         mm.put("login", secretCredentials.get("username").get)
