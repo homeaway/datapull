@@ -65,12 +65,6 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
 
-import DataPull.{jsonArrayPropertiesToList, jsonObjectPropertiesToMap}	
-import com.fasterxml.jackson.databind.ObjectMapper	
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory	
-import javax.mail.{Message, Session, Transport}	
-import javax.mail.internet.{InternetAddress, MimeMessage}
-
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -145,38 +139,38 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
 
   implicit class RichDF(val ds:org.apache.spark.sql.DataFrame) {
     def showHTML(limit:Int = 100, truncate: Int = 100):String = {
-      import xml.Utility.escape
-      val data = ds.take(limit)
-      val header = ds.schema.fieldNames.toSeq
-      val rows: Seq[Seq[String]] = data.map { row =>
-        row.toSeq.map { cell =>
-          val str = cell match {
-            case null => "null"
-            case binary: Array[Byte] => binary.map("%02X".format(_)).mkString("[", " ", "]")
-            case array: Array[_] => array.mkString("[", ", ", "]")
-            case seq: Seq[_] => seq.mkString("[", ", ", "]")
-            case _ => cell.toString
-          }
-          if (truncate > 0 && str.length > truncate) {
-            // do not show ellipses for strings shorter than 4 characters.
-            if (truncate < 4) str.substring(0, truncate)
-            else str.substring(0, truncate - 3) + "..."
-          } else {
-            str
-          }
-        }: Seq[String]
-      }
-      var bodyHtml = StringBuilder.newBuilder
-      bodyHtml=bodyHtml.append( s"""<style>table, th, td {border: 1px solid black;}</style> <table>
-                <tr>
-                 ${header.map(h => s"<th>${escape(h)}</th>").mkString}
-                </tr>
-                ${rows.map { row =>
-        s"<tr>${row.map{c => s"<td>${escape(c)}</td>" }.mkString}</tr>"
-      }.mkString}
-            </table>
-        """)
-      bodyHtml.toString()
+      ////      import xml.Utility.escape
+      //      val data = ds.take(limit)
+      //      val header = ds.schema.fieldNames.toSeq
+      //      val rows: Seq[Seq[String]] = data.map { row =>
+      //        row.toSeq.map { cell =>
+      //          val str = cell match {
+      //            case null => "null"
+      //            case binary: Array[Byte] => binary.map("%02X".format(_)).mkString("[", " ", "]")
+      //            case array: Array[_] => array.mkString("[", ", ", "]")
+      //            case seq: Seq[_] => seq.mkString("[", ", ", "]")
+      //            case _ => cell.toString
+      //          }
+      //          if (truncate > 0 && str.length > truncate) {
+      //            // do not show ellipses for strings shorter than 4 characters.
+      //            if (truncate < 4) str.substring(0, truncate)
+      //            else str.substring(0, truncate - 3) + "..."
+      //          } else {
+      //            str
+      //          }
+      //        }: Seq[String]
+      //      }
+      //      var bodyHtml = StringBuilder.newBuilder
+      //      bodyHtml=bodyHtml.append( s"""<style>table, th, td {border: 1px solid black;}</style> <table>
+      //              <tr>
+      ////                 ${header.map(h => s"<th>${escape(h)}</th>").mkString}
+      //               </tr>
+      //                ${rows.map { row =>
+      ////        s"<tr>${row.map{c => s"<td>${escape(c)}</td>" }.mkString}</tr>"
+      ////      }.mkString}
+      ////            </table>
+      //        """)
+      return null
 
     }
   }
@@ -823,6 +817,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       clusterName = consul.serviceName
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",") + ":27017"
     }
+    val pwd_tmp = "4ecd1c7e-949b-4986-881f-8109452b594d"
     var uri: String = null
     val helper = new Helper(appConfig)
     var vaultLogin: String = null
@@ -830,7 +825,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     //if password isn't set, attempt to get from security.Vault
     if (authenticationEnabled.toBoolean) {
-      vaultPassword = password
+      vaultPassword = pwd_tmp
       vaultLogin = login
       if (vaultPassword == "") {
         val secretService = new SecretService(secretStore, appConfig)
@@ -878,7 +873,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       val df = sparkSession.loadFromMongoDB(ReadConfig(sparkOptions))
       return df
     }
-
+    sparkSession.read.json("/Users/srigajjala/Downloads/covid_data_100")
   }
 
     def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: Boolean): Unit = {

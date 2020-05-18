@@ -1,26 +1,46 @@
 {
-  "useremailaddress": "yourid@DOMAIN.com",
+  "useremailaddress": "srigajjala@expedia.com",
   "migrations": [
     {
-      "source": {
-        "platform": "filesystem",
-        "path": "target/classes/SampleData/HelloWorld.csv",
-        "fileformat": "csv"
-      },
       "destination": {
-        "platform": "filesystem",
-        "path": "target/classes/SampleData_Json",
+        "platform": "s3",
+        "s3path": "epc-datapull-lodgingpartnerp-prodp/datapull-opensource/data/Onboarding/ContactUsInfo/json",
         "fileformat": "json",
-        "groupbyfields": "IntField"
+        "savemode": "Overwrite"
+      },
+      "source": {
+        "platform": "mongodb",
+        "cluster": "epc-onboarding-lodgingpartnerp-mongodb001.eglocal.exp-prodp.net:27017,epc-onboarding-lodgingpartnerp-mongodb002.eglocal.exp-prodp.net:27017,epc-onboarding-lodgingpartnerp-mongodb003.eglocal.exp-prodp.net:27017,epc-onboarding-lodgingpartnerp-mongodb004.eglocal.exp-prodp.net:27017,epc-onboarding-lodgingpartnerp-mongodb005.eglocal.exp-prodp.net",
+        "replicaset": "rs0",
+        "authenticationdatabase": "Onboarding",
+        "database": "Onboarding",
+        "collection": "ContactUsInfo",
+        "login": "",
+        "password": "",
+        "sparkoptions": {
+          "readPreference.name": "Secondary"
+        },
+        "authenticationenabled": "false",
+        "overrideconnector": "true",
+        "s3location": "epc-datapull-lodgingpartnerp-prodp/datapull-opensource/data/Onboarding/ContactUsInfo/temp",
+        "region": "us-west-2",
+        "secretstore": "secret_manager",
+        "secret_name": "segment/homeaway/env/dev/vpc/vpc-58fd953f/platform/cassandra/cluster/test-cassandra-coe-cstream.service.us-east-1-vpc-88394aef.consul/database/secret2/user/readonly_user"
       }
     }
   ],
   "cluster": {
-    "pipelinename": "ekg",
-    "awsenv": "dev",
+    "pipelinename": "test_secretmanager",
+    "awsenv": "prod",
     "portfolio": "Data Engineering Services",
-    "product": "Data Engineering - COE",
-    "ec2instanceprofile": "Iam role",
-    "cronexpression": "21 * * * *"
+    "product": "Data Engineering Data Tools",
+    "ComponentInfo": "00000000-0000-0000-0000-000000000000",
+    "terminateclusterafterexecution": "false",
+    "tags": {
+      "Team": "LPED",
+      "Product Area": "Onboarding",
+      "Role": "epc-onboarding-web",
+      "Portfolio": "LPS EPC Ptnr Engmnt US (LPED)"
+    }
   }
 }

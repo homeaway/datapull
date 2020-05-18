@@ -18,7 +18,7 @@ import java.time.Instant
 import java.util.UUID
 
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
-import com.amazonaws.regions.Regions
+import com.amazonaws.regions.{DefaultAwsRegionProviderChain, Regions}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import config.AppConfig
 import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials}
@@ -282,22 +282,27 @@ class Migration extends  SparkListener {
       def prePostFortmpS3(datastore: JSONObject): Unit = {
         var customized_object = new JSONObject()
         var post_migrate_command = new JSONObject()
+        var tmp_file_location: String = null
+
         if (datastore.get("platform") == "mongodb" || datastore.get("platform") == "kafka") {
-          var region: String = "us-east-1"
+          var region: String = new DefaultAwsRegionProviderChain().getRegion
           if (datastore.has("overrideconnector") || datastore.get("platform") == "kafka") {
+            if (datastore.has("tmpfilelocation")) {
+              tmp_file_location = datastore.get("tmpfilelocation").toString
+            } else {
+              tmp_file_location = datastore.get("s3location").toString
+            }
 
             if (datastore.has("s3region")) {
               region = datastore.getString("s3region")
             }
             customized_object.put("platform", "s3".toString).put("s3region", region)
-            post_migrate_command.put("operation", "delete").put("s3path", datastore.get("s3location"))
+            post_migrate_command.put("operation", "delete").put("s3path", tmp_file_location)
             customized_object.put("post_migrate_command", post_migrate_command)
           }
+          jsonSourceDestinationRunPrePostMigrationCommand(customized_object, false, reportRowHtml, sparkSession, pipeline)
         }
-        jsonSourceDestinationRunPrePostMigrationCommand(customized_object, false, reportRowHtml, sparkSession, pipeline)
       }
-
-
       //run the post-migration command for the sources, if any.
       for (a <- 0 to sources.length() - 1) {
         val selectedSource = sources.getJSONObject(a)
@@ -567,7 +572,7 @@ class Migration extends  SparkListener {
     var s3Client = AmazonS3ClientBuilder.defaultClient()
     var accessKey = ""
     var secretKey = ""
-    var s3Region = "us-east-1"
+    var s3Region = new DefaultAwsRegionProviderChain().getRegion
 
     if (platformObject.has("awsaccesskeyid") && platformObject.has("awssecretaccesskey")) {
       setAWSCredentials(sparkSession, jsonObjectPropertiesToMap(platformObject))
@@ -583,6 +588,7 @@ class Migration extends  SparkListener {
 
     val credentialsProvider = if (accessKey != null && !accessKey.isEmpty && secretKey != null && !secretKey.isEmpty) new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey))
     else new DefaultAWSCredentialsProviderChain
+
 
     s3Client = AmazonS3ClientBuilder.standard.withRegion(Regions.fromName(s3Region)).withCredentials(credentialsProvider).build
 
