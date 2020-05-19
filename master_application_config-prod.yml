@@ -1,6 +1,6 @@
 datapull:
   application:
-    region: us-west-2
+    region:
   secretstore:
     vault:
       vault_url:
@@ -25,11 +25,11 @@ datapull:
     consul_url:
     sleeptimeout: 60000
   api:
-    s3_bucket_name: epc-datapull-lodgingpartnerp-prodp
-    application_subnet_1: subnet-4eaee037
-    application_subnet_2: subnet-af89d1f5
-    application_security_group: sg-059171947c2f6f8cd
-    vpc_id: vpc-bc9a68c4
+    s3_bucket_name:
+    application_subnet_1:
+    application_subnet_2:
+    application_security_group:
+    vpc_id:
     load_balancer_certificate_arn:
   emr:
     emr_security_group_master:
@@ -44,7 +44,7 @@ datapull:
       Platform: EMRPipeline
   logger:
     cloudwatch:
-      groupName: /ecs/datapull-web-api
+      groupName: /ecs/datatools-datapull-api
       streamName: datapull-stream
     mssql:
       server:
@@ -58,7 +58,7 @@ datapull:
       emailaddress:
       smtpserveraddress:
     ses:
-      region: us-west-2
-      email: obeng@expedia.com
+      region:
+      email:
       access_key:
       secret_key:
