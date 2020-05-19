@@ -164,7 +164,7 @@ class Migration extends  SparkListener {
       //add optional keysp explicitely else the map will complain they don't exist later down
       destinationMap = destinationMap ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList(), destination)
 
-      if(destinationMap.getOrElse("secretstore", "").equals("secret_manager")){
+      if (destinationMap.getOrElse("secretstore", "").equals("aws_secrets_manager")) {
         destinationMap = extractCredentialsFromSecretManager(destinationMap)
       }
 
@@ -383,42 +383,13 @@ class Migration extends  SparkListener {
     }
   }
 
-  def extractCredentialsFromSecretManager(destinationMap : Map[String, String]) : Map[String, String] = {
-    val secretManager = new SecretsManager(appConfig)
-    val secretName = destinationMap.getOrElse("secret_name", "");
-    val mm = collection.mutable.Map[String, String]() ++= destinationMap
-    if (secretName != null && !secretName.isEmpty) {
-      val secretCredentials = secretManager.getSecret(secretName)
-      if (secretCredentials.contains("password")) {
-        mm.put("password", secretCredentials.get("password").get)
-      }
-      else {
-        mm.put("login", secretCredentials.get("username").get)
-        mm.put("server", secretCredentials.get("host").get)
-        mm.put("database", secretCredentials.get("dbname").get)
-        mm.put("password", secretCredentials.get("password").get)
-      }
-    }
-    return mm.toMap
-  }
-  /*this function takes in a mssql platform source json and returns the SQL query stored in a provided SQL file in s3 if it exists; else returns an empty string*/
-  def mssqlPlatformQueryFromS3File(sparkSession: org.apache.spark.sql.SparkSession, platformObject: JSONObject): String = {
-    var sqlQuery = ""
-    if (platformObject.has("querys3sqlfile")) {
-      val jsonMap = jsonObjectPropertiesToMap(List("s3path", "awsaccesskeyid", "awssecretaccesskey"), platformObject.getJSONObject("querys3sqlfile"))
-      setAWSCredentials(sparkSession, jsonMap)
-      sqlQuery = sparkSession.sparkContext.wholeTextFiles("s3n://" + jsonMap("s3path")).first()._2
-    }
-    sqlQuery
-  }
-
   def jsonSourceDestinationToDataFrame(sparkSession: org.apache.spark.sql.SparkSession, platformObject: JSONObject,migrationId: String, jobId: String, s3TempFolderDeletionError:StringBuilder, pipeline : String): org.apache.spark.sql.DataFrame = {
     var propertiesMap = jsonObjectPropertiesToMap(platformObject)
     //add optional keysp explicitely else the map will complain they don't exist later down
     propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList(), platformObject)
 
-    if(propertiesMap.getOrElse("secretstore", "").equals("secret_manager")){
-        propertiesMap = extractCredentialsFromSecretManager(propertiesMap)
+    if (propertiesMap.getOrElse("secretstore", "").equals("aws_secrets_manager")) {
+      propertiesMap = extractCredentialsFromSecretManager(propertiesMap)
     }
 
 
@@ -457,7 +428,7 @@ class Migration extends  SparkListener {
       dataframeFromTo.kafkaToDataFrame(propertiesMap("bootstrapServers"), propertiesMap("topic"), propertiesMap("offset"), propertiesMap("schemaRegistries"), propertiesMap.getOrElse("keydeserializer", "org.apache.kafka.common.serialization.StringDeserializer"), propertiesMap("deSerializer"), propertiesMap.getOrElse("s3location", appConfig.s3bucket.toString + "/datapull-opensource/logs/"), propertiesMap.getOrElse("groupid", null), propertiesMap.getOrElse("requiredonlyvalue", "false"), propertiesMap.getOrElse("payloadcolumnname", "body"), migrationId, jobId, sparkSession, s3TempFolderDeletionError)
     }
     else if (platform == "elastic") {
-      dataframeFromTo.ElasticToDataframe(propertiesMap("awsenv"), propertiesMap("clustername"), propertiesMap("port"), propertiesMap("index"), propertiesMap("type"), propertiesMap("version") ,propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"),propertiesMap.getOrElse("secretstore","vault"),  sparkSession)
+      dataframeFromTo.ElasticToDataframe(propertiesMap("awsenv"), propertiesMap("clustername"), propertiesMap("port"), propertiesMap("index"), propertiesMap("type"), propertiesMap("version"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), sparkSession)
     }
     else if (platform == "influxdb") {
       dataframeFromTo.InfluxdbToDataframe(propertiesMap("awsenv"), propertiesMap("clustername"), propertiesMap("database"), propertiesMap("measurementname"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), sparkSession)
@@ -468,14 +439,38 @@ class Migration extends  SparkListener {
     }
   }
 
-  def jsonSourceDestinationRunPrePostMigrationCommand(platformObject: JSONObject, runPreMigrationCommand: Boolean, reportbodyHtml: StringBuilder,sparkSession: SparkSession, pipeline : String): Unit = {
+  /*this function takes in a mssql platform source json and returns the SQL query stored in a provided SQL file in s3 if it exists; else returns an empty string*/
+  def mssqlPlatformQueryFromS3File(sparkSession: org.apache.spark.sql.SparkSession, platformObject: JSONObject): String = {
+    var sqlQuery = ""
+    if (platformObject.has("querys3sqlfile")) {
+      val jsonMap = jsonObjectPropertiesToMap(List("s3path", "awsaccesskeyid", "awssecretaccesskey"), platformObject.getJSONObject("querys3sqlfile"))
+      setAWSCredentials(sparkSession, jsonMap)
+      sqlQuery = sparkSession.sparkContext.wholeTextFiles("s3n://" + jsonMap("s3path")).first()._2
+    }
+    sqlQuery
+  }
+
+  def extractCredentialsFromSecretManager(destinationMap: Map[String, String]): Map[String, String] = {
+    val secretManager = new SecretsManager(appConfig)
+    val secretName = destinationMap.getOrElse("secret_name", "");
+    val mm = collection.mutable.Map[String, String]() ++= destinationMap
+    if (secretName != null && !secretName.isEmpty) {
+      val secretCredentials = secretManager.getSecret(secretName)
+      if (secretCredentials.contains(destinationMap.get("secret_key_name").toString)) {
+        mm.put("password", secretCredentials.getOrElse(destinationMap.get("secret_key_name").toString, "password"))
+      }
+    }
+    mm.toMap
+  }
+
+  def jsonSourceDestinationRunPrePostMigrationCommand(platformObject: JSONObject, runPreMigrationCommand: Boolean, reportbodyHtml: StringBuilder, sparkSession: SparkSession, pipeline: String): Unit = {
     var propertiesMap = jsonObjectPropertiesToMap(platformObject)
 
-    if(platformObject.has("pre_migrate_command")){}
+    if (platformObject.has("pre_migrate_command")) {}
 
     //add optional keysp explicitely else the map will complain they don't exist later down
     propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList(), platformObject)
-    if(propertiesMap.getOrElse("secretstore", "").equals("secret_manager")){
+    if (propertiesMap.getOrElse("secretstore", "").equals("aws_secrets_manager")) {
       propertiesMap = extractCredentialsFromSecretManager(propertiesMap)
     }
     var platform = propertiesMap("platform")

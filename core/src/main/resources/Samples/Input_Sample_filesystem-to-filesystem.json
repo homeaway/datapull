@@ -24,7 +24,7 @@
         "overrideconnector": "true",
         "s3location": "epc-datapull-lodgingpartnerp-prodp/datapull-opensource/data/Onboarding/ContactUsInfo/temp",
         "region": "us-west-2",
-        "secretstore": "secret_manager",
+        "secretstore": "aws_secrets_manager",
         "secret_name": "segment/homeaway/env/dev/vpc/vpc-58fd953f/platform/cassandra/cluster/test-cassandra-coe-cstream.service.us-east-1-vpc-88394aef.consul/database/secret2/user/readonly_user"
       }
     }
