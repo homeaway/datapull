@@ -875,7 +875,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       val df = sparkSession.loadFromMongoDB(ReadConfig(sparkOptions))
       return df
     }
-    sparkSession.read.json("/Users/srigajjala/Downloads/covid_data_100")
   }
 
     def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: Boolean): Unit = {
