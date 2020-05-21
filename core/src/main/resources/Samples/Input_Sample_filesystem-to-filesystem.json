@@ -4,12 +4,12 @@
     {
       "source": {
         "platform": "filesystem",
-        "path": "/FOLDER/SUB_FOLDER/HelloWorld.csv",
+        "path": "target/classes/SampleData/HelloWorld.csv",
         "fileformat": "csv"
       },
       "destination": {
         "platform": "filesystem",
-        "path": "/FOLDER/SUB_FOLDER/SampleData_Json",
+        "path": "target/classes/SampleData_Json",
         "fileformat": "json",
         "groupbyfields": "IntField"
       }

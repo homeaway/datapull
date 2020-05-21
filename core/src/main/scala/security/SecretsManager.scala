@@ -23,16 +23,20 @@ import config.AppConfig
 import org.json4s.jackson.JsonMethods._
 case class SecretsManager(appConfig: AppConfig){
 
-  def getSecret(secretName : String): Map[String, String] = {
+  def getSecret(secretName: String, keyName: String): String = {
     var decodedBinarySecret = null
     val getSecretValueRequest = new GetSecretValueRequest().withSecretId(secretName)
-    val client  = appConfig.getSecretsManagerClient();
-    val  getSecretValueResult = client.getSecretValue(getSecretValueRequest)
+    val client = appConfig.getSecretsManagerClient();
+    val getSecretValueResult = client.getSecretValue(getSecretValueRequest)
 
-    val secretString  = getSecretValueResult.getSecretString
-    val secret = if(secretString != null) getSecretValueResult.getSecretString else new String(Base64.getDecoder.decode(getSecretValueResult.getSecretBinary).array)
-    val result = parse(secret.toString).values.asInstanceOf[Map[String, String]]
-    //val result  = parse(secret.toString).extract[Map[String, String]]
-    return result
+    val secretString = getSecretValueResult.getSecretString
+    var secret: String = if (secretString != null) secretString else new String(Base64.getDecoder.decode(getSecretValueResult.getSecretBinary).array)
+    if (keyName != null && !keyName.isEmpty) {
+      secret = parse(secret.toString).values.asInstanceOf[Map[String, String]].get(keyName) match {
+        case Some(s) => s
+        case None => ""
+      }
+    }
+    secret
   }
 }
