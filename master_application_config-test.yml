@@ -25,7 +25,7 @@ datapull:
     consul_url:
     sleeptimeout: 60000
   api:
-    s3_bucket_name: ha-stage-data-datatools-us-east-1
+    s3_bucket_name:
     application_subnet_1:
     application_subnet_2:
     application_security_group:
@@ -55,8 +55,8 @@ datapull:
       driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
   email:
     smtp:
-      emailaddress: HA_DataTools@expediacorp.onmicrosoft.com
-      smtpserveraddress: mailq.wvrgroup.internal
+      emailaddress:
+      smtpserveraddress:
     ses:
       region:
       email:
