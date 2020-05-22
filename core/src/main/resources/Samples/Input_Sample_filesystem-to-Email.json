@@ -1,17 +1,17 @@
 {
-  "useremailaddress": "yourid@DOMAIN.com",
   "migrations": [
     {
       "source": {
         "platform": "filesystem",
-        "path": "target/classes/SampleData/HelloWorld.csv",
-        "fileformat": "csv"
+        "path": "/Users/yourname/Desktop/Sample-Optmeio-report.json",
+        "fileformat": "json"
       },
       "destination": {
-        "platform": "filesystem",
-        "path": "target/classes/SampleData_Json",
-        "fileformat": "json",
-        "groupbyfields": "IntField"
+        "platform": "Email",
+        "to": "yourname@expediagroup.com",
+        "subject":"Test",
+        "limit":"100",
+        "truncate":"100"
       }
     }
   ],
@@ -21,6 +21,6 @@
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
     "ec2instanceprofile": "Iam role",
-    "cronexpression": "21 * * * *"
+    "cronexpression":"21 * * * *"
   }
 }

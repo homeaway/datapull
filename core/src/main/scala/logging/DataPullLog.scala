@@ -91,7 +91,7 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
     println("the bucket here is :" + appConfig.s3bucket)
     val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
     val s3loggingfolder= appConfig.s3bucket+"/datapull-opensource/logs/"
-    dataframeFromTo.dataFrameToFile(s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal), null, sparkSession, null, false, null, null, null, null, null)
+    dataframeFromTo.dataFrameToFile(s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal), null, sparkSession, null, false, null, null, null, null, null, "false", null)
 
     if (sparkSession.sparkContext.isLocal == false) {
       logDataFrameToCloudWatch(appConfig.cloudWatchLogGroup, appConfig.cloudWatchLogStream, appConfig.cloudWatchLogRegion, appConfig.accessKeyForCloudWatchLog, appConfig.secretKeyForCloudWatchLog, df, sparkSession);

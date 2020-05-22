@@ -17,6 +17,7 @@
 package core
 
 import java.io.{File, PrintWriter, StringWriter}
+import java.nio.charset.StandardCharsets
 import java.sql.{Connection, DriverManager, Statement, Timestamp}
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -28,6 +29,8 @@ import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.datastax.driver.core.exceptions.TruncateException
 import com.datastax.spark.connector.cql.CassandraConnector
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
@@ -36,8 +39,12 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.{Message, Session, Transport}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.spark.SparkConf
@@ -55,8 +62,9 @@ import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
 import scala.collection.immutable.List
 import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
+
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -124,15 +132,95 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): Unit = {
 
-    if( filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null )
+  /*
+* Get ngram transformation
+*/
+
+  implicit class RichDF(val ds:org.apache.spark.sql.DataFrame) {
+    def showHTML(limit:Int = 100, truncate: Int = 100):String = {
+      import xml.Utility.escape
+      val data = ds.take(limit)
+      val header = ds.schema.fieldNames.toSeq
+      val rows: Seq[Seq[String]] = data.map { row =>
+        row.toSeq.map { cell =>
+          val str = cell match {
+            case null => "null"
+            case binary: Array[Byte] => binary.map("%02X".format(_)).mkString("[", " ", "]")
+            case array: Array[_] => array.mkString("[", ", ", "]")
+            case seq: Seq[_] => seq.mkString("[", ", ", "]")
+            case _ => cell.toString
+          }
+          if (truncate > 0 && str.length > truncate) {
+            // do not show ellipses for strings shorter than 4 characters.
+            if (truncate < 4) str.substring(0, truncate)
+            else str.substring(0, truncate - 3) + "..."
+          } else {
+            str
+          }
+        }: Seq[String]
+      }
+      var bodyHtml = StringBuilder.newBuilder
+      bodyHtml = bodyHtml.append(
+        s"""<style>table, th, td {border: 1px solid black;}</style> <table>
+                <tr>
+                 ${header.map(h => s"<th>${escape(h)}</th>").mkString}
+                </tr>
+                ${
+          rows.map { row =>
+            s"<tr>${row.map { c => s"<td>${escape(c)}</td>" }.mkString}</tr>"
+          }.mkString
+        }
+            </table>
+        """)
+      bodyHtml.toString()
+
+    }
+  }
+
+  def dataFrameToEmail(to: String, subject: String, df: org.apache.spark.sql.DataFrame ,limit :String , truncate :String ): Unit =
+
+  {
+    if(df == null )
     {
       throw new Exception("Platform cannot have null values")
     }
 
-    if( filePath.isEmpty() == true && fileFormat.isEmpty() == true && groupByFields.isEmpty() == true && s3SaveMode.isEmpty() == true && login.isEmpty() == true  && sparkSession == null)
-    {
+    val bodyHtml= df.showHTML(limit.toInt,truncate.toInt)
+    //DataMigrationFramework.SendEmail(to,bodyHtml,"","",subject)
+    val yamlMapper = new ObjectMapper(new YAMLFactory());
+    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application-dev.yml");
+    val applicationConf = yamlMapper.readTree(inputStream)
+    val config = new AppConfig(applicationConf)
+    val EmailAddress=to;
+    val htmlContent = bodyHtml;
+
+      // Set up the mail object
+      if (EmailAddress != "") {
+        val properties = System.getProperties
+        properties.put("mail.smtp.host", config.smtpServerAddress)
+        val session = Session.getDefaultInstance(properties)
+        val message = new MimeMessage(session)
+        var subject1: String = subject
+        // Set the from, to, subject, body text
+        message.setFrom(new InternetAddress(config.dataToolsEmailAddress))
+        message.setRecipients(Message.RecipientType.TO, "" + EmailAddress)
+        message.setRecipients(Message.RecipientType.BCC, "" + config.dataToolsEmailAddress)
+        message.setSubject(subject1)
+        message.setContent(htmlContent, "text/html; charset=utf-8")
+        // And send it
+        Transport.send(message)
+      }
+
+  }
+
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String, rowFromJsonString: String, jsonFieldName: String): Unit = {
+
+    if (filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && isS3 == null && SparkSession == null) {
+      throw new Exception("Platform cannot have null values")
+    }
+
+    if (filePath.isEmpty() == true && fileFormat.isEmpty() == true && groupByFields.isEmpty() == true && s3SaveMode.isEmpty() == true && login.isEmpty() == true && sparkSession == null) {
       throw new Exception("Platform cannot have empty values")
     }
 
@@ -145,7 +233,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       vaultLogin = vaultCreds("username")
       vaultPassword = vaultCreds("password")
     }
-
+    sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     var groupByFieldsArray = groupByFields.split(",")
     var filePrefix = ""
 
@@ -182,6 +270,25 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         save(filePath)
 
       df.show()
+    } else if (rowFromJsonString.toBoolean) {
+
+      df.foreachPartition(partition => {
+
+        val partitionList = new util.ArrayList[String]()
+        partition.foreach { Row =>
+          partitionList.add(Row.apply(0).toString)
+        }
+        if (!partitionList.isEmpty) {
+          val conf: Configuration = new Configuration
+          val path_string = filePrefix + filePath + "/" + UUID.randomUUID().toString + ".json"
+          val dest: Path = new Path(path_string)
+          val fs: FileSystem = dest.getFileSystem(conf)
+          val out: FSDataOutputStream = fs.create(dest, true)
+          out.write(partitionList.mkString("\n").getBytes(StandardCharsets.UTF_8))
+          out.close()
+        }
+        partitionList.clear()
+      })
     }
     else {
       if (fileFormat == "json") {
@@ -705,7 +812,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: Boolean): org.apache.spark.sql.DataFrame = {
+  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, tmpFileLocation: String, sampleSize: String): org.apache.spark.sql.DataFrame = {
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
@@ -717,8 +824,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
+    sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     //if password isn't set, attempt to get from security.Vault
-    if (authenticationEnabled) {
+    if (authenticationEnabled.toBoolean) {
       vaultPassword = password
       vaultLogin = login
       if (vaultPassword == "") {
@@ -728,34 +836,46 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         vaultPassword = vaultCreds("password")
       }
     }
-      uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled)
+    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled.toBoolean)
     if (overrideconnector.toBoolean) {
       var mongoClient: MongoClient = new MongoClient(new MongoClientURI(uri))
       var mdatabase: MongoDatabase = mongoClient.getDatabase("" + database);
       var col: MongoCollection[Document] = mdatabase.getCollection(collection);
       var cur: MongoCursor[Document] = col.find().iterator()
       var doc: org.bson.Document = null
-      var jsondocs = new ListBuffer[String]()
-
-      while (cur.hasNext()) {
-        doc = cur.next();
-        jsondocs += doc.toJson()
-      }
-      val finaljsondoc = jsondocs.toList
+      val list = new ListBuffer[String]()
+      val tmp_location = tmpFileLocation
+      var df_temp = sparkSession.emptyDataFrame
+      var df_big = sparkSession.emptyDataFrame
 
       import sparkSession.implicits._
-      val df = finaljsondoc.toDF().withColumnRenamed("value", "jsonfield")
-      df
+      while (cur.hasNext()) {
+        doc = cur.next();
+        list += (doc.toJson)
+        if (list.length >= 20000) {
+          df_temp = list.toList.toDF("jsonfield")
+          df_temp.write.mode(SaveMode.Append).json(tmp_location)
+          list.clear()
+        }
+      }
+      df_temp = list.toList.toDF("jsonfield")
+      df_temp.write.mode(SaveMode.Append).json(tmp_location)
+      list.clear()
+      df_big = sparkSession.read.json(tmp_location).withColumnRenamed("value", "jsonfield")
+      return df_big
     }
     else {
       var sparkOptions = Map("uri" -> uri)
       if (addlSparkOptions != null) {
         sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
       }
+      if (sampleSize != null) {
+        sparkOptions = sparkOptions ++ Map("spark.mongodb.input.sample.sampleSize" -> sampleSize, "sampleSize" -> sampleSize)
+      }
       val df = sparkSession.loadFromMongoDB(ReadConfig(sparkOptions))
-      df
+      return df
     }
-    }
+  }
 
     def dataFrameToMongodb(awsEnv: String, cluster: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, replicaset: String, replaceDocuments: String, ordered: String, df: org.apache.spark.sql.DataFrame, sparkSession: org.apache.spark.sql.SparkSession, documentfromjsonfield: String, jsonfield: String, vaultEnv: String, secretStore: String, addlSparkOptions: JSONObject, maxBatchSize: String, authenticationEnabled: Boolean): Unit = {
 

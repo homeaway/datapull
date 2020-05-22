@@ -296,6 +296,16 @@ object DataPull {
     properties map (property => property -> (if (jsonObject.has(property)) jsonObject.getString(property) else "")) toMap
   }
 
+  def jsonArrayPropertiesToList(jsonStringArr: String) = {
+    var returnList = List.empty[String]
+    val jsonArray = new JSONArray(jsonStringArr)
+    val length = jsonArray.length()
+    for( i <- 0 to length-1){
+      returnList = returnList :+ jsonArray.get(i).toString()
+    }
+    returnList
+  }
+
   def uuid(): String = {
 
     UUIDs.timeBased().toString
