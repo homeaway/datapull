@@ -54,7 +54,7 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
 
     val df = sparkSession.createDataFrame(Seq(tableJobHistory(migrationId,jobId,jsonString,startTime,endTime,elapsed_time.toString,count,size, status)))
 
-    //    persistLog (df, prefix, sparkSession)
+        persistLog(df, prefix, sparkSession)
   }
 
   /**
@@ -81,7 +81,7 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
     val df = sparkSession.createDataFrame(Seq(tableMigrationHistory(jobId,jobId,portfolio,product,master,ec2Role,migrationJson,stepSubmissionTime,endTime,elapsed_time.toString, status,errors)))
     val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"))
     val prefix = "DataPullHistory/LogTime=" + DATE_TIME_FORMATTER.format(Instant.now().atZone(ZoneId.of("UTC"))) + "/JobId="+jobId
-    //    persistLog (df, prefix, sparkSession)
+    persistLog(df, prefix, sparkSession)
   }
 
   /**
