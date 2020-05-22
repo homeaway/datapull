@@ -1181,25 +1181,17 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
 
   def hiveToDataFrame(table: String, sparkSession: SparkSession): org.apache.spark.sql.DataFrame = {
 
+    sparkSession.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+
     val df = sparkSession.sql("Select * FROM " + table)
     df
   }
 
-  def dataFrameToHive(cluster: String, clusterType: String, database: String, table: String, df: org.apache.spark.sql.DataFrame): Unit = {
-    var sparkSession = SparkSession.builder //.master("local")
-      .config("dfs.ha.namenodes." + clusterType, "nn1")
-      .config("dfs.nameservices", clusterType)
-      .config("dfs.namenode.rpc-address." + clusterType + ".nn1", cluster + ":8020")
-      .config("dfs.client.failover.proxy.provider." + clusterType, "dfs.client.failover.proxy.provider." + clusterType)
-      .config("hive.metastore.uris", "thrift://" + cluster + ":9083")
-      .appName("data migration")
-      .enableHiveSupport()
-      .getOrCreate()
+  def dataFrameToHive(table: String, saveMode: String, df: org.apache.spark.sql.DataFrame): Unit = {
 
     df.write
-      .mode(SaveMode.Append)
-      .format("orc")
-      .saveAsTable(database + "." + table)
+      .mode(SaveMode.valueOf(saveMode))
+      .insertInto(table)
   }
 
   def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String): Unit = {
