@@ -69,7 +69,7 @@ resource "aws_ecs_task_definition" "datapull-web-api_backend_container" {
       "hostname": null,
       "extraHosts": null,
       "user": null,
-      "requires_compatibilities":["FARGATE"],
+      "requires_compatibilities":["EC2"],
       "readonlyRootFilesystem": null,
       "dockerLabels": null,
       "privileged": null,
@@ -79,7 +79,7 @@ resource "aws_ecs_task_definition" "datapull-web-api_backend_container" {
 EOF
 
   network_mode = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
+  requires_compatibilities = ["EC2"]
   execution_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/datapull_task_execution_role"
   task_role_arn = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/datapull_task_role"
   cpu = var.container_cpu
@@ -138,7 +138,7 @@ resource "aws_ecs_service" "datapull-web-api_service" {
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
   scheduling_strategy                = "REPLICA"
-  launch_type                        = "FARGATE"
+  launch_type                        = "EC2"
 
   network_configuration {
     security_groups = [
