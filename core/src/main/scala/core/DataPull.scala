@@ -123,7 +123,7 @@ object DataPull {
         .config("" + config.broadcasttimeout, "" + config.btimeout)
         .config("" + config.executor, config.interval)
         .config("" + config.failures, no_of_retries)
-        .config("fs.s3a.multiobjectdelete.enable", false)
+        .config("fs.s3a.multiobjectdelete.enable", true)
         .config("spark.sql.hive.metastore.version", "1.2.1")
         .config("spark.sql.hive.metastore.jars", "builtin")
         .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
