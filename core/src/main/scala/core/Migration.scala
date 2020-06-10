@@ -64,8 +64,12 @@ class Migration extends  SparkListener {
         .config("spark.network.timeout", "10000s")
         .config("spark.executor.heartbeatInterval", "1000s")
         .config("spark.sql.broadcastTimeout", 36000)
-        .config("spark.task.maxFailures",no_of_retries)
-        .config("fs.s3a.multiobjectdelete.enable",false)
+        .config("spark.task.maxFailures", no_of_retries)
+        .config("fs.s3a.multiobjectdelete.enable", true)
+        .config("spark.sql.hive.metastore.version", "1.2.1")
+        .config("spark.sql.hive.metastore.jars", "builtin")
+        .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
+        .enableHiveSupport()
         .getOrCreate()
     }
 
@@ -206,7 +210,7 @@ class Migration extends  SparkListener {
         dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], true, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
       }
       else if (destinationMap("platform") == "hive") {
-        dataframeFromTo.dataFrameToHive(destinationMap("cluster"), destinationMap("clustertype"), destinationMap("database"), destinationMap("table"), dft)
+        dataframeFromTo.dataFrameToHive(destinationMap("table"), destinationMap.getOrElse("savemode", "Append"), dft)
       } else if (destinationMap("platform") == "mongodb") {
         dataframeFromTo.dataFrameToMongodb(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("database"), destinationMap("authenticationdatabase"), destinationMap("collection"), destinationMap("login"), destinationMap("password"), destinationMap.getOrElse("replicaset", null), destinationMap.getOrElse("replacedocuments", "true"), destinationMap.getOrElse("orderedrecords", "false"), dft, sparkSession, destinationMap.getOrElse("documentfromjsonfield", "false"), destinationMap.getOrElse("jsonfield", "jsonfield"), destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destination.optJSONObject("sparkoptions"), destinationMap.get("maxBatchSize").getOrElse(null), destinationMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean])
       } else if (destinationMap("platform") == "kafka") {
@@ -420,7 +424,7 @@ class Migration extends  SparkListener {
       dataframeFromTo.fileToDataFrame(propertiesMap("path"), propertiesMap("fileformat"), propertiesMap.getOrElse("delimiter", ","), propertiesMap.getOrElse("charset", "utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, false,propertiesMap.getOrElse("secretstore","vault"),true, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
     }
     else if (platform == "hive") {
-      dataframeFromTo.hiveToDataFrame(propertiesMap("cluster"), propertiesMap("clustertype"), propertiesMap("database"), propertiesMap("table"))
+      dataframeFromTo.hiveToDataFrame(propertiesMap("table"), sparkSession)
     } else if (platform == "mongodb") {
       dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("tmpfilelocation", null), propertiesMap.getOrElse("samplesize", null))
     }

@@ -54,7 +54,7 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
 
     val df = sparkSession.createDataFrame(Seq(tableJobHistory(migrationId,jobId,jsonString,startTime,endTime,elapsed_time.toString,count,size, status)))
 
-    persistLog (df, prefix, sparkSession)
+        persistLog(df, prefix, sparkSession)
   }
 
   /**
@@ -81,13 +81,14 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
     val df = sparkSession.createDataFrame(Seq(tableMigrationHistory(jobId,jobId,portfolio,product,master,ec2Role,migrationJson,stepSubmissionTime,endTime,elapsed_time.toString, status,errors)))
     val DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.of("UTC"))
     val prefix = "DataPullHistory/LogTime=" + DATE_TIME_FORMATTER.format(Instant.now().atZone(ZoneId.of("UTC"))) + "/JobId="+jobId
-    persistLog (df, prefix, sparkSession)
+    persistLog(df, prefix, sparkSession)
   }
 
   /**
     * Persists the log in the form of a dataframe , to disk. If running locally, this is the filesystem; else it is S3
     */
   def persistLog(df: org.apache.spark.sql.DataFrame, logSubFolder: String, sparkSession: SparkSession):Unit = {
+    println("the bucket here is :" + appConfig.s3bucket)
     val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
     val s3loggingfolder= appConfig.s3bucket+"/datapull-opensource/logs/"
     dataframeFromTo.dataFrameToFile(s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal), null, sparkSession, null, false, null, null, null, null, null, "false", null)
