@@ -18,14 +18,14 @@ If the secret has to be retrieved from Secrets Manger then the instance profile 
 So we have included a policy `datapull_secrets_manager_attachment` in the sample terraform  which has all required permissions to access the secrets in the AWS secrets manager and attached the policy to the role.
 Replace the `<SECRET_ARN>` with the full ARN secret ARN.
 
-****NOTE: Remove the policy and the policy attachment from the terraform file if you don't want to use the secrets manager as the secrets store****
+> NOTE: Remove the policy and the policy attachment from the terraform file if you don't want to use the secrets manager as the secrets store
 
  After making the necessary changes, please follow the below steps:
  - Clone/download the master branch of the datapull repo if it doesn't exists.
  - make sure the file is under this path `/api/terraform/datapull_iam` 
  - Have available, the [AWS Profile](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) `<aws_admin_profile>` of an IAM user/role that can create IAM users and IAM roles in your AWS account
      -   It is advisable this IAM user/role have admin access to the AWS account. Typically these credentials will be available only to the team managing the AWS account; hence the team deploying DataPull will need to coordinate with the team managing the AWS account. 
-****NOTE: If you have installed datapull using your machine, then make sure the admin profile credentials exists and is not expired****
+> NOTE: If you have installed datapull using your machine, then make sure the admin profile credentials exists and is not expired
 - Then please follow the below steps:
 
 > We recommend team managing the AWS account run this script from a terminal that has the AWS administrator credentials available as a profile `<aws_admin_profile>` in the [Credential Profile Chain](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/credentials.html) i.e. you should have the AWS credentials set in
@@ -36,9 +36,10 @@ Replace the `<SECRET_ARN>` with the full ARN secret ARN.
 </ul>
 
 Make sure you have the below required information before running the below commands:
- <aws_admin_profile>  - The name of the admin aws profile which has saved in your credentials file
- <s3_bucket_name>  - this is the bucket used during datapull installation
- <region> - the region in which the datapull has been installed
+
+- <aws_admin_profile>  - The name of the admin aws profile which has saved in your credentials file
+- <s3_bucket_name>  - this is the bucket used during datapull installation
+- <region> - the region in which the datapull has been installed.
 
 - From the terminal at the root of the repo, run 
     - `cd api/terraform/datapull_iam/`
