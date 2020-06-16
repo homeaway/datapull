@@ -1,0 +1,70 @@
+datapull:
+  application:
+    region: us-east-1
+  secretstore:
+    vault:
+      vault_url: https://vault-us-east-1.egdp-prod.aws.away.black:8200
+      static_secret_path_prefix: /v1/dbops/staticsecrets/awsenvironments/awsregions/us-east-1/clusters/v1/auth/aws-ec2/login
+      vault_nonce: f2d47637-4b41-fdad-f556-b657ff2c0edb
+      vault_path_login:
+  json:
+    inputjson: Input_Sample_filesystem-to-filesystem.json
+  spark:
+    network: spark.network.timeout
+    timeout: 10000s
+    executor: spark.executor.heartbeatInterval
+    interval: 1000s
+    broadcasttimeout: spark.sql.broadcastTimeout
+    btimeout: 36000
+    scheduler: spark.scheduler.mode
+    mode: FAIR
+    failures: spark.task.maxFailures
+  miscellaneous:
+    no_of_retries: 16
+    timeout: 10000
+    consul_url:
+    sleeptimeout: 60000
+  api:
+    s3_bucket_name: egdp-prod-data-datatools-us-east-1
+    application_subnet_1: subnet-02004ba8aeea7d316
+    application_subnet_2: subnet-05334028769c15c12
+    application_security_group: sg-0348a5a11c2748bc8
+    vpc_id: vpc-018bd5207b3335f70
+    load_balancer_certificate_arn:
+  emr:
+    emr_security_group_master: sg-0e335528d7fad2db2
+    emr_security_group_slave: sg-0ef8e5417ac26fa00
+    emr_security_group_service_access: sg-08e583d6322c57590
+    tags:
+      Brand: HomeAway
+      Owner: HA_DataTools@expediacorp.onmicrosoft.com
+      Purpose: EMRPipeline
+      Service: emr
+      Platform: EMRPipeline
+      ComponentInfo: 7f99fe6f-4675-4ef2-b88f-a48cf92bc00a
+      AssetProtectionLevel: 99
+      Portfolio: Data Engineering Services
+      Creator: HA_DataTools@expediacorp.onmicrosoft.com
+      Team: DataTools
+      Env: egdp-prod
+      Name: ECS_datapull_prod
+  logger:
+    cloudwatch:
+      groupName: /ecs/datatools-datapull-api
+      streamName: datapull-stream
+    mssql:
+      server:
+      database:
+      login:
+      password:
+      table:
+      driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
+  email:
+    smtp:
+      emailaddress: HA_DataTools@expediacorp.onmicrosoft.com
+      smtpserveraddress: mailq-prod-egdp.expedia.biz
+    ses:
+      region:
+      email:
+      access_key:
+      secret_key:

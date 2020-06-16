@@ -31,6 +31,7 @@ import com.datastax.driver.core.exceptions.TruncateException
 import com.datastax.spark.connector.cql.CassandraConnector
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
+import com.homeaway.datatools.hotels.ExpediaHotelAmenity
 import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
@@ -49,7 +50,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{Row, SaveMode, SparkSession,Encoder, Encoders}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
 import org.elasticsearch.spark.sql._
@@ -65,6 +66,7 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
 
+import com.homeaway.datatools.hotels._
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializable {
 
@@ -618,6 +620,22 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     if(mappingId !=null)
       config =config ++ Map("es.mapping.id" -> mappingId)
 
+    if(mappingId !=null)
+      config =config ++ Map("es.mapping.id" -> mappingId)
+
+    if (flag == "true") {
+      val tmp_df = ExpediaHotelAmenity.select(df.withColumn("lastchanged", df("lastChangeTime").cast("timestamp")))
+
+      implicit val HotelAmenity: Encoder[HotelAmenity] = Encoders.kryo[HotelAmenity]
+      implicit val RoomAmenity: Encoder[RoomAmenity] = Encoders.kryo[RoomAmenity]
+      implicit val HotelAmenityListEncoder: Encoder[List[RoomAmenity]] = Encoders.kryo[List[RoomAmenity]]
+      implicit val RoomAmenityListEncoder: Encoder[List[HotelAmenity]] = Encoders.kryo[List[HotelAmenity]]
+      //  implicit val EsRecordEncoder:Encoder[EsRecord] = Encoders.kryo[EsRecord]
+
+      import sparkSession.implicits._
+
+      tmp_df.map(row => ExpediaHotelAmenity.getEsRecord(row)).saveToEs(config)
+    }
     if (flag == "false") {
       df.saveToEs(config)
     }
