@@ -1,4 +1,4 @@
-# Deploying DataPull on AWS Fargate and AWS EMR
+# Deploying DataPull on AWS Fargate/ECS and AWS EMR
 This document helps you install DataPull on an Amazon AWS account, and run your first DataPull job of converting CSV data in AWS S3 to JSON data. 
 
 ![DataPull installation on AWS](media/datapull_installation.png)
