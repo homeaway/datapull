@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.6] - 2020-05-22
 ### Changed
+* core/src/main/scala/core/DataFrameFromTo.scala
+
+## [0.1.6] - 2020-05-22
+### Changed
 * core/src/main/resources/Samples/Input_Json_Specification.json
 * core/src/main/scala/core/Controller.scala
 * core/src/main/scala/core/DataFrameFromTo.scala

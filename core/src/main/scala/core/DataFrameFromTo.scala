@@ -1323,7 +1323,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
         driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
         url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
       }
-      else if (platform == "postgresql") {
+      else if (platform == "postgres") {
         driver = "org.postgresql.Driver"
         url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
       }
