@@ -4,8 +4,8 @@
     {
       "source": {
         "platform": "hive",
-        "url": "jdbc:hive2://egdl-hive-server2.egdp-test.aws.away.black:10000/",
-        "dbtable":"test.atlas_test",
+        "url": "your_jdbc_hive_url",
+        "dbtable":"your_dbtable",
         "username":""
       },
       "destination": {
