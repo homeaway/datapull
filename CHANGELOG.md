@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.7] - 2020-05-22
 ### Changed
+* README.md - replaced instructions to install MkDocs with dockerised MkDocs commands; replaced need for JDK8 install for Dockerised execution,  with dockerised maven
+* docs/docs/index.md - replaced instructions to install MkDocs with dockerised MkDocs commands
+
+## [0.1.7] - 2020-05-22
+### Changed
 * core/src/main/scala/core/DataFrameFromTo.scala
 
 ## [0.1.6] - 2020-05-22
