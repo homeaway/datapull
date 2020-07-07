@@ -1,6 +1,8 @@
-#!/usr/bin/env bash -x
+#!/usr/bin/env bash
 
 set -x
+
+exit 1
 
 exitAfterFailure(){
    if [[ "$?" -ne 0 ]] ; then
