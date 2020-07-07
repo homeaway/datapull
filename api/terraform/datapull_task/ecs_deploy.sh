@@ -2,8 +2,6 @@
 
 set -x
 
-exit 1
-
 exitAfterFailure(){
    if [[ "$?" -ne 0 ]] ; then
       echo 'PROCESS FAILED'; exit $rc
@@ -135,12 +133,12 @@ echo " conf file path"
 
 pwd
 
-docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${PWD}/m2":/root/.m2 -w /usr/src/mymaven maven:alpine mvn clean install
+#### docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${PWD}/m2":/root/.m2 -w /usr/src/mymaven maven:alpine mvn clean install
 exitAfterFailure
 
 echo "Uploading core Jar to s3"
 
-docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${PWD}":/data -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws s3 cp /data/target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar "$jar_file_path"
+#### docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${PWD}":/data -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws s3 cp /data/target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar "$jar_file_path"
 
 exitAfterFailure
 

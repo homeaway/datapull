@@ -97,7 +97,7 @@ resource "aws_alb" "datapull-web-api-lb" {
   tags=local.datapull_ecs_tags
   security_groups = [
     var.security_grp]
-  internal = true
+  internal = false
   depends_on = [aws_alb_target_group.datapull-web-api-targetgroup]
 }
 
@@ -121,8 +121,8 @@ resource "aws_alb_target_group" "datapull-web-api-targetgroup" {
 resource "aws_alb_listener" "datapull-web-apilb-listener" {
   load_balancer_arn = aws_alb.datapull-web-api-lb.arn
 
-  port      = 443
-  protocol  = "HTTPS"
+  port      = 8080
+  protocol  = "HTTP"
 
   default_action {
     target_group_arn = aws_alb_target_group.datapull-web-api-targetgroup.arn
@@ -144,7 +144,7 @@ resource "aws_ecs_service" "datapull-web-api_service" {
     security_groups = [
       var.security_grp]
     subnets         = [var.application_subnet_1,var.application_subnet_2]
-    assign_public_ip = false
+    assign_public_ip = true
   }
 
   load_balancer {

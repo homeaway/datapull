@@ -5,9 +5,9 @@ This document helps you install DataPull on an Amazon AWS account, and run your 
 
 In a nutshell, deploying DataPull to an AWS Account
 
-- creates three IAM Roles
+- creates four IAM Roles
     - `datapull_task_role`, `datapull_task_execution_role` for running the DataPull REST API on AWS Fargate
-    - `emr_ec2_datapull_role` for running ephemeral AWS EMR clusters
+    - `emr_datapull_role`, `emr_ec2_datapull_role` for running ephemeral AWS EMR clusters
 - creates an IAM User `datapull_user` temporarily for the purpose of installing the following DataPull components
     - an AWS Fargate service `datapull-web-api` with an associated image in AWS ECR, and AWS Application Load Balancer (ALB)
     - an AWS CloudWatch Log Group `datapull_cloudwatch_log_group` and associated log stream
