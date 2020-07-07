@@ -139,7 +139,7 @@ Please add an element _cronexpression_ in the cluster section of the Input Json.
 The current list of contributors are tracked by Github at https://github.com/homeaway/datapull/graphs/contributors . Prior to being opensourced, DataPull was an innersourced project at Vrbo, that evolved with contributions from
 
 * Arturo Artigas
-* Nirav Shah
+* Nirav S.
 * Ranjith Peddi
 * Rohith Mark Varghese
 * Sandeep Nautiyal
