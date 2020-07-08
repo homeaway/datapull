@@ -132,6 +132,7 @@ Please follow the instructions on [this wiki](/oracle_teradata_support) to use O
     - Update the resource `aws_alb_listener` with 
         - protocol as `"HTTPS"` (instead of `"HTTP"`)
         - port as `443` (instead of `8080`)
+        - uncomment line `# certificate_arn = var.load_balancer_certificate_arn`
 
 #### Create IAM User and Roles, with policies
 
