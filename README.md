@@ -70,7 +70,8 @@ Prereq:- Docker Installed
 ```
 docker run --rm -it -p 8000:8000 -v ${PWD}/docs:/docs squidfunk/mkdocs-material
 ```
-- Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
+- Open http://127.0.0.1/8000 to see a preview of the documentation site.You can also try http://0.0.0.0:8000 if that doesnot work.
+You can edit the documentation by following https://www.mkdocs.org/#getting-started
 - Once you're done updating the documentation, please commit and push your updates to your forked repo. 
 - In terminal from the root of the forked repo, run 
 ```
