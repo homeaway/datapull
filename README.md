@@ -65,8 +65,6 @@ DataPull documentation is available at https://homeaway.github.io/datapull/ . To
 
 Method 1.
 Prereq:- Docker Installed
-- Create a [Feature Request](https://github.com/homeaway/datapull/issues/new?template=feature_request.md) issue
-  - Please fill in the title and the body of the issue. Our suggested title is "Documentation for `<what this documentation is for>`"
 - Fork the [DataPull](https://github.com/homeaway/datapull) repo
 - In terminal from the root of the repo, run 
 ```
