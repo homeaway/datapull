@@ -80,10 +80,13 @@ docker run --rm -it -v ~/.ssh:/root/.ssh -v ${PWD}:/docs squidfunk/mkdocs-materi
 - Create 2 PRs (one for forked repo branch that you updated, another for `gh-pages` branch) and we'll review and approve them.
 
 Method 2.
-Prereq:- Install MkDocs and Material for MkDocs
-Clone your forked repo locally, and run mkdocs serve in Terminal from the docs folder of the repo
-Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
+Prereq:- Install MkDocs and Material for MkDocs.
+Clone your forked repo locally, and run mkdocs serve in Terminal from the docs folder of the repo.
+
+Open http://127.0.0.1/8000 to see a preview of the documentation site. 
+You can edit the documentation by following https://www.mkdocs.org/#getting-started.
 Once you're done updating the documentation, please commit and push your local master branch to your fork. Also, run mkdocs gh-deploy at the terminal to update and push your gh-pages branch.
-Create 2 PRs (one for master branch, one for gh-pages branch) and we'll review and approve them.
+
+- Create 2 PRs (one for master branch, one for gh-pages branch) and we'll review and approve them.
 
 - Thanks again, for helping make DataPull better!
