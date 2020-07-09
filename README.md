@@ -81,7 +81,8 @@ docker run --rm -it -v ~/.ssh:/root/.ssh -v ${PWD}:/docs squidfunk/mkdocs-materi
 
 Method 2.
 Prereq:- Install MkDocs and Material for MkDocs.
-Clone your forked repo locally, and run mkdocs serve in Terminal from the docs folder of the repo.
+
+- Clone your forked repo locally, and run mkdocs serve in Terminal from the docs folder of the repo.
 
 Open http://127.0.0.1/8000 to see a preview of the documentation site. 
 You can edit the documentation by following https://www.mkdocs.org/#getting-started.
