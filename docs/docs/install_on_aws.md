@@ -16,7 +16,9 @@ In a nutshell, deploying DataPull to an AWS Account
 
 ## Pre-install steps
 
-- Clone/download the master branch of this repo for fargate based install or master_ecs_ec2 branch if you want to do ecs based install.
+- (optional but recommended, since it allows easy reinstalls, updates and uninstalls in the future) Fork/[Mirror](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/duplicating-a-repository) this repo to your git org. All proceeding references to "repo" will refer to your forked/mirrored repo.
+    - You will need to mirror instead of fork, if your org is not on github.com
+- Clone/download the `master` branch of this repo for ECS Fargate-based install or `master_ecs_ec2` branch if you want to do ECS EC2-based install.
 - Have available, the [AWS Profile](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html) `<aws_admin_profile>` of an IAM user/role that can create IAM users and IAM roles in your AWS account
     -   It is advisable this IAM user/role have admin access to the AWS account. Typically these credentials will be available only to the team managing the AWS account; hence the team deploying DataPull will need to coordinate with the team managing the AWS account. 
 - Have an S3 bucket `<s3_bucket_name>` (this bucket can be an existing bucket or a new bucket) that DataPull will use to store artifacts and logs under the folder `datapull-opensource`. The installation will use the name name as the prefix for new resources needed by DataPull, such as ECS service, Application load balancer, etc.
