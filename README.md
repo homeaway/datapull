@@ -16,6 +16,7 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
 
 ## Run DataPull locally
 > Note: DataPull consists of two services, an API written in Java Spring Boot, and a Spark app written in Scala. Although Scala apps can run on JDK 11, per [official docs](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-11-compatibility-notes) it is recommended that Java 8 be used for compiling Scala code. The effort to upgrade to OpenJDK 11+ is tracked [here](https://github.com/homeaway/datapull/issues/2)
+
 ### Build and execute within a Dockerised Spark environment
 > Pre-requisite: Docker Desktop
 * Clone this repo locally and check out the master branch
@@ -25,28 +26,30 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
 * build the Scala JAR from within the core folder
   ```
   cd datapull/core
-  make build
+  cp ./src/main/resources/application-dev.yml ./src/main/resources/application.yml
+  docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${PWD}/m2":/root/.m2 -w /usr/src/mymaven maven:3.6.3-jdk-8 mvn clean install
   ```
 * Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.  
   ```
   docker run -v $(pwd):/core -w /core -it --rm gettyimages/spark:2.2.1-hadoop-2.8 spark-submit --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
   ```
 * Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld.csv transformed into JSON.
-### Build and debug within an IDE (IntelliJ) ###
-> Pre-requisite: IntelliJ with Scala plugin configured. Check out this [Help page](https://docs.scala-lang.org/getting-started-intellij-track/getting-started-with-scala-in-intellij.html) if this plugin is not installed.
-* Clone this repo locally and check out the master branch
-* Open the folder [core](core) in IntelliJ IDE.
-* When prompted, add this project as a maven project.
-* By default, this source code is designed to execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.
-* Go to File > Project Structure... , and choose 1.8 (java version) as the Project SDK
-* Go to Run > Edit Configurations... , and do the following
-    * Create an Application configuration (use the + sign on the top left corner of the modal window)
-    * Set the Name to Debug
-    * Set the Main Class as Core.DataPull
-    * Use classpath of module Core.DataPull
-    * Set JRE to 1.8
-    * Click Apply and then OK
-* Click Run > Debug 'Debug' to start the debug execution
+
+### Build and debug within an IDE (IntelliJ) ###	
+> Pre-requisite: IntelliJ with Scala plugin configured. Check out this [Help page](https://docs.scala-lang.org/getting-started-intellij-track/getting-started-with-scala-in-intellij.html) if this plugin is not installed.	
+* Clone this repo locally and check out the master branch	
+* Open the folder [core](core) in IntelliJ IDE.	
+* When prompted, add this project as a maven project.	
+* By default, this source code is designed to execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.	
+* Go to File > Project Structure... , and choose 1.8 (java version) as the Project SDK	
+* Go to Run > Edit Configurations... , and do the following	
+    * Create an Application configuration (use the + sign on the top left corner of the modal window)	
+    * Set the Name to Debug	
+    * Set the Main Class as Core.DataPull	
+    * Use classpath of module Core.DataPull	
+    * Set JRE to 1.8	
+    * Click Apply and then OK	
+* Click Run > Debug 'Debug' to start the debug execution	
 * Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld.csv transformed into JSON.
 
 ## Deploy DataPull to Amazon AWS
@@ -59,12 +62,32 @@ Deploying DataPull to Amazon AWS, involves
 Please create an issue in this git repo, using the bug report or feature request templates.
 ### Documentation
 DataPull documentation is available at https://homeaway.github.io/datapull/ . To update this documentation, please do the following steps...
-- Create a [Feature Request](https://github.com/homeaway/datapull/issues/new?template=feature_request.md) issue
-  - Please fill in the title and the body of the issue. Our suggested title is "Documentation for `<what this documentation is for>`"
+
+Method 1.
+Prereq:- Docker Installed
 - Fork the [DataPull](https://github.com/homeaway/datapull) repo
-- Install [MkDocs](https://www.mkdocs.org/) and [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/)
-- Clone your forked repo locally, and run `mkdocs serve` in Terminal from the `docs` folder of the repo
-- Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
-- Once you're done updating the documentation, please commit and push your local master branch to your fork. Also, run `mkdocs gh-deploy` at the terminal to update and push your `gh-pages` branch. 
-- Create 2 PRs (one for `master` branch, one for `gh-pages` branch) and we'll review and approve them. 
+- In terminal from the root of the repo, run 
+```
+docker run --rm -it -p 8000:8000 -v ${PWD}/docs:/docs squidfunk/mkdocs-material
+```
+- Open http://127.0.0.1/8000 to see a preview of the documentation site.You can also try http://0.0.0.0:8000 if that doesnot work.
+You can edit the documentation by following https://www.mkdocs.org/#getting-started
+- Once you're done updating the documentation, please commit and push your updates to your forked repo. 
+- In terminal from the root of the forked repo, run 
+```
+docker run --rm -it -v ~/.ssh:/root/.ssh -v ${PWD}:/docs squidfunk/mkdocs-material gh-deploy --config-file /docs/docs/mkdocs.yml
+```
+- Create 2 PRs (one for forked repo branch that you updated, another for `gh-pages` branch) and we'll review and approve them.
+
+Method 2.
+Prereq:- Install MkDocs and Material for MkDocs.
+
+- Clone your forked repo locally, and run mkdocs serve in Terminal from the docs folder of the repo.
+
+Open http://127.0.0.1/8000 to see a preview of the documentation site. 
+You can edit the documentation by following https://www.mkdocs.org/#getting-started.
+Once you're done updating the documentation, please commit and push your local master branch to your fork. Also, run mkdocs gh-deploy at the terminal to update and push your gh-pages branch.
+
+- Create 2 PRs (one for master branch, one for gh-pages branch) and we'll review and approve them.
+
 - Thanks again, for helping make DataPull better!

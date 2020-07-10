@@ -7,11 +7,7 @@
 DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data across heterogeneous datastores effortlessly. When deployed to Amazon AWS, DataPull spins up EMR Spark infrastructure, does the data movement and terminates the infrastructure once the job is complete; to minimize costs. 
 Multiple data migrations can be done ither serially or in parallel within a DataPull job. There also exists built-in integration with [Hashicorp Vault](https://www.vaultproject.io/) so that datastore credentials are never exposed. DataPull also has a built-in scheduler for daily/recurring jobs; or its REST API endpoints can be invoked by a third-party scheduler.
 
-# Authors. 
- Marko Varghese.
- Nirav Shah.
- Srinivas Gajjala.
-
+## Platforms supported
 
 DataPull supports the following datastores as sources and destinations.
 
@@ -32,17 +28,17 @@ DataPull supports the following datastores as sources and destinations.
 
 ## How to use DataPull
 
-###  Steps common to all environments (Dev/Test/Stage/Prod)...
+###  Steps common to all environments (Dev/Test/Stage/Prod)
 
 * Create a json file/string that has the source/s, destination/s and the portfolio information for tagging the ephemeral infrastructure needed to do the DataPull
   * Here are some sample JSON files for some common use cases: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples
   * Here is JSON specification document which has all the possible options supported by DataPull: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json
-* Please provide an email address for the element "useremailaddress" in the JSON input. Once your DataPull completes,  an email will be sent with all the migration details along with the source, destination details of the migrations, the time taken for the migrations to complete and the number of records processed, etc. 
+* Please provide an email address for the element "useremailaddress" in the JSON input. Once your DataPull completes, an email will be sent with all the migration details along with the source, destination details of the migrations, the time taken for the migrations to complete and the number of records processed, etc. 
 * For DataPull to get access to the source and destination data platforms, you need to either provide the login and password within the JSON (not recommended for Stage and Production environments); or provide the login and an IAM Role which is mapped to the credentials in Vault (you also need to add the ```"awsenv"``` and ```"vaultenv"``` elements to the source(s) and destination in the json input).
 * Navigate to your swagger api URL and invoke this REST API with the json as input.
 
 
-## More information about the Input JSON: ##
+## More information about the Input JSON
 
 The input JSON mainly divided into Three sections.
 
@@ -60,7 +56,7 @@ Cluster section is mostly related to the infrastructure of the migration job whi
 [This sample JSON input](https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Sample_MySql_to_S3.json) moves data from MySql to AWS S3
 
 
-## What we use to make the DataPull do it's job?
+## How does DataPull work?
 
 Spark is the main engine which drives the DataPull. So technically it will run on any spark environment. But we are biased to Amazon's Elastic Map Reduce(EMR) to have minimum dependencies(AWS versus AWS+Qubole) and our app does use EMR to spin up the spark clusters. But after all as it is a spark application it will run on any spark cluster whether it is EMR or Qubole or any other spark clusters.
 
@@ -137,3 +133,17 @@ Once this is complete you can revert back to the original of how to use DataPull
 ### How to schedule a DataPull ?
 
 Please add an element _cronexpression_ in the cluster section of the Input Json. For example, `"cronexpression": "0 21 * * *"` executes DataPull every day at 9 PM UTC.
+
+## Contributors to DataPull
+
+The current list of contributors are tracked by Github at https://github.com/homeaway/datapull/graphs/contributors . Prior to being opensourced, DataPull was an innersourced project at Vrbo, that evolved with contributions from
+
+* Arturo Artigas
+* Nirav N Shah
+* Ranjith Peddi
+* Rohith Mark Varghese
+* Sandeep Nautiyal
+* Satish Behra
+* Selvanathan Ragunathan
+* Srinivas Rao Gajjala
+* Virendra Chaudhary
