@@ -6,8 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.7] - 2020-06-11
 ### Added
-* docs/docs/custom_role_creation.md
-* docs/docs/resources/sample_instanceprofile.tf
+* docs/docs/custom_emr_ec2_role.md
+* docs/docs/resources/sample_custom_emr_ec2_role.tf
 
 ## [0.1.6] - 2020-05-22
 ### Changed
