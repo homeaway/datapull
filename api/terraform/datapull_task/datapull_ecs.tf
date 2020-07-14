@@ -123,6 +123,7 @@ resource "aws_alb_listener" "datapull-web-apilb-listener" {
 
   port      = 8080
   protocol  = "HTTP"
+  # certificate_arn = var.load_balancer_certificate_arn
 
   default_action {
     target_group_arn = aws_alb_target_group.datapull-web-api-targetgroup.arn
@@ -144,7 +145,7 @@ resource "aws_ecs_service" "datapull-web-api_service" {
     security_groups = [
       var.security_grp]
     subnets         = [var.application_subnet_1,var.application_subnet_2]
-    assign_public_ip = false
+    assign_public_ip = true
   }
 
   load_balancer {
