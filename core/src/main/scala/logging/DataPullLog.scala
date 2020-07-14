@@ -88,7 +88,6 @@ class DataPullLog(appConfig: AppConfig, pipeline : String) extends Logger {
     * Persists the log in the form of a dataframe , to disk. If running locally, this is the filesystem; else it is S3
     */
   def persistLog(df: org.apache.spark.sql.DataFrame, logSubFolder: String, sparkSession: SparkSession):Unit = {
-    println("the bucket here is :" + appConfig.s3bucket)
     val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
     val s3loggingfolder= appConfig.s3bucket+"/datapull-opensource/logs/"
     dataframeFromTo.dataFrameToFile(s3loggingfolder + logSubFolder, "json", "", "Append", df, !(sparkSession.sparkContext.isLocal), null, sparkSession, null, false, null, null, null, null, null, "false", null)
