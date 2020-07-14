@@ -1,6 +1,6 @@
 # DataPull #
 <p align="center">
-  <img width="222" height="207" src="./docs/docs/media/logo.png">
+  <img width="222" height="207" src="./docs/docs/media/logo_transparent.png">
 </p>
 DataPull is a self-service Distributed ETL tool to join and transform data from heterogeneous datastores. It provides users an easy and consistent way to move data from one datastore to another. Supported datastores include, but are not limited to, SQLServer, MySql, Postgres, Cassandra, MongoDB, and Kafka.
 
@@ -53,27 +53,49 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
 * Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld.csv transformed into JSON.
 
 ## Deploy DataPull to Amazon AWS
+
 Deploying DataPull to Amazon AWS, involves
 - installing the DataPull API and Spark JAR in AWS Fargate, using [this runbook](https://homeaway.github.io/datapull/install_on_aws/)
 - running DataPulls in AWS EMR, using [this runbook](https://homeaway.github.io/datapull/emr_runbook/)
 
 ## Contribute to this project
+
 ### Bugs/Feature Requests
+
 Please create an issue in this git repo, using the bug report or feature request templates.
+
 ### Documentation
+
 DataPull documentation is available at https://homeaway.github.io/datapull/ . To update this documentation, please do the following steps...
-- Create a [Feature Request](https://github.com/homeaway/datapull/issues/new?template=feature_request.md) issue
-  - Please fill in the title and the body of the issue. Our suggested title is "Documentation for `<what this documentation is for>`"
-- Fork the [DataPull](https://github.com/homeaway/datapull) repo
-- In terminal from the root of the repo, run 
-```
-docker run --rm -it -p 8000:8000 -v ${PWD}/docs:/docs squidfunk/mkdocs-material
-```
-- Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
-- Once you're done updating the documentation, please commit and push your updates to your forked repo. 
-- In terminal from the root of the forked repo, run 
-```
-docker run --rm -it -v ~/.ssh:/root/.ssh -v ${PWD}:/docs squidfunk/mkdocs-material gh-deploy --config-file /docs/docs/mkdocs.yml
-```
-- Create 2 PRs (one for forked repo branch that you updated, another for `gh-pages` branch) and we'll review and approve them. 
-- Thanks again, for helping make DataPull better!
+
+1. Fork the [DataPull](https://github.com/homeaway/datapull) repo
+
+1. In terminal from the root of the repo, run 
+    1. if Docker is installed, run 
+    ```
+    docker run --rm -it -p 8000:8000 -v ${PWD}/docs:/docs squidfunk/mkdocs-material
+    ```
+    2. or, if MkDocs and Material for MkDocs are installed, run 
+    ```
+    cd docs
+    mkdocs serve
+    ```
+
+1. Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
+
+1. Once you're done updating the documentation, please commit and push your updates to your forked repo. 
+
+1. In terminal from the root of the forked repo, run one of the following command blocks, to update and push your `gh-pages` branch.
+    1. if Docker is installed, run 
+    ```
+    docker run --rm -it -v ~/.ssh:/root/.ssh -v ${PWD}:/docs squidfunk/mkdocs-material gh-deploy --config-file /docs/docs/mkdocs.yml
+    ```
+    2. or, if MkDocs and Material for MkDocs are installed, run 
+    ```
+    cd docs
+    mkdocs gh-deploy
+    ```
+
+1. Create 2 PRs (one for forked repo branch that you updated, another for `gh-pages` branch) and we'll review and approve them.
+
+Thanks again, for helping make DataPull better!
