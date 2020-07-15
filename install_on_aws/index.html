@@ -208,6 +208,33 @@
   
 
 
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
+    
+    <label class="md-nav__link" for="nav-3">
+      DataPull on AWS
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
+      </span>
+    </label>
+    <nav class="md-nav" aria-label="DataPull on AWS" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+        </span>
+        DataPull on AWS
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+  
+
+
   <li class="md-nav__item md-nav__item--active">
     
     <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
@@ -349,10 +376,10 @@
     
   </li>
 
-    
-      
-      
-      
+        
+          
+          
+          
 
 
   <li class="md-nav__item">
@@ -361,16 +388,33 @@
     </a>
   </li>
 
-    
-      
-      
-      
+        
+          
+          
+          
 
 
   <li class="md-nav__item">
-    <a href="../oracle_teradata_support/" title="Add support for Oracle and Teradata" class="md-nav__link">
-      Add support for Oracle and Teradata
+    <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
+      Running DataPull on AWS EMR
     </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../custom_emr_ec2_role/" title="Custom EC2 Role for EMR" class="md-nav__link">
+      Custom EC2 Role for EMR
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
   </li>
 
     
@@ -380,8 +424,8 @@
 
 
   <li class="md-nav__item">
-    <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
-      Running DataPull on AWS EMR
+    <a href="../oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-nav__link">
+      Support for Oracle and Teradata
     </a>
   </li>
 
@@ -574,9 +618,9 @@
 <p><img alt="DataPull installation on AWS" src="../media/datapull_installation.png" /></p>
 <p>In a nutshell, deploying DataPull to an AWS Account</p>
 <ul>
-<li>creates three IAM Roles<ul>
+<li>creates four IAM Roles<ul>
 <li><code>datapull_task_role</code>, <code>datapull_task_execution_role</code> for running the DataPull REST API on AWS Fargate</li>
-<li><code>emr_ec2_datapull_role</code> for running ephemeral AWS EMR clusters</li>
+<li><code>emr_datapull_role</code>, <code>emr_ec2_datapull_role</code> for running ephemeral AWS EMR clusters</li>
 </ul>
 </li>
 <li>creates an IAM User <code>datapull_user</code> temporarily for the purpose of installing the following DataPull components<ul>
@@ -591,7 +635,11 @@
 </ul>
 <h2 id="pre-install-steps">Pre-install steps</h2>
 <ul>
-<li>Clone/download the master branch of this repo for fargate based install or master_ecs_ec2 branch if you want to do ecs based install.</li>
+<li>(optional but recommended, since it allows easy reinstalls, updates and uninstalls in the future) Fork/<a href="https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/duplicating-a-repository">Mirror</a> this repo to your git org. All proceeding references to "repo" will refer to your forked/mirrored repo.<ul>
+<li>You will need to mirror instead of fork, if your org is not on github.com</li>
+</ul>
+</li>
+<li>Clone/download the <code>master</code> branch of this repo for ECS Fargate-based install or <code>master_ecs_ec2</code> branch if you want to do ECS EC2-based install.</li>
 <li>Have available, the <a href="https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html">AWS Profile</a> <code>&lt;aws_admin_profile&gt;</code> of an IAM user/role that can create IAM users and IAM roles in your AWS account<ul>
 <li>It is advisable this IAM user/role have admin access to the AWS account. Typically these credentials will be available only to the team managing the AWS account; hence the team deploying DataPull will need to coordinate with the team managing the AWS account. </li>
 </ul>
@@ -718,6 +766,7 @@
 <li>Update the resource <code>aws_alb_listener</code> with <ul>
 <li>protocol as <code>"HTTPS"</code> (instead of <code>"HTTP"</code>)</li>
 <li>port as <code>443</code> (instead of <code>8080</code>)</li>
+<li>uncomment line <code># certificate_arn = var.load_balancer_certificate_arn</code></li>
 </ul>
 </li>
 </ul>

@@ -11,19 +11,21 @@
         <meta name="description" content="Open Source Docs and Community Standards">
       
       
+        <link rel="canonical" href="https://homeaway.github.io/datapull/custom_emr_ec2_role/">
+      
       
         <meta name="author" content="Data Tools">
       
-      <link rel="shortcut icon" href="/datapull/assets/images/favicon.png">
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.4.0">
     
     
       
-        <title>DataPull Documentation</title>
+        <title>Custom EC2 Role for EMR - DataPull Documentation</title>
       
     
     
-      <link rel="stylesheet" href="/datapull/assets/stylesheets/main.fe0cca5b.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.fe0cca5b.min.css">
       
       
     
@@ -52,6 +54,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#custom-ec2-instance-profilerole-for-emr-clusters" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -76,7 +83,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              
+              Custom EC2 Role for EMR
             
           </span>
         </div>
@@ -176,7 +183,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/." title="Home" class="md-nav__link">
+    <a href=".." title="Home" class="md-nav__link">
       Home
     </a>
   </li>
@@ -188,7 +195,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/architecture/" title="Architecture" class="md-nav__link">
+    <a href="../architecture/" title="Architecture" class="md-nav__link">
       Architecture
     </a>
   </li>
@@ -198,10 +205,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       DataPull on AWS
@@ -225,7 +234,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/install_on_aws/" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
+    <a href="../install_on_aws/" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
       Installing DataPull on AWS Fargate and S3
     </a>
   </li>
@@ -237,7 +246,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/aws_account_setup/" title="Setup VPC etc. in AWS Account for DataPull install" class="md-nav__link">
+    <a href="../aws_account_setup/" title="Setup VPC etc. in AWS Account for DataPull install" class="md-nav__link">
       Setup VPC etc. in AWS Account for DataPull install
     </a>
   </li>
@@ -249,7 +258,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
+    <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
       Running DataPull on AWS EMR
     </a>
   </li>
@@ -259,11 +268,53 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="/datapull/custom_emr_ec2_role/" title="Custom EC2 Role for EMR" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Custom EC2 Role for EMR
+        <span class="md-nav__icon md-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
+        </span>
+      </label>
+    
+    <a href="./" title="Custom EC2 Role for EMR" class="md-nav__link md-nav__link--active">
       Custom EC2 Role for EMR
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#runbook-to-create-custom-ec2-role-for-datapull-on-emr" class="md-nav__link">
+    Runbook to create custom EC2 Role for DataPull on EMR
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -278,7 +329,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-nav__link">
+    <a href="../oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-nav__link">
       Support for Oracle and Teradata
     </a>
   </li>
@@ -290,7 +341,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/transformation/" title="Sample input JSON" class="md-nav__link">
+    <a href="../transformation/" title="Sample input JSON" class="md-nav__link">
       Sample input JSON
     </a>
   </li>
@@ -302,7 +353,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/monitor_spark_ui/" title="Monitor DataPull jobs using Spark UI" class="md-nav__link">
+    <a href="../monitor_spark_ui/" title="Monitor DataPull jobs using Spark UI" class="md-nav__link">
       Monitor DataPull jobs using Spark UI
     </a>
   </li>
@@ -314,7 +365,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/faq/" title="FAQs" class="md-nav__link">
+    <a href="../faq/" title="FAQs" class="md-nav__link">
       FAQs
     </a>
   </li>
@@ -327,12 +378,69 @@
               </div>
             
             
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#runbook-to-create-custom-ec2-role-for-datapull-on-emr" class="md-nav__link">
+    Runbook to create custom EC2 Role for DataPull on EMR
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
-  <h1>404 - Not found</h1>
-
+                
+                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/custom_emr_ec2_role.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                <h1 id="custom-ec2-instance-profilerole-for-emr-clusters">Custom EC2 Instance Profile/Role for EMR Clusters</h1>
+<p>By default, DataPull on EMR uses the IAM role <code>emr_ec2_datapull_role</code> as the <a href="https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-iam-role-for-ec2.html">service role for cluster EC2 instances</a> (also called the EC2 instance profile for Amazon EMR).  This  IAM role <code>emr_ec2_datapull_role</code> has sufficient access to run DataPull jobs that involve non-AWS data stores. For instance, you can move data from a Cassandra cluster to a MongoDB cluster without having to read this document. However, if you want to have DataPull read/write data from an AWS data store like S3, the recommendation is that you create a custom EC2 Instance Profile/Role and grant that role access to the AWS datastore/resource that DataPull needs to access.  </p>
+<p>Here is a
+<a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> for the creation of a custom IAM role <code>datapull_custom_emr_ec2_role</code> that can be used by DataPull on EMR as a custom EC2 Instance Profile/Role. The IAM Role thus used, can be specified for each DataPull job within its input JSON. The <a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> has some required policy attachments; and also some optional policies that allow DataPull to interact with AWS Secrets Manager, your own S3 bucket, etc. </p>
+<p>When creating a custom EC2 Role for DataPull, it is recommended that you remove the optional policies and their related policy attachments, if you do not need them. </p>
+<h2 id="runbook-to-create-custom-ec2-role-for-datapull-on-emr">Runbook to create custom EC2 Role for DataPull on EMR</h2>
+<blockquote>
+<p>This runbook assumes that you have already installed DataPull, and you have access to the folder of the forked/mirrored repo used for the installation. If not, you will re-do the <a href="/install_on_aws/#pre-install-steps">Pre-install Steps</a> with the same values for the variables, as was used in the Install.</p>
+</blockquote>
+<ol>
+<li>In the folder that has the locally cloned forked/mirrored repo, copy the <a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> that will create the custtom IAM role, from <code>docs/docs/resources/sample_custom_emr_ec2_role.tf</code> to <code>api/terraform/datapull_iam/</code></li>
+<li>Rename the copied file to the name of the custom IAM role, say <code>datapull_custom_emr_ec2_role.tf</code></li>
+<li>In the copied file, replace <code>&lt;PLACEHOLDERS&gt;</code> in the optional policies that you wish to use, with the values appropriate for your environment; remove the optional policies and attachments that you do not wish to use. </li>
+<li>Add the custom IAM Role name, say <code>datapull_custom_emr_ec2_role.tf</code>, to the array of resources for the policy definition of <code>datapull_passrole_policy</code> in the file <code>api/terraform/datapull_iam/datapull_user_and_roles.tf</code></li>
+<li>Re-run the installation step <a href="../install_on_aws/#create-iam-user-and-roles-with-policies">Create IAM User and Roles, with policies</a> so that the copied terraform file creates the custom IAM Role and updates the exsting Terraform state. </li>
+</ol>
+                
+              
               
                 
 
@@ -345,6 +453,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Running DataPull on AWS EMR
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Support for Oracle and Teradata
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -362,15 +505,15 @@
       
     </div>
     
-      <script src="/datapull/assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="/datapull/assets/javascripts/bundle.b39636ac.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
+      <script src="../assets/javascripts/bundle.b39636ac.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
-          base: "/datapull",
+          base: "..",
           features: [],
           search: Object.assign({
-            worker: "/datapull/assets/javascripts/worker/search.a68abb33.min.js"
+            worker: "../assets/javascripts/worker/search.a68abb33.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
