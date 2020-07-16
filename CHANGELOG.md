@@ -4,9 +4,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.7] - 2020-05-22
+## [0.1.10] - 2020-07-07
+
+### Added
+* IAM Role emr_datapull_role and associated IAM Policies. This role is used as the default EMR service role, to fulfill Feature Issue #70
+
 ### Changed
-* core/src/main/scala/core/DataFrameFromTo.scala
+* DataPull default install on AWS EMR and Fargate, spins up ephemeral EMR clusters of 6 m4.large instances instead of 3 m4.xlarge instances. This results in a spark clusters that cost the same but have 100% more usable CPU and memory
+* DataPull default install on AWS EMR and Fargate, spins up ephemeral EMR clusters that use a EMR service IAM role emr_datapull_role with reduced permission needs , instead of using the default IAM Role EMR_DefaultRole that has very broad permissions. This fulfils Feature Issue #70
+* Updated terraform for API's ALB listener with a commented line for the Certificate ARN; and fixed corresponding documentation that explains how to switch the API endpoint from HTTP to HTTPS
+* DataPull default install on AWS EMR and Fargate, has the ECS Service with assign_public_ip flag as true instead of false; this is necessary for Fargate to fetch the ECR image (ref [AWS KnowledgeCenter](https://aws.amazon.com/premiumsupport/knowledge-center/ecs-pull-container-error/))
+* Documentation to set up VPC etc in AWS Account for DataPull install fixes incorrect mention of 10.0.0.0/24 as "2 IPv4 ranges" 
+
+### Removed
+* Removed JDBC-based Hive data source functionality by reverting https://github.com/homeaway/datapull/commit/68478198b743aa4ebd26ed6151292fded7232b30 as a hotfix for Bug Issue #68
+* In core/src/main/scala/logging/DataPullLog.scala, removed an unnecessary println
+
+## [0.1.9] - 2020-07-06
+### Changed
+* api/terraform/datapull_task/ecs_deploy.sh - Fixed bug issue #67
+
+## [0.1.8] - 2020-07-05
+### Changed
+* README.md - replaced instructions to install MkDocs with dockerised MkDocs commands; replaced need for JDK8 install for Dockerised execution,  with dockerised maven
+* docs/docs/index.md - replaced instructions to install MkDocs with dockerised MkDocs commands
+
+## [0.1.7] - 2020-06-11
+### Added
+* docs/docs/custom_emr_ec2_role.md
+* docs/docs/resources/sample_custom_emr_ec2_role.tf
 
 ## [0.1.6] - 2020-05-22
 ### Changed
