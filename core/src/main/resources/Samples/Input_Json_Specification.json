@@ -176,11 +176,15 @@
         },
         "comment_sslenabled": "optional, this option is currently supported for postgres",
         "sslenabled": false,
-        "comment_primarykey":" The fields primarykey, lowerbound, upperbound, numPartitions are optional. Setting these fields allows Data Pull to read the rdbms source table/data as parallel partitions. This approach allows smaller table scans but using more connections. Please go through the following link to use these fields : https://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases",
+        "comment_primarykey": " The fields primarykey, lowerbound, upperbound, numPartitions are optional. Setting these fields allows Data Pull to read the rdbms source table/data as parallel partitions. This approach allows smaller table scans but using more connections. Please go through the following link to use these fields : https://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases",
         "primarykey": "ID",
         "lowerBound": "1",
         "upperBound": "100",
-        "numPartitions": "10"
+        "numPartitions": "10",
+        "comment_iswindowsauthenticated": "Optional, this option is to be used when the users wants to use windows authentication instead of sql authentication",
+        "iswindowsauthenticated": "false",
+        "comment_domain": "Optional, the domain group of the org you wants to connect when using windows authentication",
+        "domain": "null"
       },
       "destination_elastic": {
         "platform": "elastic",
