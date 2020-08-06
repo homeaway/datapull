@@ -1,5 +1,5 @@
 {
-  "useremailaddress": "youremail@homeaway.com",
+  "useremailaddress": "YOUR_ID@DOMAIN",
   "migrations": [
     {
       "source": {
