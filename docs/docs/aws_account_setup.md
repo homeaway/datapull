@@ -6,7 +6,7 @@ The instructions for [deploying DataPull on AWS Fargate and AWS EMR](/install_on
 When creating a VPC for DataPull, you need at least two subnets in different availability zones, since AWS Application Load Balancer requires a minimum of two availability zones. You can create a VPC with two public subnets (approach modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html) or a VPC with two private subnets and a public subnet (modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html)
 
 ## VPC with two public subnets
-- create VPC `datatools` with 2 IPv4 ranges `10.0.0.0/24`
+- create VPC `datatools` with IPv4 range `10.0.0.0/24`
     - this creates a security group named `default` for this VPC
     - this also creates a main route table with no name
 - add a rule to security group `default`: to allow inbound traffic to tcp port 22 (SSH) from your client
