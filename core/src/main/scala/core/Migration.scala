@@ -424,7 +424,7 @@ class Migration extends  SparkListener {
       dataframeFromTo.fileToDataFrame(propertiesMap("path"), propertiesMap("fileformat"), propertiesMap.getOrElse("delimiter", ","), propertiesMap.getOrElse("charset", "utf-8"), propertiesMap.getOrElse("mergeschema", "false"), sparkSession, false,propertiesMap.getOrElse("secretstore","vault"),true, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
     }
     else if (platform == "hive") {
-      dataframeFromTo.hiveToDataFrame(propertiesMap("table"), sparkSession)
+      dataframeFromTo.hiveToDataFrame(propertiesMap("url"),sparkSession, propertiesMap("dbtable"), propertiesMap.getOrElse("username",""),propertiesMap.getOrElse("fetchsize",""))
     } else if (platform == "mongodb") {
       dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("tmpfilelocation", null), propertiesMap.getOrElse("samplesize", null))
     }
