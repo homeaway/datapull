@@ -25,6 +25,7 @@ DataPull supports the following datastores as sources and destinations.
 | MySql | ✔ | ✔ |
 | Postgres | ✔ | ✔ | 
 | InfluxDB | ✔ | ✔ | 
+| Hive     | ✔ |**X**|
 
 ## How to use DataPull
 
