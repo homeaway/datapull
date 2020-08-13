@@ -140,6 +140,7 @@ The current list of contributors are tracked by Github at https://github.com/hom
 
 * Arturo Artigas
 * Nirav N Shah
+* Pratik Shah
 * Ranjith Peddi
 * Rohith Mark Varghese
 * Sandeep Nautiyal
