@@ -4,6 +4,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.12] - 2020-08-05
+### Changed
+* core/pom.xml
+* core/src/main/scala/core/DataFrameFromTo.scala
+* core/src/main/scala/core/Migration.scala
+
+## [0.1.11] - 2020-07-28
+
+### Added
+* Added the jtds driver for supporting NTLM based windows authentication for sql server.
+* Added a sample file [core/src/main/resources/Samples/Input_Sample_SQLServer_to_Cassandra_with_windows_authentication.json](Input_Sample_SQLServer_to_Cassandra_with_windows_authentication.json).
+* Added the support for windows based based authentication for SQL Server.
+
+### Changed
+* Made necessary changes to the following files :
+           * CHANGELOG.md
+           * core/pom.xml
+           *  core/src/main/resources/Samples/Input_Json_Specification.json
+           *  core/src/main/scala/core/DataFrameFromTo.scala
+           *  core/src/main/scala/core/Migration.scala
+
+### Removed
+* N/A
+
 ## [0.1.10] - 2020-07-07
 
 ### Added

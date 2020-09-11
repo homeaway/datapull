@@ -23,6 +23,8 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util
 import java.util.{Calendar, Properties, UUID}
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.{Message, Session, Transport}
 
 import com.amazonaws.services.logs.model.{DescribeLogStreamsRequest, InputLogEvent, PutLogEventsRequest}
 import com.amazonaws.services.s3.model._
@@ -39,8 +41,6 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
-import javax.mail.internet.{InternetAddress, MimeMessage}
-import javax.mail.{Message, Session, Transport}
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.hadoop.conf.Configuration
@@ -49,6 +49,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
+import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.{Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
@@ -1155,34 +1156,39 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     break()
   }
 
-  def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject): org.apache.spark.sql.DataFrame = {
+  def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {
 
     var driver: String = null
     var url: String = null
+    if (isWindowsAuthenticated.toBoolean) {
+      if (platform == "mssql") {
+        driver = "net.sourceforge.jtds.jdbc.Driver"
+        url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
+      }
+    } else {
+      if (platform == "mssql") {
+        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
+      }
+      else if (platform == "oracle") {
+        driver = "oracle.jdbc.driver.OracleDriver"
+        url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+      }
+      else if (platform == "teradata") {
+        driver = "com.teradata.jdbc.TeraDriver"
+        url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+      }
 
-    if (platform == "mssql") {
-      driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-      url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
-    }
-    else if (platform == "oracle") {
-      driver = "oracle.jdbc.driver.OracleDriver"
-      url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
-    }
-    else if (platform == "teradata") {
-      driver = "com.teradata.jdbc.TeraDriver"
-      url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
-    }
+      else if (platform == "mysql") {
+        driver = "com.mysql.jdbc.Driver"
+        url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
+      }
 
-    else if (platform == "mysql") {
-      driver = "com.mysql.jdbc.Driver"
-      url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
+      else if (platform == "postgres") {
+        driver = "org.postgresql.Driver"
+        url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
+      }
     }
-
-    else if (platform == "postgres") {
-      driver = "org.postgresql.Driver"
-      url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
-    }
-
     val consul = new Consul(server, appConfig)
     var clusterName = server
     if (consul.IsConsulDNSName()) {
@@ -1236,30 +1242,39 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     }
   }
 
-  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject,savemode:String): Unit = {
+  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: String, domainName: String): Unit = {
 
     var driver: String = null
     var url: String = null
 
-    if (platform == "mssql") {
-      driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-      url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
-    }
-    else if (platform == "oracle") {
-      driver = "oracle.jdbc.driver.OracleDriver"
-      url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+    if (isWindowsAuthenticated.toBoolean) {
+      if (platform == "mssql") {
+        driver = "net.sourceforge.jtds.jdbc.Driver"
+        url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
+      }
+    } else {
+      if (platform == "mssql") {
+        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
+      }
+      else if (platform == "oracle") {
+        driver = "oracle.jdbc.driver.OracleDriver"
+        url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+      }
+      else if (platform == "teradata") {
+        driver = "com.teradata.jdbc.TeraDriver"
+        url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+      }
 
-    }
-    else if (platform == "teradata") {
-      driver = "com.teradata.jdbc.TeraDriver"
-      url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
-    }
-    else if (platform == "mysql") {
-      driver = "com.mysql.jdbc.Driver"
-      url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
-    } else if (platform == "postgres") {
-      driver = "org.postgresql.Driver"
-      url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
+      else if (platform == "mysql") {
+        driver = "com.mysql.jdbc.Driver"
+        url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
+      }
+
+      else if (platform == "postgres") {
+        driver = "org.postgresql.Driver"
+        url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
+      }
     }
 
     val consul = new Consul(server, appConfig)
@@ -1299,12 +1314,30 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
     df.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
   }
 
-  def hiveToDataFrame(table: String, sparkSession: SparkSession): org.apache.spark.sql.DataFrame = {
+  def hiveToDataFrame(cluster: String,sparkSession: org.apache.spark.sql.SparkSession, dbtable: String, username:String,fetchsize:String): org.apache.spark.sql.DataFrame  = {
 
-    sparkSession.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+    import org.apache.spark.sql.jdbc.JdbcDialect
 
-    val df = sparkSession.sql("Select * FROM " + table)
-    df
+    val HiveDialect = new JdbcDialect {
+      override def canHandle(url: String): Boolean = url.startsWith("jdbc:hive2") || url.contains("hive2")
+
+      override def quoteIdentifier(colName: String): String =
+
+      { s"$colName" }
+
+    }
+
+    JdbcDialects.registerDialect(HiveDialect)
+
+    val jdbcDF = sparkSession.read
+      .format("jdbc")
+      .option("url", cluster)
+      .option("dbtable", dbtable)
+      .option("username",username)
+      // .option("fetchsize", fetchsize.toInt)
+      .load()
+
+    jdbcDF
   }
 
   def dataFrameToHive(table: String, saveMode: String, df: org.apache.spark.sql.DataFrame): Unit = {
@@ -1314,32 +1347,39 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline : String) extends Serializa
       .insertInto(table)
   }
 
-  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String): Unit = {
+  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: String, domainName: String): Unit = {
     if (sql_command != "") {
 
       var driver: String = null;
       var url: String = null;
-      if (platform == "mssql") {
-        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
-      }
-      else if (platform == "postgres") {
-        driver = "org.postgresql.Driver"
-        url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
-      }
+      if (isWindowsAuthenticated.toBoolean) {
+        if (platform == "mssql") {
+          driver = "net.sourceforge.jtds.jdbc.Driver"
+          url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
+        }
+      } else {
+        if (platform == "mssql") {
+          driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+          url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
+        }
+        else if (platform == "oracle") {
+          driver = "oracle.jdbc.driver.OracleDriver"
+          url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+        }
+        else if (platform == "teradata") {
+          driver = "com.teradata.jdbc.TeraDriver"
+          url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+        }
 
-      else if (platform == "mysql") {
-        driver = "com.mysql.jdbc.Driver"
-        url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
-      }
-      else if (platform == "oracle") {
-        driver = "oracle.jdbc.driver.OracleDriver"
-        url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+        else if (platform == "mysql") {
+          driver = "com.mysql.jdbc.Driver"
+          url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
+        }
 
-      }
-      else if (platform == "teradata") {
-        driver = "com.teradata.jdbc.TeraDriver"
-        url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+        else if (platform == "postgres") {
+          driver = "org.postgresql.Driver"
+          url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
+        }
       }
 
       val consul = new Consul(server, appConfig)
