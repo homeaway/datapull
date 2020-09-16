@@ -1,0 +1,24 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "migrations": [
+    {
+      "source": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleData2",
+        "fileformat": "json"
+      },
+      "destination": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleData_Avro",
+        "fileformat": "avro"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role"
+  }
+}
