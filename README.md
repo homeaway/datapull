@@ -20,18 +20,22 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
 ### Build and execute within a Dockerised Spark environment
 > Pre-requisite: Docker Desktop
 * Clone this repo locally and check out the master branch
-  ```
+  ```shell script
   git clone git@github.com:homeaway/datapull.git
   ```
-* build the Scala JAR from within the core folder
+* Build a local docker image for running spark as a dockerised server
+  ```shell script
+  docker build -f ./core/docker_spark_server/Dockerfile -t expedia/spark2.4.4-scala2.11-hadoop3.2.1 ./core/docker_spark_server
   ```
+* build the Scala JAR from within the core folder
+  ```shell script
   cd datapull/core
   cp ./src/main/resources/application-dev.yml ./src/main/resources/application.yml
-  docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${PWD}/m2":/root/.m2 -w /usr/src/mymaven maven:3.6.3-jdk-8 mvn clean install
+  docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:3.6.3-jdk-8 mvn clean install
   ```
 * Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.  
   ```
-  docker run -v $(pwd):/core -w /core -it --rm gettyimages/spark:2.2.1-hadoop-2.8 spark-submit --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
+  docker run -v $(pwd):/core -w /core -it --rm expedia/spark2.4.4-scala2.11-hadoop3.2.1 spark-submit --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
   ```
 * Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld.csv transformed into JSON.
 

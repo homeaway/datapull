@@ -196,7 +196,7 @@ class Migration extends  SparkListener {
         dataframeFromTo.dataFrameToEmail(destinationMap.getOrElse("to",reportEmailAddress),destinationMap.getOrElse("subject","Datapull Result"),dft,destinationMap.getOrElse("limit","100"),destinationMap.getOrElse("truncate","100"))
       }
       else if (destinationMap("platform") == "mssql" || destinationMap("platform") == "mysql" || destinationMap("platform") == "postgres" || destinationMap("platform") == "oracle" || destinationMap("platform") == "teradata") {
-        dataframeFromTo.dataFrameToRdbms(destinationMap("platform"), destinationMap("awsenv"), destinationMap("server"), destinationMap("database"), destinationMap("table"), destinationMap("login"), destinationMap("password"), dft, destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destinationMap.getOrElse("sslenabled", "false"), destinationMap.getOrElse("vault", null), destination.optJSONObject("jdbcoptions"), destinationMap.getOrElse("savemode", "Append"), destinationMap.getOrElse("iswindowsauthenticated", "false"), destinationMap.getOrElse("domain", null))
+        dataframeFromTo.dataFrameToRdbms(destinationMap("platform"), destinationMap("awsenv"), destinationMap("server"), destinationMap("database"), destinationMap("table"), destinationMap("login"), destinationMap("password"), dft, destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destinationMap.getOrElse("sslenabled", "false"), destinationMap.getOrElse("port", null), destination.optJSONObject("jdbcoptions"), destinationMap.getOrElse("savemode", "Append"), destinationMap.getOrElse("iswindowsauthenticated", "false"), destinationMap.getOrElse("domain", null))
       } else if (destinationMap("platform") == "s3") {
         setAWSCredentials(sparkSession, destinationMap)
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
@@ -214,7 +214,7 @@ class Migration extends  SparkListener {
       } else if (destinationMap("platform") == "mongodb") {
         dataframeFromTo.dataFrameToMongodb(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("database"), destinationMap("authenticationdatabase"), destinationMap("collection"), destinationMap("login"), destinationMap("password"), destinationMap.getOrElse("replicaset", null), destinationMap.getOrElse("replacedocuments", "true"), destinationMap.getOrElse("orderedrecords", "false"), dft, sparkSession, destinationMap.getOrElse("documentfromjsonfield", "false"), destinationMap.getOrElse("jsonfield", "jsonfield"), destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destination.optJSONObject("sparkoptions"), destinationMap.get("maxBatchSize").getOrElse(null), destinationMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean])
       } else if (destinationMap("platform") == "kafka") {
-        dataframeFromTo.dataFrameToKafka(destinationMap("bootstrapServers"), destinationMap("schemaRegistries"), destinationMap("topic"), destinationMap("keyField"), destinationMap("Serializer"), dft)
+        dataframeFromTo.dataFrameToKafka(destinationMap("bootstrapServers"), destinationMap("schemaRegistries"), destinationMap("topic"), destinationMap("keyField"), destinationMap("keyFormat"), dft)
       } else if (destinationMap("platform") == "elastic") {
         dataframeFromTo.dataFrameToElastic(destinationMap("awsenv"), destinationMap("clustername"), destinationMap("port"), destinationMap("index"), destinationMap("type"), destinationMap("version"), destinationMap("login"), destinationMap("password"), destinationMap("local_dc"), destination.optJSONObject("sparkoptions"), dft, reportRowHtml, destinationMap("vaultenv"),destinationMap.getOrElse("savemode","index"),destinationMap.getOrElse("mappingid",null),destinationMap.getOrElse("flag","false"),destinationMap.getOrElse("secretstore","vault"), sparkSession)
       }
@@ -638,7 +638,7 @@ class Migration extends  SparkListener {
     } else if (platform == "mongodb") {
       propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "database", "authenticationdatabase", "collection", "login", "password"), platformObject)
     } else if (platform == "kafka") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("bootstrapServers", "schemaRegistries", "topic", "keyField", "Serializer"), platformObject)
+      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("bootstrapServers", "schemaRegistries", "topic", "keyField", "keyFormat"), platformObject)
     }
     htmlString.append("<dl>")
     propertiesMap.filter((t) => t._2 != "" && t._1 != "login" && t._1 != "password" && t._1 != "awsaccesskeyid" && t._1 != "awssecretaccesskey").foreach(i => htmlString.append("<dt>" + i._1 + "</dt><dd>" + i._2 + "</dd>"))

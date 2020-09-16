@@ -230,6 +230,17 @@
         "comment_payloadcolumnname": "this is the name of the payload column for the topic. for eg, value, body etc. default value for this option is `body` and this option only will have an effect when you have the option `requiredonlyvalue` to true",
         "payloadcolumnname": "body"
       },
+      "destination":{
+        "platform" : "kafka",
+        "comment_bootstrapservers":"this is for bootstrap information of the kafka cluster",
+        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
+        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
+        "topic": "TOPIC_NAME",
+        "comment_keyField": "required, field in the dataset that should be used as the kafka topic's key field",
+        "keyField": "some_keyfield",
+        "comment_keyFormat": "Options, by default will be string. If set to avro, the key field will be converted to avro and the schema will be registered in schema registry",
+        "keyFormat": "avro"
+      },
       "source_influxdb": {
         "platform": "influxdb",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",

@@ -4,7 +4,7 @@
     {
       "source": {
         "platform": "filesystem",
-        "path": "target/classes/SampleData2",
+        "path": "target/classes/SampleData",
         "fileformat": "json"
       },
       "destination": {
