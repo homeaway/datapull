@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.13] - 2020-09-16
+- Added Kafka as a destination
+- Fixed bug related to JDBC port not being read
+- Added support for reading and writing S3 data when running in dockerised spark
+- Minor improvements on time to install
+- Cleaned up and updated dependencies
+
+### Added
+* core/docker_spark_server/Dockerfile: Run dockersied spark with Spark 2.4.4, Scala 2.11, Hadoop 3.x
+* core/docker_spark_server/LICENSE: MIT License attribution to gettyimages for docker container
+* core/src/main/resources/Samples/Input_Sample_filesystem-to-filesystem-avro.json: Sample for Avro file format
+
+### Changed
+* .gitignore: Ignore local log folder created when debugging
+* README.md: Support for S3 sources and destinations when running as docker container
+* api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java: Upgraded EMR version to 5.29
+* api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java: Support for Kafka and Spark Avro
+* api/terraform/datapull_iam/datapull_user_and_roles.tf: Additional permissions to EMR service role to support EMR 6.0.0
+* api/terraform/datapull_task/ecs_deploy.sh: Installation speed improvement
+* core/pom.xml: Cleaned up and upgraded dependencies; support for Kafka streaming
+* core/src/main/resources/Samples/Input_Json_Specification.json: Documentation for Kafka as destination, EMR nodes
+* core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json: Updated sample for Kafka as destination
+* core/src/main/scala/core/DataFrameFromTo.scala: Added support for Kafka; support to use S3 platform locally
+* core/src/main/scala/core/Migration.scala: Added support for Kafka; bug fixes for JDBC port
+* core/src/main/scala/helper/Neo4j.scala: Upgrade syntax to support Scala 2.12
+* functional-test/pom.xml: Upgraded dependencies to resolve security advisories
+
+### Deleted
+* core/hive-jdbc-3.1.2.jar: Replaced downloaded dependency with maven reference
+
 ## [0.1.12] - 2020-08-05
 ### Changed
 * core/pom.xml
