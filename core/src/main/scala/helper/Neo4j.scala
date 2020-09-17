@@ -17,7 +17,7 @@
 package helper
 
 import org.neo4j.driver.v1.{AuthTokens, GraphDatabase}
-
+import org.apache.spark.sql.{Row}
 import scala.collection.mutable.ListBuffer
 
 class Neo4j {
@@ -66,7 +66,7 @@ class Neo4j {
         }
         val dftSData = sparkSession.sql(dfQueryString).repartition(partitions)
         dftSData.foreachPartition(
-          partition => {
+          (partition:Iterator[Row]) => {
             val partitionasList = partition.map(
               record => record(0).toString).toList
             if (!partitionasList.isEmpty) {

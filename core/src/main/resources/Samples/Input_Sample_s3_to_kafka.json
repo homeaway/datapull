@@ -15,8 +15,8 @@
         "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9091",
         "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
         "topic": "TOPIC_NAME",
-        "Serializer": "io.confluent.kafka.serializers.KafkaAvroSerializer",
-        "keyField": "some_keyfield"
+        "keyField": "some_keyfield",
+        "keyFormat": "avro"
       },
       "sql": {
         "query": "select some_keyfield, struct(startIpNum, endIpNum, locId, isp, organization) as value, struct(unix_timestamp() as time) as header from stage"
