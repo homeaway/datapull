@@ -176,11 +176,15 @@
         },
         "comment_sslenabled": "optional, this option is currently supported for postgres",
         "sslenabled": false,
-        "comment_primarykey":" The fields primarykey, lowerbound, upperbound, numPartitions are optional. Setting these fields allows Data Pull to read the rdbms source table/data as parallel partitions. This approach allows smaller table scans but using more connections. Please go through the following link to use these fields : https://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases",
+        "comment_primarykey": " The fields primarykey, lowerbound, upperbound, numPartitions are optional. Setting these fields allows Data Pull to read the rdbms source table/data as parallel partitions. This approach allows smaller table scans but using more connections. Please go through the following link to use these fields : https://spark.apache.org/docs/latest/sql-programming-guide.html#jdbc-to-other-databases",
         "primarykey": "ID",
         "lowerBound": "1",
         "upperBound": "100",
-        "numPartitions": "10"
+        "numPartitions": "10",
+        "comment_iswindowsauthenticated": "Optional, this option is to be used when the users wants to use windows authentication instead of sql authentication",
+        "iswindowsauthenticated": "false",
+        "comment_domain": "Optional, the domain group of the org you wants to connect when using windows authentication",
+        "domain": "null"
       },
       "destination_elastic": {
         "platform": "elastic",
@@ -225,6 +229,17 @@
         "requiredonlyvalue": "false",
         "comment_payloadcolumnname": "this is the name of the payload column for the topic. for eg, value, body etc. default value for this option is `body` and this option only will have an effect when you have the option `requiredonlyvalue` to true",
         "payloadcolumnname": "body"
+      },
+      "destination":{
+        "platform" : "kafka",
+        "comment_bootstrapservers":"this is for bootstrap information of the kafka cluster",
+        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
+        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
+        "topic": "TOPIC_NAME",
+        "comment_keyField": "required, field in the dataset that should be used as the kafka topic's key field",
+        "keyField": "some_keyfield",
+        "comment_keyFormat": "Optional, by default will be string. If set to avro, the key field will be converted to avro and the schema will be registered in schema registry",
+        "keyFormat": "string"
       },
       "source_influxdb": {
         "platform": "influxdb",
@@ -396,6 +411,12 @@
     "ComponentInfo":"00000000-0000-0000-0000-000000000000",
     "comment_cronexpression": "optional,this element will be used for scheduling the job and it will be defaulted for single run",
     "cronexpression": "21 * * * *",
+    "comment_master_instance_type": "optional, Type of EC2 instance to use for the master node of the EMR cluster. Default value: m4.large",
+    "master_instance_type": "m4.large",
+    "comment_slave_instance_type": "optional, Type of EC2 instance to use for the slave node(s) of the EMR cluster. Default value: m4.large",
+    "slave_instance_type": "m4.large",
+    "comment_NodeCount": "optional; Number of nodes, the number of slave nodes will be NodeCount -1. Default: 6",
+    "NodeCount": 6,
     "comment_sparksubmitparams":"optional, this option will give the ability to add the users to add the spark submit options for your use case",
     "sparksubmitparams": "--conf spark.driver.memory=10g --deploy-mode cluster --class DataMigrationFramework s3://BUCKET_NAME/FOLDER_PATH/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies_test.jar"
   }

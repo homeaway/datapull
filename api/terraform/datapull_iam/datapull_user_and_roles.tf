@@ -100,12 +100,12 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split1" {
                 "arn:aws:ecs:*:*:cluster/${var.ui_docker_image_name}",
                 "arn:aws:iam::*:role/datapull_task_role",
                 "arn:aws:iam::*:role/datapull_task_execution_role",
-                "arn:aws:iam::*:role/EMR_DefaultRole",
+                "${aws_iam_role.emr_datapull_role.arn}",
                 "arn:aws:ecr:*:*:repository/${var.docker_image_name}",
                 "arn:aws:ecr:*:*:repository/${var.ui_docker_image_name}",
                 "arn:aws:s3:::${var.datapull_s3_bucket}",
                 "arn:aws:s3:::${var.datapull_s3_bucket}/*",
-                "arn:aws:iam::*:role/emr_ec2_datapull_role",
+                "${aws_iam_role.emr_ec2_datapull_role.arn}",
                 "arn:aws:ecr:*:*:repository/${var.docker_image_name}*",
                 "arn:aws:ecs:*:*:cluster/${var.docker_image_name}*"
             ]
@@ -209,8 +209,8 @@ resource "aws_iam_policy" "datapull_passrole_policy" {
         "Effect": "Allow",
         "Action": "iam:PassRole",
         "Resource": [
-            "arn:aws:iam::*:role/EMR_DefaultRole",
-            "arn:aws:iam::*:role/emr_ec2_datapull_role"
+            "${aws_iam_role.emr_datapull_role.arn}",
+            "${aws_iam_role.emr_ec2_datapull_role.arn}"
         ]
     } ]
 }
@@ -449,6 +449,7 @@ EOF
 
 }
 
+# IAM Role for default EC2 instance profiles of EMR
 resource "aws_iam_role" "emr_ec2_datapull_role" {
   name = "emr_ec2_datapull_role"
   tags = local.common_tags
@@ -497,6 +498,156 @@ resource "aws_iam_instance_profile" "datapull_default_instance_profile" {
   name = "emr_ec2_datapull_role"
   role = aws_iam_role.emr_ec2_datapull_role.name
 
+}
+
+# IAM Role for EMR Service
+resource "aws_iam_role" "emr_datapull_role" {
+  name = "emr_datapull_role"
+  tags = local.common_tags
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2008-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": [
+          "spotfleet.amazonaws.com",
+          "application-autoscaling.amazonaws.com",
+          "spot.amazonaws.com",
+          "elasticmapreduce.amazonaws.com"
+        ]
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+}
+
+resource "aws_iam_policy" "datapull_emr_service_policy" {
+  name = "datapull_emr_service_policy"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Resource": "*",
+            "Action": [
+                "cloudwatch:PutMetricAlarm",
+                "cloudwatch:DescribeAlarms",
+                "cloudwatch:DeleteAlarms",
+                "application-autoscaling:RegisterScalableTarget",
+                "application-autoscaling:DeregisterScalableTarget",
+                "application-autoscaling:PutScalingPolicy",
+                "application-autoscaling:DeleteScalingPolicy",
+                "application-autoscaling:Describe*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Resource": "*",
+            "Condition": {
+                "StringLike": {
+                    "ec2:ResourceTag/tool": "datapull"
+                }
+            },
+            "Action": [
+                "ec2:TerminateInstances",
+                "ec2:DeleteTags",
+                "ec2:DetachVolume",
+                "ec2:DeleteVolume"                
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Resource": "*",
+            "Condition": {
+                "StringLikeIfExists": {
+                    "ec2:ResourceTag/tool": "datapull"
+                }
+            },
+            "Action": [
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:CancelSpotInstanceRequests",
+                "ec2:CreateFleet",
+                "ec2:CreateLaunchTemplate",
+                "ec2:CreateNetworkInterface",
+                "ec2:CreateSecurityGroup",
+                "ec2:CreateTags",
+                "ec2:DeleteLaunchTemplate",
+                "ec2:DeleteNetworkInterface",
+                "ec2:DeleteSecurityGroup",
+                "ec2:DescribeAccountAttributes",
+                "ec2:DescribeAvailabilityZones",
+                "ec2:DescribeDhcpOptions",
+                "ec2:DescribeImages",
+                "ec2:DescribeInstances",
+                "ec2:DescribeInstanceStatus",
+                "ec2:DescribeKeyPairs",
+                "ec2:DescribeLaunchTemplates",
+                "ec2:DescribeNetworkAcls",
+                "ec2:DescribeNetworkInterfaces",
+                "ec2:DescribePrefixLists",
+                "ec2:DescribeRouteTables",
+                "ec2:DescribeSecurityGroups",
+                "ec2:DescribeSpotInstanceRequests",
+                "ec2:DescribeSpotPriceHistory",
+                "ec2:DescribeSubnets",
+                "ec2:DescribeTags",
+                "ec2:DescribeVolumes",
+                "ec2:DescribeVolumeStatus",
+                "ec2:DescribeVpcAttribute",
+                "ec2:DescribeVpcEndpoints",
+                "ec2:DescribeVpcEndpointServices",
+                "ec2:DescribeVpcs",
+                "ec2:DetachNetworkInterface",
+                "ec2:ModifyImageAttribute",
+                "ec2:ModifyInstanceAttribute",
+                "ec2:RequestSpotInstances",
+                "ec2:RevokeSecurityGroupEgress",
+                "ec2:RunInstances"
+            ]
+        },
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:ListRolePolicies",
+                "iam:PassRole"
+            ],
+            "Resource": [
+                "${aws_iam_role.emr_ec2_datapull_role.arn}",
+                "${aws_iam_role.emr_datapull_role.arn}"
+            ]
+        },
+        {
+            "Sid": "",
+            "Effect": "Allow",
+            "Action": [
+                "iam:ListInstanceProfiles"
+            ],
+            "Resource": [
+                "${aws_iam_instance_profile.datapull_default_instance_profile.arn}"
+            ]
+        }
+    ]
+}
+EOF
+
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_emr_service_policy" {
+  role = aws_iam_role.emr_datapull_role.name
+  policy_arn = aws_iam_policy.datapull_emr_service_policy.arn
 }
 
 resource "aws_iam_access_key" "datapull_iam_access_key" {

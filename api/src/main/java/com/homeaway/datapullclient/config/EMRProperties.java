@@ -45,22 +45,22 @@ public class EMRProperties {
     @Value("${emr_security_group_service_access:}")
     private String emrSecurityGroupServiceAccess;
 
-    @Value("${instance_count:3}")
+    @Value("${instance_count:6}")
     private int instanceCount;
 
-    @Value( "${master_type:m4.xlarge}" )
+    @Value( "${master_type:m4.large}" )
     private String masterType;
 
-    @Value( "${slave_type:m4.xlarge}" )
+    @Value( "${slave_type:m4.large}" )
     private String slaveType;
 
-    @Value( "${service_role:EMR_DefaultRole}" )
+    @Value( "${service_role:emr_datapull_role}" )
     private String serviceRole;
 
     @Value("${job_flow_role:emr_ec2_datapull_role}")
     private String jobFlowRole;
 
-    @Value( "${emr_release:emr-5.15.0}" )
+    @Value( "${emr_release:emr-5.29.0}" )
     private String emrRelease;
 
     @Value( "${bootstrap_folder_path:}" )
