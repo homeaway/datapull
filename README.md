@@ -35,7 +35,7 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
   ```
 * Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld.csv) to a folder of json files named SampleData_Json.  
   ```
-  docker run -v $(pwd):/core -w /core -it --rm expedia/spark2.4.4-scala2.11-hadoop3.2.1 spark-submit --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
+  docker run -v $(pwd):/core -w /core -it --rm expedia/spark2.4.4-scala2.11-hadoop3.2.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
   ```
 * Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld.csv transformed into JSON.
 

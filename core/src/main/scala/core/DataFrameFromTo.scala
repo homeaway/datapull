@@ -95,7 +95,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     var filePrefix = ""
 
     if (isS3) {
-      filePrefix = "s3://"
+      filePrefix = "s3a://"
       sparkSession.conf.set("fs.s3a.connection.maximum", 100)
     }
 
@@ -127,7 +127,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           .csv(s"$filePrefix$filePath"))
 
       } else if (fileFormat == "avro") {
-        createOrReplaceTempViewOnDF(sparkSession.read.format("com.databricks.spark.avro").load(s"$filePrefix$filePath"))
+        createOrReplaceTempViewOnDF(sparkSession.read.format("avro").load(s"$filePrefix$filePath"))
       } else {
         //parquet
         createOrReplaceTempViewOnDF(sparkSession.read.option("mergeSchema", mergeSchema).parquet(s"$filePrefix$filePath"))
@@ -255,7 +255,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     if (isS3) {
-      filePrefix = "s3://"
+      filePrefix = "s3a://"
       sparkSession.conf.set("fs.s3a.connection.maximum", 100)
     }
     if (isSFTP) {
@@ -271,12 +271,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       df.show()
     } else if (rowFromJsonString.toBoolean) {
 
-      df.foreachPartition(partition => {
+      df.foreachPartition((partition:Iterator[Row]) => {
 
         val partitionList = new util.ArrayList[String]()
-        partition.foreach { Row =>
-          partitionList.add(Row.apply(0).toString)
-        }
+        partition.foreach ( Row =>
+        partitionList.add(Row.apply(0).toString)
+        )
         if (!partitionList.isEmpty) {
           val conf: Configuration = new Configuration
           val path_string = filePrefix + filePath + "/" + UUID.randomUUID().toString + ".json"
@@ -295,10 +295,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
           dft
             .write
+            .format("json")
             .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
         } else {
           dft
             .write
+            .format("json")
             .partitionBy(groupByFieldsArray: _*)
             .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
         }
@@ -321,14 +323,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         if (groupByFields == "") {
           dft
             .write
-            .format("com.databricks.avro")
+            .format("avro")
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
             .save(s"$filePrefix$filePath")
         } else {
           dft
             .write
-            .format("com.databricks.avro")
+            .format("avro")
             .partitionBy(groupByFieldsArray: _*)
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
@@ -1060,7 +1062,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
               }
 
               value = new JSONObject(valueString)
-              if (value != null && value != "") {
+              if (value != null && value.toString != "") {
 
                 fullJSONObject.put("value", value)
               }

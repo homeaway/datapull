@@ -4,12 +4,12 @@
     {
       "source": {
         "platform": "filesystem",
-        "path": "target/classes/SampleData",
-        "fileformat": "json"
+        "path": "target/classes/SampleData/HelloWorld.csv",
+        "fileformat": "csv"
       },
       "destination": {
         "platform": "filesystem",
-        "path": "target/classes/SampleData_Avro",
+        "path": "target/classes/SampleData_Avro2",
         "fileformat": "avro"
       }
     }
