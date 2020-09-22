@@ -142,7 +142,7 @@ public class DataPullTask implements Runnable {
         else{
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
-                    .withArgs("spark-submit", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
+                    .withArgs("spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
         }
         final StepConfig customExampleStep = new StepConfig()
                 .withName(this.taskId)
@@ -238,7 +238,7 @@ public class DataPullTask implements Runnable {
         else{
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
-                    .withArgs("spark-submit", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
+                    .withArgs("spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
         }
 
         final StepConfig step = new StepConfig()
