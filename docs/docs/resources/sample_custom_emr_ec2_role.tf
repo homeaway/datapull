@@ -6,8 +6,8 @@ locals {
   }
 }
 
-resource "aws_iam_role" "datapull_custom_emr_ec2_role" {
-  name = "datapull_custom_emr_ec2_role"
+resource "aws_iam_role" "emr_ec2_datapull_custom_role" {
+  name = "emr_ec2_datapull_custom_role"
   tags = local.common_tags
 
   assume_role_policy = <<EOF
@@ -17,7 +17,7 @@ resource "aws_iam_role" "datapull_custom_emr_ec2_role" {
     {
       "Action": "sts:AssumeRole",
       "Principal": {
-        "Service": ["elasticmapreduce.amazonaws.com","ec2.amazonaws.com"]
+        "Service": ["ec2.amazonaws.com"]
       },
       "Effect": "Allow",
       "Sid": ""
@@ -28,25 +28,19 @@ EOF
 }
 
 resource "aws_iam_instance_profile" "datapull_custom_emr_ec2_instance_profile" {
-  name = aws_iam_role.datapull_custom_emr_ec2_role.name
-  role = aws_iam_role.datapull_custom_emr_ec2_role.name
+  name = aws_iam_role.emr_ec2_datapull_custom_role.name
+  role = aws_iam_role.emr_ec2_datapull_custom_role.name
 }
 
 # Required policy attachments for custom role
-
-resource "aws_iam_role_policy_attachment" "datapull_custom_emr_ec2_role_policy_attachment" {
-  role = aws_iam_role.datapull_custom_emr_ec2_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role"
+resource "aws_iam_role_policy_attachment" "emr_ec2_datapull_custom_role_s3_policy_attachment" {
+  role = aws_iam_role.emr_ec2_datapull_custom_role.name
+  policy_arn = "arn:aws:iam:::policy/datapull_s3_emr_ec2_policy"
 }
 
-resource "aws_iam_role_policy_attachment" "datapull_custom_emr_ec2_role_s3_policy_attachment" {
-  role = aws_iam_role.datapull_custom_emr_ec2_role.name
-  policy_arn = aws_iam_policy.datapull_s3_policy.arn
-}
-
-resource "aws_iam_role_policy_attachment" "datapull_custom_emr_ec2_role_cloudwatch_policy_attachment" {
-  role = aws_iam_role.datapull_custom_emr_ec2_role.name
-  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
+resource "aws_iam_role_policy_attachment" "emr_ec2_datapull_custom_role_cloudwatch_policy_attachment" {
+  role = aws_iam_role.emr_ec2_datapull_custom_role.name
+  policy_arn = "arn:aws:iam:::policy/datapull_cloudwatch_logs_api_emr_ec2_policy"
 }
 
 # Optional policy and attachment for DataPull to access an S3 bucket <BUCKET_NAME>
@@ -74,7 +68,7 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_custom_s3_policy_attachment" {
-  role = aws_iam_role.datapull_custom_emr_ec2_role.name
+  role = aws_iam_role.emr_ec2_datapull_custom_role.name
   policy_arn = aws_iam_policy.datapull_custom_s3_policy.arn
 }
 
@@ -103,6 +97,6 @@ EOF
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_custom_secrets_manager_policy_attachment" {
-  role = aws_iam_role.datapull_custom_emr_ec2_role.name
+  role = aws_iam_role.emr_ec2_datapull_custom_role.name
   policy_arn = aws_iam_policy.datapull_custom_secrets_manager_policy.arn
 }

@@ -38,15 +38,15 @@ In a nutshell, deploying DataPull to an AWS Account
 
 > Pro-tip: Record the values of the variables in the pre-install steps, as a text file. Here is an example (with fake values)...
 ```
-<aws_admin_profile> : default
-<s3_bucket_name> : datatools-datapull
-<vpc_id> : vpc-071957e514a1fbd73
-<region> : us-west-2
-<application_subnet_1> : subnet-04903ae2649294308
-<application_subnet_2> : subnet-0e10783af0de2513e
-<application_security_group> : sg-08beb77f882d5d2a2
-<load_balancer_certificate_arn> : arn:aws:acm:us-west-2:771905877783:certificate/2b1d3729-aa6d-47d5-8902-d0f9e75b35a8
-<env> : stage
+<aws_admin_profile>: default
+<s3_bucket_name>: datatools-datapull
+<vpc_id>: vpc-071957e514a1fbd73
+<region>: us-west-2
+<application_subnet_1>: subnet-04903ae2649294308
+<application_subnet_2>: subnet-0e10783af0de2513e
+<application_security_group>: sg-08beb77f882d5d2a2
+<load_balancer_certificate_arn>: arn:aws:acm:us-west-2:771905877783:certificate/2b1d3729-aa6d-47d5-8902-d0f9e75b35a8
+<env>: stage
 ```
 
 ## Installation Steps
@@ -193,8 +193,7 @@ hello,world
                 {
                     "platform": "s3",
                     "s3path": "<s3_bucket_name>/datapull-opensource/data/firstdatapull/source",
-                    "fileformat": "csv",
-                    "savemode": "Overwrite"
+                    "fileformat": "csv"
                 }
             ],
             "destination": {
