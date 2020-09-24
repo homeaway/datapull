@@ -4,13 +4,13 @@ locals{
     creator              = "email@domain.com"
     team                 = "DataTools"
     purpose   		     = "Datapull installation"
-    product              = "data Pull"
+    product              = "datapull"
     portfolio            = "data infra"
     service              = "datapull"
     brand                = "VRBO"
     asset_protection_level = "99"
     component_info        = "33daf877-db67-43ca-b61b-ec6596a4af81"
-    application           = "Datapull"
+    application           = "datapull"
   }
 }
 #----------------------------
