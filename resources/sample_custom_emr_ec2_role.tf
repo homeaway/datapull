@@ -2,7 +2,7 @@ locals {
   common_tags = {
     brand = "Expedia"
     category = "EMRPipeline"
-    tool = "datapull"
+    tool = "datapull" #a bunch of policies depend on this required tag; therefore please change only if you're ready to update the policies too
   }
 }
 
