@@ -127,64 +127,22 @@ cd ../../../../core/src/main/resources/
 
 cd ../../../
 
-echo "Building core Jar"
+echo "Delete core Jar from s3"
 
-echo " conf file path"
-
-pwd
-
-# docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:alpine mvn clean install
-exitAfterFailure
-
-echo "Uploading core Jar to s3"
-
-# docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${PWD}":/data -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws s3 cp /data/target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar "$jar_file_path"
+docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${PWD}":/data -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws s3 rm "$jar_file_path"
 
 exitAfterFailure
 
 cd ../api/
 
-
-echo "Uploading API docker image to ECR $docker_image_name"
-
-# docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:alpine mvn clean install
-
-exitAfterFailure
 ENV TZ=America/Los_Angeles
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# docker build -t "${docker_image_name}" .
-
 cd terraform/datapull_task
-
-echo "deleting repo =>"
-#
-docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws ecr delete-repository --repository-name "$docker_image_name"
-#
-echo "creating repo =>"
-#
-# docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws ecr create-repository --repository-name "$docker_image_name"
-#
-#
-echo "login into repo =>"
-#
-$(docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws ecr get-login --no-include-email --region $aws_repo_region)
-
-echo "tagging image  =>"
-
-# docker tag "${docker_image_name}":latest "${aws_account_number}".dkr.ecr."${aws_repo_region}".amazonaws.com/"${docker_image_name}":latest
-
-echo "pushing image into repo =>"
-
-# docker push "${aws_account_number}".dkr.ecr."${aws_repo_region}".amazonaws.com/"${docker_image_name}":latest
-
-exitAfterFailure
 
 rm -rf ./.terraform/
 
 echo "Initializing ===>  $bucket_name"
-#
-#echo $application_subnet
 
 docker run --rm -v $(pwd):/workdir -v "${HOME}/.aws":"/root/.aws" -w /workdir -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -e TF_VAR_application_subnet_1="$application_subnet_1" -e TF_VAR_application_subnet_2="$application_subnet_2" -e TF_VAR_security_grp="$security_grp" -e TF_VAR_aws_account_number="$aws_account_number" -e TF_VAR_application_region="$aws_repo_region" -e TF_VAR_host_port="$server_port" -e TF_VAR_container_port="$container_port" -e TF_VAR_docker_image_name="$docker_image_name" -e TF_VAR_env="${env}" -e TF_VAR_vpc_id="$vpc_id" -e TF_VAR_load_balancer_certificate_arn="$load_balancer_certificate_arn" hashicorp/terraform init -backend-config "bucket=$bucket_name" -backend-config "region=$aws_repo_region"
 
@@ -192,4 +150,8 @@ echo "creating plan ===>"
 docker run --rm  -v $(pwd):/workdir -v "${HOME}/.aws":"/root/.aws" -w /workdir -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -e TF_VAR_application_subnet_1="$application_subnet_1" -e TF_VAR_application_subnet_2="$application_subnet_2" -e TF_VAR_security_grp="$security_grp" -e TF_VAR_aws_account_number="$aws_account_number" -e TF_VAR_application_region="$aws_repo_region" -e TF_VAR_host_port="$server_port" -e TF_VAR_container_port="$server_port" -e TF_VAR_docker_image_name="$docker_image_name" -e TF_VAR_env="${env}" -e TF_VAR_vpc_id="$vpc_id" -e TF_VAR_load_balancer_certificate_arn="$load_balancer_certificate_arn" hashicorp/terraform plan -destroy -out the_plan.tfplan
 echo "applying plan ===> "
 docker run --rm -v $(pwd):/workdir -v "${HOME}/.aws":"/root/.aws" -w /workdir -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -e TF_VAR_application_subnet_1="$application_subnet_1" -e TF_VAR_application_subnet_2="$application_subnet_2" -e TF_VAR_security_grp="$security_grp" -e TF_VAR_aws_account_number="$aws_account_number" -e TF_VAR_application_region="$aws_repo_region" -e TF_VAR_host_port="$server_port" -e TF_VAR_container_port="$server_port" -e TF_VAR_docker_image_name="$docker_image_name" -e TF_VAR_env="${env}" -e TF_VAR_vpc_id="$vpc_id" -e TF_VAR_load_balancer_certificate_arn="$load_balancer_certificate_arn" hashicorp/terraform apply the_plan.tfplan
+
+echo "deleting repo =>"
+
+docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws ecr delete-repository --repository-name "$docker_image_name" --force
 

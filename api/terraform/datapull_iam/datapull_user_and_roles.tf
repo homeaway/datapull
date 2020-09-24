@@ -735,7 +735,8 @@ resource "aws_iam_policy" "datapull_emr_service_policy" {
                 "iam:ListInstanceProfiles"
             ],
             "Resource": [
-                "${aws_iam_instance_profile.datapull_default_instance_profile.arn}"
+                "arn:aws:iam::*:instance-profile/emr_*datapull*",
+                "arn:aws:iam::*:instance-profile/emr_*datatech*"
             ]
         }
     ]

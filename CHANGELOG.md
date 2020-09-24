@@ -8,16 +8,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added script to uninstall DataPull non-IAM components
 - Reduced access of IAM Roles and Users used by DataPull
 - Updated documentation for custom EMR profile role
+- Added uninstall scripts and documentation for AWS deployments
 
 ### Added
 * api/terraform/datapull_task/ecs_deploy_uninstall.sh: script to uninstall DataPull non-IAM components
+* api/terraform/datapull_iam/uninstall_user_and_roles.sh: script to uninstall DataPull IAM components
+* docs/docs/uninstall_on_aws.md: Documentation on how to uninstall DataPull in AWS
 
 ### Changed
 * api/terraform/datapull_iam/datapull_user_and_roles.tfL Reduced access of IAM Roles and Users used by DataPull
 * api/terraform/datapull_task/datapull_ecs.tf: Minro fix to spelling of AWS tags
 * docs/docs/custom_emr_ec2_role.md: Updated documentation for custom EMR profile role
 * docs/docs/install_on_aws.md: Updated documentation for custom EMR profile role
-* docs/docs/index.md: Marked Kafka destionation as supported datastore
+* docs/docs/index.md: Marked Kafka destination as supported datastore
+* docs/mkdocs.yml: Updated documentation navigation 
 
 ## [0.1.13] - 2020-09-16
 - Added Kafka as a destination
