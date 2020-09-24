@@ -1,6 +1,7 @@
 
 
 
+
 <!doctype html>
 <html lang="en" class="no-js">
   <head>
@@ -17,7 +18,7 @@
         <meta name="author" content="Data Tools">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.4.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.13">
     
     
       
@@ -25,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.fe0cca5b.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.077507d7.min.css">
       
       
     
@@ -214,15 +215,11 @@
     
     <label class="md-nav__link" for="nav-3">
       DataPull on AWS
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
     </label>
     <nav class="md-nav" aria-label="DataPull on AWS" data-md-level="1">
       <label class="md-nav__title" for="nav-3">
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-        </span>
+        <span class="md-nav__icon md-icon"></span>
         DataPull on AWS
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -280,9 +277,7 @@
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
         Custom EC2 Role for EMR
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
-        </span>
+        <span class="md-nav__icon md-icon"></span>
       </label>
     
     <a href="./" title="Custom EC2 Role for EMR" class="md-nav__link md-nav__link--active">
@@ -297,9 +292,7 @@
   
   
     <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-scrollfix>
@@ -315,6 +308,18 @@
   
 </nav>
     
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../uninstall_on_aws/" title="Uninstalling DataPull on AWS Fargate and S3" class="md-nav__link">
+      Uninstalling DataPull on AWS Fargate and S3
+    </a>
   </li>
 
         
@@ -389,9 +394,7 @@
   
   
     <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-scrollfix>
@@ -426,7 +429,10 @@
                 <h1 id="custom-ec2-instance-profilerole-for-emr-clusters">Custom EC2 Instance Profile/Role for EMR Clusters</h1>
 <p>By default, DataPull on EMR uses the IAM role <code>emr_ec2_datapull_role</code> as the <a href="https://docs.aws.amazon.com/emr/latest/ManagementGuide/emr-iam-role-for-ec2.html">service role for cluster EC2 instances</a> (also called the EC2 instance profile for Amazon EMR).  This  IAM role <code>emr_ec2_datapull_role</code> has sufficient access to run DataPull jobs that involve non-AWS data stores. For instance, you can move data from a Cassandra cluster to a MongoDB cluster without having to read this document. However, if you want to have DataPull read/write data from an AWS data store like S3, the recommendation is that you create a custom EC2 Instance Profile/Role and grant that role access to the AWS datastore/resource that DataPull needs to access.  </p>
 <p>Here is a
-<a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> for the creation of a custom IAM role <code>datapull_custom_emr_ec2_role</code> that can be used by DataPull on EMR as a custom EC2 Instance Profile/Role. The IAM Role thus used, can be specified for each DataPull job within its input JSON. The <a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> has some required policy attachments; and also some optional policies that allow DataPull to interact with AWS Secrets Manager, your own S3 bucket, etc. </p>
+<a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> for the creation of a custom IAM role <code>emr_ec2_datapull_custom_role</code> that can be used by DataPull on EMR as a custom EC2 Instance Profile/Role. The IAM Role thus used, can be specified for each DataPull job within its input JSON. The <a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> has some required policy attachments; and also some optional policies that allow DataPull to interact with AWS Secrets Manager, your own S3 bucket, etc. </p>
+<blockquote>
+<p>The IAM Role for the DataPull API <code>datapull_task_role</code> needs to have IAM:PassRole access over this custom EC2 instance profile Role <code>emr_ec2_datapull_custom_role</code>. By default, the role <code>datapull_task_role</code> has IAM:PassRole access over all IAM Roles matching the pattern <code>arn:aws:iam::*:role/emr_*datapull*</code>; therefore it is recommended that your custom IAM Role matches this pattern.</p>
+</blockquote>
 <p>When creating a custom EC2 Role for DataPull, it is recommended that you remove the optional policies and their related policy attachments, if you do not need them. </p>
 <h2 id="runbook-to-create-custom-ec2-role-for-datapull-on-emr">Runbook to create custom EC2 Role for DataPull on EMR</h2>
 <blockquote>
@@ -434,9 +440,9 @@
 </blockquote>
 <ol>
 <li>In the folder that has the locally cloned forked/mirrored repo, copy the <a href="../resources/sample_custom_emr_ec2_role.tf">sample terraform file</a> that will create the custtom IAM role, from <code>docs/docs/resources/sample_custom_emr_ec2_role.tf</code> to <code>api/terraform/datapull_iam/</code></li>
-<li>Rename the copied file to the name of the custom IAM role, say <code>datapull_custom_emr_ec2_role.tf</code></li>
+<li>Rename the copied file to the name of the custom IAM role, say <code>emr_ec2_datapull_custom_role.tf</code></li>
 <li>In the copied file, replace <code>&lt;PLACEHOLDERS&gt;</code> in the optional policies that you wish to use, with the values appropriate for your environment; remove the optional policies and attachments that you do not wish to use. </li>
-<li>Add the custom IAM Role name, say <code>datapull_custom_emr_ec2_role.tf</code>, to the array of resources for the policy definition of <code>datapull_passrole_policy</code> in the file <code>api/terraform/datapull_iam/datapull_user_and_roles.tf</code></li>
+<li>If the ARN of the custom IAM Role does not match the pattern <code>arn:aws:iam::*:role/emr_*datapull*</code>, add the ARN to the array of resources for the action <code>iam:PassRole</code> of policies <code>datapull_iam_api_policy</code> and <code>datapull_emr_service_policy</code> in the file <code>api/terraform/datapull_iam/datapull_user_and_roles.tf</code></li>
 <li>Re-run the installation step <a href="../install_on_aws/#create-iam-user-and-roles-with-policies">Create IAM User and Roles, with policies</a> so that the copied terraform file creates the custom IAM Role and updates the exsting Terraform state. </li>
 </ol>
                 
@@ -472,13 +478,13 @@
           </a>
         
         
-          <a href="../oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../uninstall_on_aws/" title="Uninstalling DataPull on AWS Fargate and S3" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-footer-nav__title">
               <div class="md-ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Support for Oracle and Teradata
+                Uninstalling DataPull on AWS Fargate and S3
               </div>
             </div>
             <div class="md-footer-nav__button md-icon">
@@ -505,15 +511,15 @@
       
     </div>
     
-      <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="../assets/javascripts/bundle.b39636ac.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.2d1db4bd.min.js"></script>
+      <script src="../assets/javascripts/bundle.6627ddf3.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.a68abb33.min.js"
+            worker: "../assets/javascripts/worker/search.5eca75d3.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>

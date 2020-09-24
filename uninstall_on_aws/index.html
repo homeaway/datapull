@@ -12,19 +12,21 @@
         <meta name="description" content="Open Source Docs and Community Standards">
       
       
+        <link rel="canonical" href="https://homeaway.github.io/datapull/uninstall_on_aws/">
+      
       
         <meta name="author" content="Data Tools">
       
-      <link rel="shortcut icon" href="/datapull/assets/images/favicon.png">
+      <link rel="shortcut icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.13">
     
     
       
-        <title>DataPull Documentation</title>
+        <title>Uninstalling DataPull on AWS Fargate and S3 - DataPull Documentation</title>
       
     
     
-      <link rel="stylesheet" href="/datapull/assets/stylesheets/main.077507d7.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.077507d7.min.css">
       
       
     
@@ -53,6 +55,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#uninstall-datapull-deployed-on-aws-fargateecs-and-aws-emr" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -77,7 +84,7 @@
           </span>
           <span class="md-header-nav__topic md-ellipsis">
             
-              
+              Uninstalling DataPull on AWS Fargate and S3
             
           </span>
         </div>
@@ -177,7 +184,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/." title="Home" class="md-nav__link">
+    <a href=".." title="Home" class="md-nav__link">
       Home
     </a>
   </li>
@@ -189,7 +196,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/architecture/" title="Architecture" class="md-nav__link">
+    <a href="../architecture/" title="Architecture" class="md-nav__link">
       Architecture
     </a>
   </li>
@@ -199,10 +206,12 @@
       
       
 
+  
 
-  <li class="md-nav__item md-nav__item--nested">
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+      <input class="md-nav__toggle md-toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3" checked>
     
     <label class="md-nav__link" for="nav-3">
       DataPull on AWS
@@ -222,7 +231,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/install_on_aws/" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
+    <a href="../install_on_aws/" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link">
       Installing DataPull on AWS Fargate and S3
     </a>
   </li>
@@ -234,7 +243,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/aws_account_setup/" title="Setup VPC etc. in AWS Account for DataPull install" class="md-nav__link">
+    <a href="../aws_account_setup/" title="Setup VPC etc. in AWS Account for DataPull install" class="md-nav__link">
       Setup VPC etc. in AWS Account for DataPull install
     </a>
   </li>
@@ -246,7 +255,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
+    <a href="../emr_runbook/" title="Running DataPull on AWS EMR" class="md-nav__link">
       Running DataPull on AWS EMR
     </a>
   </li>
@@ -258,7 +267,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/custom_emr_ec2_role/" title="Custom EC2 Role for EMR" class="md-nav__link">
+    <a href="../custom_emr_ec2_role/" title="Custom EC2 Role for EMR" class="md-nav__link">
       Custom EC2 Role for EMR
     </a>
   </li>
@@ -268,11 +277,83 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="/datapull/uninstall_on_aws/" title="Uninstalling DataPull on AWS Fargate and S3" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="__toc">
+        Uninstalling DataPull on AWS Fargate and S3
+        <span class="md-nav__icon md-icon"></span>
+      </label>
+    
+    <a href="./" title="Uninstalling DataPull on AWS Fargate and S3" class="md-nav__link md-nav__link--active">
       Uninstalling DataPull on AWS Fargate and S3
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pre-requisites" class="md-nav__link">
+    Pre-requisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-does-not-get-uninstalled-by-this-process" class="md-nav__link">
+    What does not get uninstalled by this process?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-uninstall" class="md-nav__link">
+    How to uninstall
+  </a>
+  
+    <nav class="md-nav" aria-label="How to uninstall">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uninstall-non-iam-components" class="md-nav__link">
+    Uninstall non-IAM components
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uninstall-iam-components" class="md-nav__link">
+    Uninstall IAM components
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -287,7 +368,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-nav__link">
+    <a href="../oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-nav__link">
       Support for Oracle and Teradata
     </a>
   </li>
@@ -299,7 +380,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/transformation/" title="Sample input JSON" class="md-nav__link">
+    <a href="../transformation/" title="Sample input JSON" class="md-nav__link">
       Sample input JSON
     </a>
   </li>
@@ -311,7 +392,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/monitor_spark_ui/" title="Monitor DataPull jobs using Spark UI" class="md-nav__link">
+    <a href="../monitor_spark_ui/" title="Monitor DataPull jobs using Spark UI" class="md-nav__link">
       Monitor DataPull jobs using Spark UI
     </a>
   </li>
@@ -323,7 +404,7 @@
 
 
   <li class="md-nav__item">
-    <a href="/datapull/faq/" title="FAQs" class="md-nav__link">
+    <a href="../faq/" title="FAQs" class="md-nav__link">
       FAQs
     </a>
   </li>
@@ -336,12 +417,124 @@
               </div>
             
             
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#pre-requisites" class="md-nav__link">
+    Pre-requisites
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-does-not-get-uninstalled-by-this-process" class="md-nav__link">
+    What does not get uninstalled by this process?
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#how-to-uninstall" class="md-nav__link">
+    How to uninstall
+  </a>
+  
+    <nav class="md-nav" aria-label="How to uninstall">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#uninstall-non-iam-components" class="md-nav__link">
+    Uninstall non-IAM components
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#uninstall-iam-components" class="md-nav__link">
+    Uninstall IAM components
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
           
           <div class="md-content">
             <article class="md-content__inner md-typeset">
               
-  <h1>404 - Not found</h1>
-
+                
+                  <a href="https://github.com/homeaway/datapull/edit/master/docs/docs/uninstall_on_aws.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                  
+                
+                
+                <h1 id="uninstall-datapull-deployed-on-aws-fargateecs-and-aws-emr">Uninstall DataPull deployed on AWS Fargate/ECS and AWS EMR</h1>
+<p>This document helps you uninstall DataPull on an Amazon AWS account</p>
+<h2 id="pre-requisites">Pre-requisites</h2>
+<ul>
+<li>The fork/branch of the DataPull repo used for the installation should be available; since the script uses the same <code>master-application-conf-&lt;env&gt;.yml</code> data that was used for the install, for the uninstall too.</li>
+<li>The S3 bucket (which holds the <code>datapull-opensource/terraform-state</code> folder) should exist</li>
+<li>The IAM User <code>datapull_user</code> used for the purpose of installing DataPull, should exist<ul>
+<li>If this user has been deleted, you can follow the first part of DataPull installation to re-create this IAM user</li>
+</ul>
+</li>
+</ul>
+<h2 id="what-does-not-get-uninstalled-by-this-process">What does not get uninstalled by this process?</h2>
+<ul>
+<li>AWS EMR default roles that are created by the CLI command <code>aws emr create-default-roles</code></li>
+<li>DataPull's logs, sample data, terraform state, and history at <code>&lt;s3_bucket_name&gt;/datapull-opensource</code></li>
+<li>Networking components created by the runbook <a href="../aws_account_setup">Setup VPC etc. in AWS Account for DataPull install</a> </li>
+</ul>
+<h2 id="how-to-uninstall">How to uninstall</h2>
+<h3 id="uninstall-non-iam-components">Uninstall non-IAM components</h3>
+<ul>
+<li>From the terminal at the root of the repo, run <ul>
+<li><code>cd api/terraform/datapull_task/</code></li>
+<li><code>chmod +x ecs_deploy_uninstall.sh</code></li>
+<li><code>./ecs_deploy_uninstall.sh &lt;env&gt;</code></li>
+</ul>
+</li>
+</ul>
+<h3 id="uninstall-iam-components">Uninstall IAM components</h3>
+<ul>
+<li>From the terminal (assuming you are using the same terminal session as the previous steps), run<ul>
+<li><code>cd ../datapull_iam/</code><ul>
+<li>If you are at the root of the repo, run <code>cd api/terraform/datapull_iam/</code></li>
+</ul>
+</li>
+<li><code>chmod +x uninstall_user_and_roles.sh</code></li>
+<li><code>./uninstall_user_and_roles.sh &lt;aws_admin_profile&gt; &lt;s3_bucket_name&gt; &lt;region&gt;</code></li>
+</ul>
+</li>
+</ul>
+                
+              
               
                 
 
@@ -354,6 +547,41 @@
       
         
 <footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid" aria-label="Footer">
+        
+          <a href="../custom_emr_ec2_role/" title="Custom EC2 Role for EMR" class="md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+            </div>
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Custom EC2 Role for EMR
+              </div>
+            </div>
+          </a>
+        
+        
+          <a href="../oracle_teradata_support/" title="Support for Oracle and Teradata" class="md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-footer-nav__title">
+              <div class="md-ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Support for Oracle and Teradata
+              </div>
+            </div>
+            <div class="md-footer-nav__button md-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
@@ -371,15 +599,15 @@
       
     </div>
     
-      <script src="/datapull/assets/javascripts/vendor.2d1db4bd.min.js"></script>
-      <script src="/datapull/assets/javascripts/bundle.6627ddf3.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.2d1db4bd.min.js"></script>
+      <script src="../assets/javascripts/bundle.6627ddf3.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
-          base: "/datapull",
+          base: "..",
           features: [],
           search: Object.assign({
-            worker: "/datapull/assets/javascripts/worker/search.5eca75d3.min.js"
+            worker: "../assets/javascripts/worker/search.5eca75d3.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>

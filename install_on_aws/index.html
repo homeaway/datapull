@@ -1,6 +1,7 @@
 
 
 
+
 <!doctype html>
 <html lang="en" class="no-js">
   <head>
@@ -17,7 +18,7 @@
         <meta name="author" content="Data Tools">
       
       <link rel="shortcut icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.4.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-5.5.13">
     
     
       
@@ -25,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.fe0cca5b.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.077507d7.min.css">
       
       
     
@@ -214,15 +215,11 @@
     
     <label class="md-nav__link" for="nav-3">
       DataPull on AWS
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M8.59 16.58L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.42z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
     </label>
     <nav class="md-nav" aria-label="DataPull on AWS" data-md-level="1">
       <label class="md-nav__title" for="nav-3">
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-        </span>
+        <span class="md-nav__icon md-icon"></span>
         DataPull on AWS
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
@@ -244,9 +241,7 @@
     
       <label class="md-nav__link md-nav__link--active" for="__toc">
         Installing DataPull on AWS Fargate and S3
-        <span class="md-nav__icon md-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 9h14V7H3v2m0 4h14v-2H3v2m0 4h14v-2H3v2m16 0h2v-2h-2v2m0-10v2h2V7h-2m0 6h2v-2h-2v2z"/></svg>
-        </span>
+        <span class="md-nav__icon md-icon"></span>
       </label>
     
     <a href="./" title="Installing DataPull on AWS Fargate and S3" class="md-nav__link md-nav__link--active">
@@ -261,9 +256,7 @@
   
   
     <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-scrollfix>
@@ -413,6 +406,18 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../uninstall_on_aws/" title="Uninstalling DataPull on AWS Fargate and S3" class="md-nav__link">
+      Uninstalling DataPull on AWS Fargate and S3
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -484,9 +489,7 @@
   
   
     <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
-      </span>
+      <span class="md-nav__icon md-icon"></span>
       Table of contents
     </label>
     <ul class="md-nav__list" data-md-scrollfix>
@@ -668,15 +671,15 @@
 <blockquote>
 <p>Pro-tip: Record the values of the variables in the pre-install steps, as a text file. Here is an example (with fake values)...</p>
 </blockquote>
-<pre><code>&lt;aws_admin_profile&gt; : default
-&lt;s3_bucket_name&gt; : datatools-datapull
-&lt;vpc_id&gt; : vpc-071957e514a1fbd73
-&lt;region&gt; : us-west-2
-&lt;application_subnet_1&gt; : subnet-04903ae2649294308
-&lt;application_subnet_2&gt; : subnet-0e10783af0de2513e
-&lt;application_security_group&gt; : sg-08beb77f882d5d2a2
-&lt;load_balancer_certificate_arn&gt; : arn:aws:acm:us-west-2:771905877783:certificate/2b1d3729-aa6d-47d5-8902-d0f9e75b35a8
-&lt;env&gt; : stage
+<pre><code>&lt;aws_admin_profile&gt;: default
+&lt;s3_bucket_name&gt;: datatools-datapull
+&lt;vpc_id&gt;: vpc-071957e514a1fbd73
+&lt;region&gt;: us-west-2
+&lt;application_subnet_1&gt;: subnet-04903ae2649294308
+&lt;application_subnet_2&gt;: subnet-0e10783af0de2513e
+&lt;application_security_group&gt;: sg-08beb77f882d5d2a2
+&lt;load_balancer_certificate_arn&gt;: arn:aws:acm:us-west-2:771905877783:certificate/2b1d3729-aa6d-47d5-8902-d0f9e75b35a8
+&lt;env&gt;: stage
 </code></pre>
 
 <h2 id="installation-steps">Installation Steps</h2>
@@ -850,8 +853,7 @@ hello,world
                 {
                     &quot;platform&quot;: &quot;s3&quot;,
                     &quot;s3path&quot;: &quot;&lt;s3_bucket_name&gt;/datapull-opensource/data/firstdatapull/source&quot;,
-                    &quot;fileformat&quot;: &quot;csv&quot;,
-                    &quot;savemode&quot;: &quot;Overwrite&quot;
+                    &quot;fileformat&quot;: &quot;csv&quot;
                 }
             ],
             &quot;destination&quot;: {
@@ -948,15 +950,15 @@ hello,world
       
     </div>
     
-      <script src="../assets/javascripts/vendor.d710d30a.min.js"></script>
-      <script src="../assets/javascripts/bundle.b39636ac.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
+      <script src="../assets/javascripts/vendor.2d1db4bd.min.js"></script>
+      <script src="../assets/javascripts/bundle.6627ddf3.min.js"></script><script id="__lang" type="application/json">{"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents"}</script>
       
       <script>
         app = initialize({
           base: "..",
           features: [],
           search: Object.assign({
-            worker: "../assets/javascripts/worker/search.a68abb33.min.js"
+            worker: "../assets/javascripts/worker/search.5eca75d3.min.js"
           }, typeof search !== "undefined" && search)
         })
       </script>
