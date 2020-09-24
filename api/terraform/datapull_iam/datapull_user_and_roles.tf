@@ -193,7 +193,12 @@ resource "aws_iam_policy" "datapull_emr_policy" {
                 "elasticmapreduce:AddTags",
                 "elasticmapreduce:AddJobFlowSteps"
             ],
-            "Resource": "*"
+            "Resource": "*",
+            "Condition": {
+                "StringLikeIfExists": {
+                    "elasticmapreduce:ResourceTag/tool": "datapull"
+                }
+            }
         }
   ]
 }
@@ -325,8 +330,6 @@ resource "aws_iam_user_policy_attachment" "datapull_cloudwatch_logs_policy_attac
   user = aws_iam_user.datapull_user.name
   policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
 }
-
-
 
 resource "aws_iam_user_policy_attachment" "datapull_ServiceLinkedRole_policy_attachment" {
   user = aws_iam_user.datapull_user.name
