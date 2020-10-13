@@ -15,6 +15,7 @@ nav:
         - Setup VPC etc. in AWS Account for DataPull install: aws_account_setup.md
         - Running DataPull on AWS EMR: emr_runbook.md
         - Custom EC2 Role for EMR: custom_emr_ec2_role.md
+        - Uninstalling DataPull on AWS Fargate and S3: uninstall_on_aws.md
     - Support for Oracle and Teradata: oracle_teradata_support.md
     - Sample input JSON: transformation.md
     - Monitor DataPull jobs using Spark UI: monitor_spark_ui.md

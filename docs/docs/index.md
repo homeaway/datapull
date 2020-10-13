@@ -20,7 +20,7 @@ DataPull supports the following datastores as sources and destinations.
 | FileSystem | ✔ | ✔ |
 | SFTP | ✔ | ✔ |
 | Elasticsearch | ✔ | ✔ |
-| Kafka | ✔ |**X**|
+| Kafka | ✔ | ✔ |
 | Neo4j |**X** | ✔ |
 | MySql | ✔ | ✔ |
 | Postgres | ✔ | ✔ | 

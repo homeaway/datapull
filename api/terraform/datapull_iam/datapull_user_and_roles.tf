@@ -1,20 +1,20 @@
 # ----- SERVICE ACCOUNT QUESTIONS -----
 # What functions is required for the IAM account? Jenkins will run as the IAM User, to spin up ECS Fargate containers. The ECS Fargate containers will assume the IAM Role, to spin up EMR clusters
-# What permissions are allowed for the IAM account? IAM User: AmazonECS_FullAccess; IAM Role: AmazonElasticMapReduceFullAccess, Access to S3 bucket ${var.datapull_s3_bucket}
-# What AWS services is the IAM account touching? IAM User: ECS, IAM Role: EMR, S3
+# What permissions are allowed for the IAM account? IAM User: Access to install DataPull on AWS; IAM Roles: Access to run EMR, Access to S3 bucket ${var.datapull_s3_bucket}
+# What AWS services is the IAM account touching? IAM User: ECS, IAM Role: EMR, S3, CloudWatch
 # Is the IAM account apart of a role/group, is so, which role/group? No
 # Does your account require shared access with a third party vendor? No
 # Will your application be exposed to the internet? No
 
-#IAM User datapull_user
-
 locals {
   common_tags = {
-    brand = "HomeAway"
+    brand = "Expedia"
     category = "EMRPipeline"
     tool = "datapull"
   }
 }
+
+#IAM User datapull_user used to install datapull. This user can be deleted once installation is done; or retained for use by the CI/CD pipeline to install DataPull
 
 resource "aws_iam_user" "datapull_user" {
   name = "datapull_user"
@@ -33,6 +33,8 @@ resource "aws_iam_user" "datapull_user" {
   tags = local.common_tags
 
 }
+
+#Policies for datapull_user...
 
 # Attach policy to enable creation of ECS fargate containers
 /*the S3 buckets in this policy will be overwritten by create_user_and_role.sh*/
@@ -92,8 +94,7 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split1" {
                 "s3:PutObjectAcl",
                 "s3:PutObjectVersionAcl",
                 "s3:PutObjectVersionTagging",
-                "s3:RestoreObject",
-                "iam:PassRole"
+                "s3:RestoreObject"
             ],
             "Resource": [
                 "arn:aws:ecs:*:*:cluster/${var.docker_image_name}",
@@ -192,49 +193,16 @@ resource "aws_iam_policy" "datapull_emr_policy" {
                 "elasticmapreduce:AddTags",
                 "elasticmapreduce:AddJobFlowSteps"
             ],
-            "Resource": "*"
+            "Resource": "*",
+            "Condition": {
+                "StringLikeIfExists": {
+                    "elasticmapreduce:ResourceTag/tool": "datapull"
+                }
+            }
         }
   ]
 }
 EOF
-}
-
-resource "aws_iam_policy" "datapull_passrole_policy" {
-  name = "datapull_passrole_policy"
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [ {
-        "Effect": "Allow",
-        "Action": "iam:PassRole",
-        "Resource": [
-            "${aws_iam_role.emr_datapull_role.arn}",
-            "${aws_iam_role.emr_ec2_datapull_role.arn}"
-        ]
-    } ]
-}
-EOF
-}
-
-resource "aws_iam_user_policy_attachment" "datapull_passrole_policy" {
-  user = aws_iam_user.datapull_user.name
-  policy_arn = aws_iam_policy.datapull_passrole_policy.arn
-}
-
-resource "aws_iam_user_policy_attachment" "datapull_emr_policy" {
-  user = aws_iam_user.datapull_user.name
-  policy_arn = aws_iam_policy.datapull_emr_policy.arn
-}
-
-resource "aws_iam_user_policy_attachment" "datapull_user_infra_policy_split1" {
-  user = aws_iam_user.datapull_user.name
-  policy_arn = aws_iam_policy.datapull_user_infra_policy_split1.arn
-}
-
-resource "aws_iam_user_policy_attachment" "datapull_user_infra_policy_split2" {
-  user = aws_iam_user.datapull_user.name
-  policy_arn = aws_iam_policy.datapull_user_infra_policy_split2.arn
 }
 
 resource "aws_iam_policy" "datapull_cloudwatch_logs_policy" {
@@ -242,44 +210,48 @@ resource "aws_iam_policy" "datapull_cloudwatch_logs_policy" {
 
   policy = <<EOF
 {
-    "Version": "2012-10-17",
-    "Statement": [ 
-      {
-          "Effect": "Allow",
-          "Action": [
-            "logs:PutRetentionPolicy",
-            "logs:ListTagsLogGroup",
-            "logs:TagLogGroup",
-            "logs:DeleteLogGroup"
-          ],
-          "Resource": [
-             "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*:*",
-             "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*:*",
-              "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*",
-             "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*"
-          ]
-        },
-        {
-          "Effect": "Allow",
-          "Action": [
-            "logs:PutLogEvents",
-            "logs:GetLogEvents",
-            "logs:DeleteLogStream"
-          ],
-          "Resource": [
-            "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}:log-stream:*"
-          ]
-        },
-        {
-          "Effect": "Allow",
-          "Action": [
-            "logs:CreateLogGroup",
-            "logs:DescribeLog*",
-            "ecs:DescribeTask*",
-            "logs:CreateLogStream"
-          ],
-          "Resource": "*"
-        } ]
+  "Version": "2012-10-17",
+  "Statement": [ 
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:DescribeLog*"
+      ],
+      "Resource": [
+          "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*:*",
+          "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*",
+          "arn:aws:logs:*:*:log-group::log-stream*",
+          "arn:aws:logs:*:*:log-group::log-stream*:*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:PutRetentionPolicy",
+        "logs:TagLogGroup",
+        "logs:UntagLogGroup",
+        "logs:DeleteLogGroup",
+        "logs:ListTagsLogGroup",
+        "logs:CreateLogStream",
+        "logs:CreateLogGroup"
+      ],
+      "Resource": [
+          "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*:*",
+          "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:PutLogEvents",
+        "logs:GetLogEvents",
+        "logs:DeleteLogStream"
+      ],
+      "Resource": [
+        "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}:log-stream:*"
+      ]
+    }
+  ]
 }
 EOF
 
@@ -314,16 +286,6 @@ EOF
 
 }
 
-resource "aws_iam_user_policy_attachment" "datapull_loadbalancer_policy_attachment" {
-  user = aws_iam_user.datapull_user.name
-  policy_arn = aws_iam_policy.datapull_loadbalancer_logs_policy.arn
-}
-
-resource "aws_iam_user_policy_attachment" "datapull_cloudwatch_logs_policy_attachment" {
-  user = aws_iam_user.datapull_user.name
-  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
-}
-
 resource "aws_iam_policy" "datapull_ServiceLinkedRole_policy" {
   name = "datapull_ServiceLinkedRole_policy"
 
@@ -342,6 +304,31 @@ resource "aws_iam_policy" "datapull_ServiceLinkedRole_policy" {
 }
 EOF
 
+}
+
+resource "aws_iam_user_policy_attachment" "datapull_emr_policy" {
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_emr_policy.arn
+}
+
+resource "aws_iam_user_policy_attachment" "datapull_user_infra_policy_split1" {
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_user_infra_policy_split1.arn
+}
+
+resource "aws_iam_user_policy_attachment" "datapull_user_infra_policy_split2" {
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_user_infra_policy_split2.arn
+}
+
+resource "aws_iam_user_policy_attachment" "datapull_loadbalancer_policy_attachment" {
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_loadbalancer_logs_policy.arn
+}
+
+resource "aws_iam_user_policy_attachment" "datapull_cloudwatch_logs_policy_attachment" {
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
 }
 
 resource "aws_iam_user_policy_attachment" "datapull_ServiceLinkedRole_policy_attachment" {
@@ -372,40 +359,88 @@ EOF
 
 }
 
-resource "aws_iam_role_policy_attachment" "taskrole_emr_policy" {
+resource "aws_iam_instance_profile" "datapull_instance_profile" {
+  name = "datapull_task_role"
   role = aws_iam_role.datapull_task_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess"
-
 }
 
-resource "aws_iam_role_policy_attachment" "emr_ec2_role_emr_policy" {
-  role = aws_iam_role.emr_ec2_datapull_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonElasticMapReduceFullAccess"
-
-}
-
-resource "aws_iam_role_policy_attachment" "datapull_logs_policy" {
-  role = aws_iam_role.datapull_task_role.name
-  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
-
-}
+# policies for datapull_task_role
 
 /*the S3 buckets in this policy will be overwritten by create_user_and_role.sh*/
-resource "aws_iam_policy" "datapull_s3_policy" {
-  name = "datapull_s3_policy"
-
+resource "aws_iam_policy" "datapull_s3_api_policy" {
+  name = "datapull_s3_api_policy"
   policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
       "Action": [
-        "s3:*"
+        "s3:ListBucket*"
       ],
       "Effect": "Allow",
       "Resource": [
-           "arn:aws:s3:::${var.datapull_s3_bucket}",
-           "arn:aws:s3:::${var.datapull_s3_bucket}/*"
+           "arn:aws:s3:::${var.datapull_s3_bucket}"
+      ],
+      "Condition": {
+          "StringLike": {
+              "s3:prefix": [
+                  "datapull-opensource/*"
+              ]
+          }
+      }
+    },
+    {
+      "Action": [
+        "s3:GetObject*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/*"
+      ]
+    },
+    {
+      "Action": [
+        "s3:PutObject*",
+        "s3:DeleteObject*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/history/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "datapull_cloudwatch_logs_api_emr_ec2_policy" {
+  name = "datapull_cloudwatch_logs_api_emr_ec2_policy"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [ 
+    
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:ListTagsLogGroup",
+        "logs:CreateLogStream",
+        "logs:DescribeLog*"
+      ],
+      "Resource": [
+          "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*:*",
+          "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:PutLogEvents",
+        "logs:GetLogEvents"
+      ],
+      "Resource": [
+        "arn:aws:logs:*:*:log-group:/ecs/${var.docker_image_name}:log-stream:*"
       ]
     }
   ]
@@ -414,19 +449,128 @@ EOF
 
 }
 
-resource "aws_iam_role_policy_attachment" "datapull_s3_policy_attachment" {
-  role = aws_iam_role.datapull_task_role.name
-  policy_arn = aws_iam_policy.datapull_s3_policy.arn
+# policy that replaces AmazonElasticMapReduceFullAccess, needed to spin up EMR 
+resource "aws_iam_policy" "datapull_emr_api_policy" {
+  name = "datapull_emr_api_policy"
 
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [ 
+    {
+      "Effect": "Allow",
+      "Action": [
+        "elasticmapreduce:List*",
+        "elasticmapreduce:GetBlockPublicAccessConfiguration",
+        "elasticmapreduce:AddTags",
+        "elasticmapreduce:RemoveTags"
+      ],
+      "Resource": [
+          "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+         "elasticmapreduce:Describe*",
+         "elasticmapreduce:GetManagedScalingPolicy",
+         "elasticmapreduce:AddInstance*",
+         "elasticmapreduce:AddJobFlowSteps",
+         "elasticmapreduce:CancelSteps",
+         "elasticmapreduce:Modify*",
+         "elasticmapreduce:Put*",
+         "elasticmapreduce:Remove*",
+         "elasticmapreduce:SetTerminationProtection",
+         "elasticmapreduce:TerminateJobFlows"
+      ],
+      "Resource": [
+          "*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "elasticmapreduce:ResourceTag/tool": "datapull"
+        }
+      }
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+         "elasticmapreduce:RunJobFlow*"
+      ],
+      "Resource": [
+          "*"
+      ],
+      "Condition": {
+        "StringEquals": {
+          "elasticmapreduce:RequestTag/tool": "datapull"
+        }
+      }
+    }
+  ]
+}
+EOF
 }
 
-resource "aws_iam_instance_profile" "datapull_instance_profile" {
-  name = "datapull_task_role"
-  role = aws_iam_role.datapull_task_role.name
+resource "aws_iam_policy" "datapull_iam_api_policy" {
+  name = "datapull_iam_api_policy"
 
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [ 
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:PassRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/emr_*datapull*",
+        "arn:aws:iam::*:role/emr_*datatech*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iam:ListRoles",
+      "Resource": [
+          "*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetPolicy",
+        "iam:GetPolicyVersion"
+      ],
+      "Resource": [
+          "arn:aws:iam:::policy/datapull_*"
+      ]
+    }  
+  ]
+}
+EOF
 }
 
-# IAM role for datapullapi ecs task
+resource "aws_iam_role_policy_attachment" "datapull_emr_api_policy_attachment" {
+  role = aws_iam_role.datapull_task_role.name
+  policy_arn = aws_iam_policy.datapull_emr_api_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_iam_api_policy_attachment" {
+  role = aws_iam_role.datapull_task_role.name
+  policy_arn = aws_iam_policy.datapull_iam_api_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_logs_api_policy_attachment" {
+  role = aws_iam_role.datapull_task_role.name
+  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_api_emr_ec2_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_s3_api_policy_attachment" {
+  role = aws_iam_role.datapull_task_role.name
+  policy_arn = aws_iam_policy.datapull_s3_api_policy.arn
+}
+
+# IAM role for datapullapi ecs task executor
 resource "aws_iam_role" "datapull_task_execution_role" {
   name = "datapull_task_execution_role"
   tags = local.common_tags
@@ -449,55 +593,11 @@ EOF
 
 }
 
-# IAM Role for default EC2 instance profiles of EMR
-resource "aws_iam_role" "emr_ec2_datapull_role" {
-  name = "emr_ec2_datapull_role"
-  tags = local.common_tags
-
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": ["elasticmapreduce.amazonaws.com","ec2.amazonaws.com"]
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-
-}
-
-
-resource "aws_iam_role_policy_attachment" "datapull_s3_attachment" {
-  role = aws_iam_role.emr_ec2_datapull_role.name
-  policy_arn = aws_iam_policy.datapull_s3_policy.arn
-
-}
-
-resource "aws_iam_role_policy_attachment" "datapull_emr_ec2_attachment" {
-  role = aws_iam_role.emr_ec2_datapull_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonElasticMapReduceforEC2Role"
-}
-
-resource "aws_iam_role_policy_attachment" "datapull_emr_cloudwatch_attachment" {
-  role = aws_iam_role.emr_ec2_datapull_role.name
-  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_policy.arn
-}
+# policies for datapull_task_execution_role...
 
 resource "aws_iam_role_policy_attachment" "datapull_task_execution_policy" {
   role = aws_iam_role.datapull_task_execution_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
-}
-
-resource "aws_iam_instance_profile" "datapull_default_instance_profile" {
-  name = "emr_ec2_datapull_role"
-  role = aws_iam_role.emr_ec2_datapull_role.name
-
 }
 
 # IAM Role for EMR Service
@@ -527,6 +627,8 @@ resource "aws_iam_role" "emr_datapull_role" {
 EOF
 
 }
+
+# policies for emr_datapull_role...
 
 resource "aws_iam_policy" "datapull_emr_service_policy" {
   name = "datapull_emr_service_policy"
@@ -625,8 +727,8 @@ resource "aws_iam_policy" "datapull_emr_service_policy" {
                 "iam:PassRole"
             ],
             "Resource": [
-                "${aws_iam_role.emr_ec2_datapull_role.arn}",
-                "${aws_iam_role.emr_datapull_role.arn}"
+                "arn:aws:iam::*:role/emr_*datapull*",
+                "arn:aws:iam::*:role/emr_*datatech*"
             ]
         },
         {
@@ -636,7 +738,8 @@ resource "aws_iam_policy" "datapull_emr_service_policy" {
                 "iam:ListInstanceProfiles"
             ],
             "Resource": [
-                "${aws_iam_instance_profile.datapull_default_instance_profile.arn}"
+                "arn:aws:iam::*:instance-profile/emr_*datapull*",
+                "arn:aws:iam::*:instance-profile/emr_*datatech*"
             ]
         }
     ]
@@ -648,6 +751,94 @@ EOF
 resource "aws_iam_role_policy_attachment" "datapull_emr_service_policy" {
   role = aws_iam_role.emr_datapull_role.name
   policy_arn = aws_iam_policy.datapull_emr_service_policy.arn
+}
+
+# IAM Role for default EC2 instance profiles of EMR
+resource "aws_iam_role" "emr_ec2_datapull_role" {
+  name = "emr_ec2_datapull_role"
+  tags = local.common_tags
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": ["ec2.amazonaws.com"]
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+
+}
+
+# policies for emr_ec2_datapull_role ...
+
+/*the S3 buckets in this policy will be overwritten by create_user_and_role.sh*/
+resource "aws_iam_policy" "datapull_s3_emr_ec2_policy" {
+  name = "datapull_s3_emr_ec2_policy"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "s3:ListBucket*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+           "arn:aws:s3:::${var.datapull_s3_bucket}"
+      ],
+      "Condition": {
+          "StringLike": {
+              "s3:prefix": [
+                  "datapull-opensource/*"
+              ]
+          }
+      }
+    },
+    {
+      "Action": [
+        "s3:GetObject*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/*"
+      ]
+    },
+    {
+      "Action": [
+        "s3:PutObject*",
+        "s3:DeleteObject*"
+      ],
+      "Effect": "Allow",
+      "Resource": [
+           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/data/*",
+           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/logs/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_s3_emr_ec2_attachment" {
+  role = aws_iam_role.emr_ec2_datapull_role.name
+  policy_arn = aws_iam_policy.datapull_s3_emr_ec2_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_emr_ec2_cloudwatch_attachment" {
+  role = aws_iam_role.emr_ec2_datapull_role.name
+  policy_arn = aws_iam_policy.datapull_cloudwatch_logs_api_emr_ec2_policy.arn
+}
+
+resource "aws_iam_instance_profile" "datapull_default_instance_profile" {
+  name = "emr_ec2_datapull_role"
+  role = aws_iam_role.emr_ec2_datapull_role.name
 }
 
 resource "aws_iam_access_key" "datapull_iam_access_key" {
