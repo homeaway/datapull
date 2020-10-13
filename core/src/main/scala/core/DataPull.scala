@@ -287,8 +287,15 @@ object DataPull {
   def setAWSCredentials(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String]): Unit = {
     //sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.impl", "com.amazon.ws.emr.hadoop.fs.EmrFileSystem")
     if (sourceDestinationMap("awssecretaccesskey") != "") {
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3a.access.key", sourceDestinationMap("awsaccesskeyid"))
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3a.secret.key", sourceDestinationMap("awssecretaccesskey"))
+      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.access.key", sourceDestinationMap("awsaccesskeyid"))
+      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.secret.key", sourceDestinationMap("awssecretaccesskey"))
+    }
+    if (sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") {
+
+      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.enableServerSideEncryption", "true")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.serverSideEncryptionAlgorithm", "AES256")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.connection.ssl.enabled", "true")
+
     }
   }
 

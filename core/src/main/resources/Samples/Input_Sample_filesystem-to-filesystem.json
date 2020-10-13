@@ -21,6 +21,7 @@
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
     "ec2instanceprofile": "Iam role",
-    "cronexpression": "21 * * * *"
+    "emr_service_role": "some_test",
+    "ComponentInfo": "some_info"
   }
 }

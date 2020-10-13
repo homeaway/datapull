@@ -22,7 +22,7 @@ echo "Deleting api's application.yml if already exists"
 rm -rf api/src/main/resources/application.yml
 
 echo "deleting core application.yml file if already existing"
-rm-rf core/src/main/resources/application.yml
+rm -rf core/src/main/resources/application.yml
 
 docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v ${PWD}:/workdir -v "${HOME}"/.m2/:/root/.m2/ -w /workdir  lolhens/ammonite amm api/src/main/resources/overwrite_config.sc ${env}
 
@@ -133,17 +133,18 @@ echo " conf file path"
 
 pwd
 
-docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:alpine mvn clean install
+#docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:alpine mvn clean install
 exitAfterFailure
 
 echo "Uploading core Jar to s3"
 
-docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${PWD}":/data -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws s3 cp /data/target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar "$jar_file_path"
+#docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${PWD}":/data -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws s3 cp /data/target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar "$jar_file_path"
 
 exitAfterFailure
 
-cd ../api/
+#exit 0
 
+cd ../api/
 
 echo "Uploading API docker image to ECR $docker_image_name"
 

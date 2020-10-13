@@ -43,6 +43,9 @@ public class ClusterProperties {
     @JsonAlias({"ec2_instance_profile", "ec2instanceprofile"})
     private String instanceProfile;
 
+    @JsonAlias({"emr_service_role", "emrservicerole"})
+    private String emrServiceRole;
+
     @JsonAlias({"instance_type", "master_instance_type"})
     private String masterInstanceType;
 
@@ -99,6 +102,7 @@ public class ClusterProperties {
                 ", cronExpression='" + cronExpression + '\'' +
                 ", terminateClusterAfterExecution='" + terminateClusterAfterExecution + '\'' +
                 ", instanceProfile='" + instanceProfile + '\'' +
+                ", emrServiceRole='" + emrServiceRole + '\'' +
                 ", masterInstanceType='" + masterInstanceType + '\'' +
                 ", slaveInstanceType='" + slaveInstanceType + '\'' +
                 ", masterSecurityGroup='" + masterSecurityGroup + '\'' +

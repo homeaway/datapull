@@ -24,8 +24,6 @@ import java.time.Instant
 import java.util
 import java.util.{Calendar, Properties, UUID}
 
-import javax.mail.internet.{InternetAddress, MimeMessage}
-import javax.mail.{Message, Session, Transport}
 import com.amazonaws.services.logs.model.{DescribeLogStreamsRequest, InputLogEvent, PutLogEventsRequest}
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
@@ -33,7 +31,7 @@ import com.datastax.driver.core.exceptions.TruncateException
 import com.datastax.spark.connector.cql.CassandraConnector
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.homeaway.datatools.hotels.ExpediaHotelAmenity
+import com.homeaway.datatools.hotels.{ExpediaHotelAmenity, _}
 import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
@@ -42,26 +40,23 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
-import org.apache.avro.Schema
-import org.apache.avro.generic.{GenericData, GenericRecord}
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.{Message, Session, Transport}
+import org.apache.avro.generic.GenericData
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-
 import org.apache.spark.sql.functions.{col, struct}
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.{Row, SaveMode, SparkSession}
-import org.apache.spark.sql.{Row, SaveMode, SparkSession,Encoder, Encoders}
+import org.apache.spark.sql.{Encoder, Encoders, Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
 import org.elasticsearch.spark.sql._
 import org.influxdb.InfluxDBFactory
 import org.influxdb.dto.Query
-import org.json.simple.parser.JSONParser
 import security._
 import za.co.absa.abris.avro.functions.to_confluent_avro
 import za.co.absa.abris.avro.read.confluent.SchemaManager
@@ -72,8 +67,6 @@ import scala.collection.immutable.List
 import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
-
-import com.homeaway.datatools.hotels._
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
 
@@ -99,8 +92,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     var filePrefix = ""
 
     if (isS3) {
-      filePrefix = "s3a://"
-      sparkSession.conf.set("fs.s3a.connection.maximum", 100)
+      filePrefix = "s3://"
+      sparkSession.conf.set("fs.s3.connection.maximum", 100)
     }
 
     def createOrReplaceTempViewOnDF(df: org.apache.spark.sql.DataFrame): org.apache.spark.sql.DataFrame = {
@@ -259,8 +252,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     if (isS3) {
-      filePrefix = "s3a://"
-      sparkSession.conf.set("fs.s3a.connection.maximum", 100)
+      filePrefix = "s3://"
+      sparkSession.conf.set("fs.s3.connection.maximum", 100)
     }
     if (isSFTP) {
 
@@ -339,6 +332,21 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
             .save(s"$filePrefix$filePath")
+        }
+      } else if (fileFormat == "orc") {
+        if (groupByFields == "") {
+          dft
+            .write
+            .option("header", "true")
+            .mode(SaveMode.valueOf(s3SaveMode))
+            .orc(s"$filePrefix$filePath")
+        } else {
+          dft
+            .write
+            .partitionBy(groupByFieldsArray: _*)
+            .option("header", "true")
+            .mode(SaveMode.valueOf(s3SaveMode))
+            .orc(s"$filePrefix$filePath")
         }
       }
       else {
@@ -1137,6 +1145,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                         topic: String,
                         keyField: String,
                         keyFormat: String,
+                        addlSparkOptions: JSONObject,
+                        valueField: String,
+                        headerField: String,
                         df: org.apache.spark.sql.DataFrame): Unit = {
     val commonRegistryConfig = Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> topic,
@@ -1151,15 +1162,32 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       //, SchemaManager.PARAM_VALUE_SCHEMA_ID -> "latest"
     )
 
-    val allColumns = struct(df.columns.head, df.columns.tail: _*)
+    var allColumns = struct(df.columns.head, df.columns.tail: _*)
+
+    if (valueField != null) {
+      allColumns = df.col(valueField)
+    }
+
+    var isHeaderPresent = df.columns.contains("headers")
+
+    if (!isHeaderPresent) {
+      import org.apache.spark.sql.functions.{lit, struct}
+      df.withColumn("headers", struct(lit(System.currentTimeMillis()) as 'time))
+    }
+
+    var sparkOptions = Map("kafka.bootstrap.servers" -> bootstrapServers, "includeHeaders" -> "true")
+
+    if (addlSparkOptions != null) {
+      sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
+    }
     try {
       df.select((keyFormat match {
         case "avro" => to_confluent_avro(col(keyField), keyRegistryConfig)
         case _ => col(keyField).cast(StringType)
       })
-        as 'key, to_confluent_avro(allColumns, valueRegistryConfig) as 'value)
+        as 'key, to_confluent_avro(allColumns, valueRegistryConfig) as 'value, df.col("headers"))
         .write
-        .option("kafka.bootstrap.servers", bootstrapServers)
+        .options(sparkOptions)
         .option("topic", topic)
         .format("kafka")
         .save()
@@ -1177,7 +1205,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     if (isWindowsAuthenticated.toBoolean) {
       if (platform == "mssql") {
         driver = "net.sourceforge.jtds.jdbc.Driver"
-        url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
+        url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain=" + domainName + ";useNTLMv2=true"
       }
     } else {
       if (platform == "mssql") {

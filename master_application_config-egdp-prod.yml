@@ -30,7 +30,7 @@ datapull:
     application_subnet_2: subnet-05334028769c15c12
     application_security_group: sg-0348a5a11c2748bc8
     vpc_id: vpc-018bd5207b3335f70
-    load_balancer_certificate_arn:
+    load_balancer_certificate_arn: arn:aws:acm:us-east-1:112945290135:certificate/ae795a35-7f1d-4b1c-bf13-455ad7c2c641
   emr:
     emr_security_group_master: sg-0e335528d7fad2db2
     emr_security_group_slave: sg-0ef8e5417ac26fa00

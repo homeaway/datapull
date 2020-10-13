@@ -54,10 +54,10 @@ public class EMRProperties {
     @Value( "${slave_type:m4.large}" )
     private String slaveType;
 
-    @Value( "${service_role:emr_datapull_role}" )
+    @Value("${service_role:emr-service-datatech-us-east-1}")
     private String serviceRole;
 
-    @Value("${job_flow_role:emr_ec2_datapull_role}")
+    @Value("${job_flow_role:emr-profile-datatech-us-east-1}")
     private String jobFlowRole;
 
     @Value( "${emr_release:emr-5.29.0}" )

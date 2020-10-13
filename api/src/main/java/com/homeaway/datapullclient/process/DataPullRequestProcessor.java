@@ -66,12 +66,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private static final String JKS_FILE_STRING ="aws s3 cp %s /mnt/bootstrapfiles/ \n";
     private static final String PIPELINE_NAME_SUFFIX = "pipeline";
     private static final String PIPELINE_NAME_DELIMITER = "-";
-    private static final String CRONEXPRESSION_STRING = "cronexpression";
-    private static final String PIPELINENAME_STRING = "pipelinename";
-    private static final String AWS_ENV = "awsenv";
     private static final int POOL_SIZE = 10;
-    private static final String EC2_INSTANCEPROFILE = "ec2instanceprofile";
-    private static final String TERMINATE_CLUSTER_AFTER_EXECUTION = "terminateclusterafterexecution";
     private static final String EMR = "emr";
     private static final String CREATOR = "useremailaddress";
     private Schema inputJsonSchema;
