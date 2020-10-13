@@ -142,8 +142,6 @@ echo "Uploading core Jar to s3"
 
 exitAfterFailure
 
-#exit 0
-
 cd ../api/
 
 echo "Uploading API docker image to ECR $docker_image_name"

@@ -197,12 +197,12 @@ public class DataPullTask implements Runnable {
         final String jobFlowRole = emrProperties.getJobFlowRole();
 
 
-        Map<String, String> emrfsProperties = new HashMap<String, String>();
+/*        Map<String, String> emrfsProperties = new HashMap<String, String>();
         emrfsProperties.put("fs.s3.enableServerSideEncryption", "true");
 
         Configuration myEmrfsConfig = new Configuration()
                 .withClassification("emrfs-site")
-                .withProperties(emrfsProperties);
+                .withProperties(emrfsProperties);*/
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
