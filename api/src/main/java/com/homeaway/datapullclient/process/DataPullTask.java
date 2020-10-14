@@ -196,13 +196,21 @@ public class DataPullTask implements Runnable {
         final String serviceRole = emrProperties.getServiceRole();
         final String jobFlowRole = emrProperties.getJobFlowRole();
 
+
+/*        Map<String, String> emrfsProperties = new HashMap<String, String>();
+        emrfsProperties.put("fs.s3.enableServerSideEncryption", "true");
+
+        Configuration myEmrfsConfig = new Configuration()
+                .withClassification("emrfs-site")
+                .withProperties(emrfsProperties);*/
+
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
                 .withReleaseLabel(Objects.toString(this.clusterProperties.getEmrReleaseVersion(), emrReleaseVersion))
                 .withSteps(customExampleStep)
                 .withApplications(spark)
                 .withLogUri(logPath)
-                .withServiceRole(serviceRole)
+                .withServiceRole(Objects.toString(this.clusterProperties.getEmrServiceRole(), serviceRole))
                 .withJobFlowRole(Objects.toString(this.clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
                 .withVisibleToAllUsers(true)
                 .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties))

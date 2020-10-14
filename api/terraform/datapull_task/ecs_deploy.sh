@@ -22,7 +22,7 @@ echo "Deleting api's application.yml if already exists"
 rm -rf api/src/main/resources/application.yml
 
 echo "deleting core application.yml file if already existing"
-rm-rf core/src/main/resources/application.yml
+rm -rf core/src/main/resources/application.yml
 
 docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v ${PWD}:/workdir -v "${HOME}"/.m2/:/root/.m2/ -w /workdir  lolhens/ammonite amm api/src/main/resources/overwrite_config.sc ${env}
 

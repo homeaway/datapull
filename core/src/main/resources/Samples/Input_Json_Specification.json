@@ -40,7 +40,7 @@
       "source_s3": {
         "platform": "s3",
         "s3path": "BUCKET_NAME/FOLDER_PATH",
-        "comment_fileformat": "Supported formats are parquet, json, csv. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
+        "comment_fileformat": "Supported formats are parquet, json, csv, orc, avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
         "fileformat": "parquet",
         "comment_groupbyfields": "optional. Applies only to destinations. If specified, the records are group in nested subfolders named field1=value etc",
         "groupbyfields": "field1,field2",
@@ -56,6 +56,8 @@
         "mergeschema": false,
         "comment_coalescefilecount": "Optional, Specify the number of partitions, which determine the number of files in the destination folder. Applies only to destinations, not sources",
         "coalescefilecount": null,
+        "comment_enable_server_side_encryption": "Optional, to access the buckets which have server side encryption enabled with AES 256 to be set true. Default: false",
+        "enable_server_side_encryption": "false",
         "comment_post_migrate_command": "This is to execute copy/delete operation after the desired migration to s3",
         "post_migrate_command": {
           "comment_operation": "This field will take options either copy/delete.",
@@ -218,21 +220,29 @@
         "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
         "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
         "topic": "TOPIC_NAME",
-        "offset":"earliest",
-        "comment_deserializer":"currenlty we are supporting the below mentioned deserializer but we are happy to support other ones if required.",
+        "offset": "earliest",
+        "comment_deserializer": "currenlty we are supporting the below mentioned deserializer but we are happy to support other ones if required.",
         "deSerializer": "org.apache.kafka.common.serialization.Deserializer",
         "comment_s3location": "we stage s3 data in a s3 location as we poll the topic many times. giving a location in the same env as the kafka topic is required and we append two UUID's(we have migration id and job id for each run, so we will appending these two UUID's at the end of the s3location to the user input)",
         "s3location": "s3a://BUCKET_NAME/FOLDER_PATH",
-        "comment_groupid":"Optional, using this option will read the data where you are left off in the previous run with the same group id",
+        "comment_groupid": "Optional, using this option will read the data where you are left off in the previous run with the same group id",
         "groupid": "KAFKA_GROUPID",
         "comment_requiredonlyvalue": "Optional, by default we will read both the key and value objects. if you want to get the only value then keep this option to true",
         "requiredonlyvalue": "false",
-        "comment_payloadcolumnname": "this is the name of the payload column for the topic. for eg, value, body etc. default value for this option is `body` and this option only will have an effect when you have the option `requiredonlyvalue` to true",
-        "payloadcolumnname": "body"
+        "comment_": "this is the name of the payload column for the topic. for eg, value, body etc. default value for this option is `body` and this option only will have an effect when you have the option `requiredonlyvalue` to true",
+        "payloadcolumnname": "body",
+        "Comment_keyField": "this is the key to be set for the message from dataset",
+        "keyField": "some_keyfield",
+        "comment_keyFormat": "Optional, you can set the serializer type for the key between string and avro, Default: string",
+        "keyFormat": "string",
+        "comment_valuefield": "Optional, if the value field has to be derived from a column from the dataset else whole row will be treated as the payload",
+        "valuefield": "null",
+        "comment_headerfield": "Optional, if you want to set header field from a column in the dataset else we add timestamp column as headers field. Please note that it should be of the struct type if it's being build in sql",
+        "headerfield": "null"
       },
-      "destination":{
-        "platform" : "kafka",
-        "comment_bootstrapservers":"this is for bootstrap information of the kafka cluster",
+      "destination": {
+        "platform": "kafka",
+        "comment_bootstrapservers": "this is for bootstrap information of the kafka cluster",
         "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
         "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
         "topic": "TOPIC_NAME",
@@ -408,7 +418,7 @@
     "comment_ec2instanceprofile": "The role with whioch the emr cluster(ec2-instances) has to be spun up so that they can access vault.",
     "ec2instanceprofile": "my-loader",
     "comment_componentinfo": "Dominion enforced UUID tag. ",
-    "ComponentInfo":"00000000-0000-0000-0000-000000000000",
+    "ComponentInfo": "00000000-0000-0000-0000-000000000000",
     "comment_cronexpression": "optional,this element will be used for scheduling the job and it will be defaulted for single run",
     "cronexpression": "21 * * * *",
     "comment_master_instance_type": "optional, Type of EC2 instance to use for the master node of the EMR cluster. Default value: m4.large",
@@ -417,7 +427,9 @@
     "slave_instance_type": "m4.large",
     "comment_NodeCount": "optional; Number of nodes, the number of slave nodes will be NodeCount -1. Default: 6",
     "NodeCount": 6,
-    "comment_sparksubmitparams":"optional, this option will give the ability to add the users to add the spark submit options for your use case",
-    "sparksubmitparams": "--conf spark.driver.memory=10g --deploy-mode cluster --class DataMigrationFramework s3://BUCKET_NAME/FOLDER_PATH/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies_test.jar"
+    "comment_sparksubmitparams": "optional, this option will give the ability to add the users to add the spark submit options for your use case",
+    "sparksubmitparams": "--conf spark.driver.memory=10g --deploy-mode cluster --class DataMigrationFramework s3://BUCKET_NAME/FOLDER_PATH/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies_test.jar",
+    "comment_emr_service_role": "optional, thsi option should be used set the emr service role. Default: emr_datapull_role",
+    "emr_service_role": "emr_datapull_role"
   }
 }
