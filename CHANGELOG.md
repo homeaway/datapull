@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.15] - 2020-10-13
+- Added support for reading/writing to a filesystem in orc.
+- Added support for accepting an optional emr service role from the user if needed.
+- Added support for accepting optional value and header fileds when writing data to kafka.
+- Added support for reading/writing data to server side encrypted s3 buckets with AES-256. 
+
+### Changed
+* api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+* api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+* api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+* api/terraform/datapull_task/ecs_deploy.sh
+* core/pom.xml
+* core/src/main/scala/core/DataFrameFromTo.scala
+* core/src/main/scala/core/DataPull.scala
+* core/src/main/scala/core/Migration.scala
+* 
+
 ## [0.1.14] - 2020-09-23
 - Added script to uninstall DataPull non-IAM components
 - Reduced access of IAM Roles and Users used by DataPull
