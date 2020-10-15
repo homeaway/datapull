@@ -195,14 +195,7 @@ public class DataPullTask implements Runnable {
         final String emrReleaseVersion = emrProperties.getEmrRelease();
         final String serviceRole = emrProperties.getServiceRole();
         final String jobFlowRole = emrProperties.getJobFlowRole();
-
-
-/*        Map<String, String> emrfsProperties = new HashMap<String, String>();
-        emrfsProperties.put("fs.s3.enableServerSideEncryption", "true");
-
-        Configuration myEmrfsConfig = new Configuration()
-                .withClassification("emrfs-site")
-                .withProperties(emrfsProperties);*/
+        final String emrSecurityConfiguration = Objects.toString(clusterProperties.getEmr_security_configuration(), "");
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
@@ -215,6 +208,10 @@ public class DataPullTask implements Runnable {
                 .withVisibleToAllUsers(true)
                 .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties))
                 .withInstances(jobConfig);
+
+        if (!emrSecurityConfiguration.isEmpty()) {
+            request.withSecurityConfiguration(emrSecurityConfiguration);
+        }
 
         if (this.hasBootStrapAction) {
             final BootstrapActionConfig bsConfig = new BootstrapActionConfig();

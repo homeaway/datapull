@@ -34,6 +34,9 @@ public class ClusterProperties {
     @JsonProperty("awsenv")
     private String awsEnv;
 
+    @JsonProperty("emr_security_configuration")
+    private String emr_security_configuration;
+
     @JsonProperty("cronexpression")
     private String cronExpression;
 
