@@ -13,19 +13,22 @@ DataPull supports the following datastores as sources and destinations.
 
 | Platform | Source | Destination |
 |:---: |:---: |:---: |
-| SQL Server | ✔ | ✔ |
 | Cassandra | ✔ | ✔ |
-| Mongodb | ✔ | ✔ |
-| S3 | ✔ | ✔ |
-| FileSystem | ✔ | ✔ |
-| SFTP | ✔ | ✔ |
 | Elasticsearch | ✔ | ✔ |
-| Kafka | ✔ | ✔ |
-| Neo4j |**X** | ✔ |
-| MySql | ✔ | ✔ |
-| Postgres | ✔ | ✔ | 
-| InfluxDB | ✔ | ✔ | 
+| FileSystem | ✔ | ✔ |
 | Hive     | ✔ |**X**|
+| InfluxDB | ✔ | ✔ |
+| Kafka | ✔ | ✔ |
+| Mongodb | ✔ | ✔ |
+| MySql | ✔ | ✔ |
+| Neo4j |**X** | ✔ |
+| Oracle[<sup>(*)</sup>](oracle_teradata_support.md) | ✔ | ✔ |
+| Postgresql | ✔ | ✔ |  
+| S3 | ✔ | ✔ |
+| SFTP | ✔ | ✔ |
+| Snowflake | ✔ | ✔ | 
+| SQL Server | ✔ | ✔ |
+| Teradata[<sup>(*)</sup>](oracle_teradata_support.md) | ✔ | ✔ |
 
 ## How to use DataPull
 
