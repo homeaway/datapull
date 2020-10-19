@@ -625,6 +625,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       "es.write.operation" -> saveMode,
       "es.nodes.wan.only" -> "true",
       "es.resource" -> s"$index/$nodetype",
+      "org.elasticsearch.hadoop.rest.commonshttp" -> "TRACE",
       "es.internal.es.version" -> version)
 
 
@@ -1036,7 +1037,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
           Thread.sleep(10000)
 
-          if (poll >= 400) {
+          if (poll >= 10) {
             df_temp = sparkSession.read.json(sparkSession.sparkContext.parallelize(list))
             df_temp.write.mode(SaveMode.Append).json(tmp_s3)
             list.clear()
