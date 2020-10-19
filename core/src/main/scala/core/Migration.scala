@@ -220,7 +220,6 @@ class Migration extends SparkListener {
       else if (destinationMap("platform") == "cloudwatch") {
         dataframeFromTo.dataFrameToCloudWatch(destinationMap("groupname"), destinationMap("streamname"), destinationMap.getOrElse("region", ""), destinationMap.getOrElse("awsaccesskeyid", ""), destinationMap.getOrElse("awssecretaccesskey", ""), destinationMap.getOrElse("timestamp_column", ""), destinationMap.getOrElse("timestamp_format", ""), dft, sparkSession)
       }
-
       else if (destinationMap("platform") == "neo4j") {
         var node1 = destination.optJSONObject("node1")
         var node2 = destination.optJSONObject("node2")
@@ -280,7 +279,23 @@ class Migration extends SparkListener {
 
         dataframeFromTo.dataFrameToNeo4j(dft, destinationMap("cluster"), destinationMap("login"), destinationMap.getOrElse("password", ""), destinationMap("awsenv"), destinationMap("vaultenv"), node1_label, node1_keys, node1_nonKeys, node2_label, node2_keys, node2_nonKeys, relation_label, destinationMap.getOrElse("batchsize", "10000").toInt, node1_createOrMerge, node1_createNodeKeyConstraint, node2_createOrMerge, node2_createNodeKeyConstraint, relation_createOrMerge, destinationMap.getOrElse("secretstore", "vault"), sparkSession)
       }
-
+      else if (destinationMap("platform") == "snowflake") {
+        dataframeFromTo.dataFrameToSnowflake (
+          destinationMap("url"), 
+          destinationMap("user"), 
+          destinationMap("password"), 
+          destinationMap("database"), 
+          destinationMap("schema"),
+          destinationMap("table"),
+          destinationMap.getOrElse("savemode", "Append"),
+          destination.optJSONObject("options"),
+          destinationMap("awsenv"),
+          destinationMap("vaultenv"),
+          destinationMap.getOrElse("secretstore", "vault"),
+          dft, 
+          sparkSession
+        )
+      }
 
       def prePostFortmpS3(datastore: JSONObject): Unit = {
         var customized_object = new JSONObject()
@@ -442,7 +457,20 @@ class Migration extends SparkListener {
     else if (platform == "influxdb") {
       dataframeFromTo.InfluxdbToDataframe(propertiesMap("awsenv"), propertiesMap("clustername"), propertiesMap("database"), propertiesMap("measurementname"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), sparkSession)
     }
-
+     else if (platform == "snowflake") {
+      dataframeFromTo.snowflakeToDataFrame(
+        propertiesMap("url"), 
+        propertiesMap("user"), 
+        propertiesMap("password"), 
+        propertiesMap("database"), 
+        propertiesMap("schema"),
+        propertiesMap("table"),
+        platformObject.optJSONObject("options"),
+        propertiesMap("awsenv"),
+        propertiesMap("vaultenv"),
+        propertiesMap.getOrElse("secretstore", "vault"),
+        sparkSession)
+    }
     else {
       sparkSession.emptyDataFrame
     }

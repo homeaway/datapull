@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.16] - 2020-10-18
+### Changed
+- README.md : Minor path fixes for running DataPull in a local Docker container
+- core/pom.xml, core/src/main/scala/core/DataFrameFromTo.scala, core/src/main/scala/core/Migration.scala : Added support for Snowflake
+- core/src/main/resources/Samples/Input_Sample_sftp-to-filesystem.json : Removed duplicate json attribute
+- core/src/main/resources/Samples/Input_Json_Specification.json : Added documentation for uuing Snowflake as a source/destination
+### Added
+- core/src/main/resources/Samples/Input_Sample_snowflake-to-filesystem-to-snowflake.json : Added sample input json to read and write from Snowflake
+
 ## [0.1.15] - 2020-10-13
 - Added support for reading/writing to a filesystem in orc.
 - Added support for accepting an optional emr service role from the user if needed.
@@ -19,7 +28,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 * core/src/main/scala/core/DataFrameFromTo.scala
 * core/src/main/scala/core/DataPull.scala
 * core/src/main/scala/core/Migration.scala
-* 
 
 ## [0.1.14] - 2020-09-23
 - Added script to uninstall DataPull non-IAM components
