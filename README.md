@@ -25,11 +25,12 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
   ```
 * Build a local docker image for running spark as a dockerised server
   ```shell script
+  cd ./datapull
   docker build -f ./core/docker_spark_server/Dockerfile -t expedia/spark2.4.4-scala2.11-hadoop3.2.1 ./core/docker_spark_server
   ```
 * build the Scala JAR from within the core folder
   ```shell script
-  cd datapull/core
+  cd ./core
   cp ./src/main/resources/application-dev.yml ./src/main/resources/application.yml
   docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:3.6.3-jdk-8 mvn clean install
   ```
@@ -38,6 +39,8 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
   docker run -v $(pwd):/core -w /core -it --rm expedia/spark2.4.4-scala2.11-hadoop3.2.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
   ```
 * Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld.csv transformed into JSON.
+
+> Pro-tip: The folder `target/classes/SampleData_Json` is created by the docker spark container, so you will not be able to delete it until you take ownership of it by running `sudo chown -R $(whoami):$(whoami) .`
 
 ### Build and debug within an IDE (IntelliJ) ###	
 > Pre-requisite: IntelliJ with Scala plugin configured. Check out this [Help page](https://docs.scala-lang.org/getting-started-intellij-track/getting-started-with-scala-in-intellij.html) if this plugin is not installed.	

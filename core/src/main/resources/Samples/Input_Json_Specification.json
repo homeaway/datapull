@@ -196,7 +196,7 @@
         "comment_savemode":"Optional, the default value is upsert and please check here more information on this 'https://www.elastic.co/guide/en/elasticsearch/hadoop/current/configuration.html#_operation': ",
         "savemode": "upsert",
         "mappingid": "Optional:Any unique field of your data",
-        "type": "type of index,equivalent of table",
+        "type": "type of index,equivalent of table.",
         "version": "Version of your ES",
         "login": "LOGIN_NAME",
         "password": "PASSWORD",
@@ -401,6 +401,23 @@
         },
         "login": "appuser",
         "password": "appuser"
+      },
+      "destination_snowflake": {
+        "platform": "snowflake",
+        "comment_url": "Specifies the hostname for your account in the following format: account_name.snowflakecomputing.com . However, note that your full account name might include additional segments that identify the region and cloud platform where your account is hosted.",
+        "url": "youraccountnumber.awsregion.snowflakecomputing.com",
+        "user": "snowflakeuser",
+        "password": "password",
+        "database": "snowflake database name",
+        "schema": "schema in datbase",
+        "comment_table": "Table to read/write. When used as a source platform, one can also specify a SQL query that evaluates to a view e.g (SELECT * FROM testtable1) A",
+        "table": "testtable1",
+        "comment_savemode": "Optional, This should be one of the Append/Overwrite/ErrorIfExists",
+        "savemode": "Overwrite",
+        "comment_options": "Specify configuation options (including session options) for the connector, ref https://docs.snowflake.com/en/user-guide/spark-connector-use.html#setting-configuration-options-for-the-connector . Note that these options will take precedence over url, user, etc. if they overlap. For example, if you specify sfSchema in this section, it will take precedence over schema in parent JSON object",
+        "options": {
+          "postactions": "DROP SCHEMA \"DEMO_DB\".\"TESTSCHEMA1\";"
+        }
       }
     }
   ],
