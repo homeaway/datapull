@@ -290,12 +290,10 @@ object DataPull {
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.access.key", sourceDestinationMap("awsaccesskeyid"))
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.secret.key", sourceDestinationMap("awssecretaccesskey"))
     }
-    if (sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") {
-
+    if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption") == "true")) {
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.enableServerSideEncryption", "true")
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.serverSideEncryptionAlgorithm", "AES256")
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.connection.ssl.enabled", "true")
-
     }
   }
 

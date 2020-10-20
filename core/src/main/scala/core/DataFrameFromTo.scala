@@ -42,6 +42,7 @@ import core.DataPull.jsonObjectPropertiesToMap
 import helper._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import javax.mail.{Message, Session, Transport}
+import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
 import org.apache.avro.generic.GenericData
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
@@ -1164,6 +1165,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     )
 
     var allColumns = struct(df.columns.head, df.columns.tail: _*)
+    var df_local = df
 
     if (valueField != null) {
       allColumns = df.col(valueField)
@@ -1173,7 +1175,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     if (!isHeaderPresent) {
       import org.apache.spark.sql.functions.{lit, struct}
-      df.withColumn("headers", struct(lit(System.currentTimeMillis()) as 'time))
+      df_local = df.withColumn("headers", struct(lit(System.currentTimeMillis()) as 'time))
     }
 
     var sparkOptions = Map("kafka.bootstrap.servers" -> bootstrapServers, "includeHeaders" -> "true")
@@ -1182,11 +1184,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
     }
     try {
-      df.select((keyFormat match {
+      df_local.select((keyFormat match {
         case "avro" => to_confluent_avro(col(keyField), keyRegistryConfig)
         case _ => col(keyField).cast(StringType)
       })
-        as 'key, to_confluent_avro(allColumns, valueRegistryConfig) as 'value, df.col("headers"))
+        as 'key, to_confluent_avro(allColumns, valueRegistryConfig) as 'value, df_local.col("headers"))
         .write
         .options(sparkOptions)
         .option("topic", topic)
@@ -1501,6 +1503,98 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       val putLogEventsResult = awsLogsClient.putLogEvents(putLogEventsRequest)
       token = putLogEventsResult.getNextSequenceToken
     })
+  }
+
+  def snowflakeToDataFrame(
+                            sfUrl: String,
+                            sfUser: String,
+                            sfPassword: String,
+                            sfDatabase: String,
+                            sfSchema: String,
+                            tableOrQuery: String,
+                            options: JSONObject,
+                            awsEnv: String,
+                            vaultEnv: String,
+                            secretStore: String,
+                            sparkSession: org.apache.spark.sql.SparkSession): org.apache.spark.sql.DataFrame = {
+    //if password isn't set, attempt to get from security.Vault
+    var vaultPassword = sfPassword
+    var vaultLogin = sfUser
+    if (vaultPassword == "") {
+      val clusterName = sfUrl + "/" + sfDatabase + "/" + sfSchema
+      val secretService = new SecretService(secretStore, appConfig)
+      val vaultCreds = secretService.getSecret(awsEnv, clusterName, vaultLogin, vaultEnv)
+      vaultLogin = vaultCreds("username")
+      vaultPassword = vaultCreds("password")
+    }
+
+    var sfOptions = Map(
+      "sfUrl" -> sfUrl,
+      "sfUser" -> vaultLogin,
+      "sfPassword" -> vaultPassword,
+      "sfDatabase" -> sfDatabase,
+      "sfSchema" -> sfSchema
+    )
+
+    if (options != null) {
+      sfOptions = sfOptions ++ jsonObjectPropertiesToMap(options)
+    }
+
+    val df = sparkSession
+      .read
+      .format(SNOWFLAKE_SOURCE_NAME)
+      .options(sfOptions)
+      .option("query", "SELECT * FROM " + tableOrQuery)
+      .load()
+
+    df
+  }
+
+  def dataFrameToSnowflake(
+                            sfUrl: String,
+                            sfUser: String,
+                            sfPassword: String,
+                            sfDatabase: String,
+                            sfSchema: String,
+                            table: String,
+                            saveMode: String,
+                            options: JSONObject,
+                            awsEnv: String,
+                            vaultEnv: String,
+                            secretStore: String,
+                            df: org.apache.spark.sql.DataFrame,
+                            sparkSession: org.apache.spark.sql.SparkSession
+                          ): Unit = {
+    //if password isn't set, attempt to get from security.Vault
+    var vaultPassword = sfPassword
+    var vaultLogin = sfUser
+    if (vaultPassword == "") {
+      val clusterName = sfUrl + "/" + sfDatabase + "/" + sfSchema
+      val secretService = new SecretService(secretStore, appConfig)
+      val vaultCreds = secretService.getSecret(awsEnv, clusterName, vaultLogin, vaultEnv)
+      vaultLogin = vaultCreds("username")
+      vaultPassword = vaultCreds("password")
+    }
+
+    var sfOptions = Map(
+      "sfUrl" -> sfUrl,
+      "sfUser" -> vaultLogin,
+      "sfPassword" -> vaultPassword,
+      "sfDatabase" -> sfDatabase,
+      "sfSchema" -> sfSchema
+    )
+
+    if (options != null) {
+      sfOptions = sfOptions ++ jsonObjectPropertiesToMap(options)
+    }
+
+    df.write
+      .format(SNOWFLAKE_SOURCE_NAME)
+      .options(sfOptions)
+      .option("dbtable", table)
+      .mode(SaveMode.valueOf(saveMode))
+      .save()
+
   }
 }
 

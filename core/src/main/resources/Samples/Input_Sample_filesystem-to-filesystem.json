@@ -1,17 +1,23 @@
 {
-  "useremailaddress": "yourid@DOMAIN.com",
+  "useremailaddress": "sbehra@expediagroup.com",
   "migrations": [
     {
       "source": {
         "platform": "filesystem",
-        "path": "target/classes/SampleData/HelloWorld.csv",
-        "fileformat": "csv"
+        "path": "/Users/srigajjala/opensource/datapull/core/src/main/resources/SampleData/HelloWorld.csv",
+        "fileformat": "csv",
+        "alias": "stage"
       },
       "destination": {
-        "platform": "filesystem",
-        "path": "target/classes/SampleData_Json",
-        "fileformat": "json",
-        "groupbyfields": "IntField"
+        "platform": "kafka",
+        "bootstrapservers": "localhost:9092",
+        "schemaregistries": "http://localhost:8081",
+        "topic": "test",
+        "keyfield": "HelloField",
+        "keyformat": "avro"
+      },
+      "sql": {
+        "query": "select HelloField,WorldField,IntField ,struct(HelloField,WorldField,IntField) as headers from stage"
       }
     }
   ],
@@ -21,7 +27,6 @@
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
     "ec2instanceprofile": "Iam role",
-    "emr_service_role": "some_test",
-    "ComponentInfo": "some_info"
+    "cronexpression": "21 * * * *"
   }
 }
