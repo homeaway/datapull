@@ -1,32 +1,44 @@
 {
-  "useremailaddress": "sbehra@expediagroup.com",
+  "useremailaddress": "chwilliams@expediagroup.com",
+  "parallelmigrations": "false",
   "migrations": [
     {
       "source": {
-        "platform": "filesystem",
-        "path": "/Users/srigajjala/opensource/datapull/core/src/main/resources/SampleData/HelloWorld.csv",
-        "fileformat": "csv",
-        "alias": "stage"
+        "platform": "mssql",
+        "server": "hastgdb.hahosting.local",
+        "database": "Home_Away",
+        "login": "ekg_services",
+        "awsenv": "stage",
+        "password": "!HA@Stg9*",
+        "alias": "unit_distribution",
+        "table": "(SELECT top 10 LOWER([udi].[udi_uuid]) AS entityId, LOWER([udi].[udi_uuid]) AS entityUuid, CONVERT(DATETIME2, [udi].[udi_updated_date] AT TIME ZONE 'Central Standard Time' AT TIME ZONE 'UTC') AS entityUpdateDate, CAST ([udi].[udi_dch_id] AS VARCHAR(10))  AS distributionChannelEntityId, 'home_away:'+CAST ([udi].[udi_uni_id] AS VARCHAR(10))  AS unitEntityId, GETDATE() AS lastPullDate, [udi].[udi_id],[udi].[udi_uni_id], [udi].[udi_dis_id],[udi].[udi_dch_id],[udi].[udi_distribute] FROM [dbo].[unit_distribution] AS udi  WHERE 1 = 1) A"
       },
       "destination": {
-        "platform": "kafka",
-        "bootstrapservers": "localhost:9092",
-        "schemaregistries": "http://localhost:8081",
-        "topic": "test",
-        "keyfield": "HelloField",
-        "keyformat": "avro"
+        "platform": "mongodb",
+        "cluster": "10.122.5.194",
+        "authenticationdatabase": "ekg_dataservices",
+        "database": "ekg_dataservices",
+        "collection": "unitDistribution2",
+        "login": "ekg_dataservices_appuser",
+        "awsenv": "stage",
+        "vaultenv": "stage",
+        "replicaset": "stage-mongodb-datatools",
+        "password": "d2b8917f-aa2c-4b40-b462-fc99c8b18416"
       },
       "sql": {
-        "query": "select HelloField,WorldField,IntField ,struct(HelloField,WorldField,IntField) as headers from stage"
+        "query": "select entityId  as _id, unitEntityId, distributionChannelEntityId, CAST(udi_id AS STRING)  as unitDistributionId, CAST(udi_uni_id AS STRING) as udiUnitId,CAST(udi_dis_id AS STRING) as distributionId,CAST(udi_dch_id AS STRING) as udiDchId,  CAST(udi_distribute as BOOLEAN) as udiDistribute,entityUuid, entityUpdateDate, CAST('0000' AS STRING) as systemCode, lastPullDate from unit_distribution"
       }
     }
   ],
   "cluster": {
-    "pipelinename": "ekg",
+    "pipelinename": "ekg3",
     "awsenv": "dev",
+    "terminateclusterafterexecution": "false",
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
-    "ec2instanceprofile": "Iam role",
-    "cronexpression": "21 * * * *"
+    "ComponentInfo": "e9dbb688-b8c6-4c25-8978-4161730b8a6c",
+    "ec2instanceprofile": "ekg-loader"
   }
 }
+
+

@@ -12,7 +12,7 @@ exitAfterFailure(){
 echo "Replace config params"
 export docker_image_name="datatools-datapull-api"
 env=$1
-export AWS_PROFILE="egdptest"
+export AWS_PROFILE="egdpprod"
 
 cd ../../../
 
