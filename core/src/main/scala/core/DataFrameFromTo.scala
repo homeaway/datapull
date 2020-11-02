@@ -43,24 +43,23 @@ import helper._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import javax.mail.{Message, Session, Transport}
 import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
-import org.apache.avro.generic.GenericData
+import org.apache.avro.Schema
+import org.apache.avro.generic.{GenericData, GenericRecord}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.functions.{col, struct}
 import org.apache.spark.sql.jdbc.JdbcDialects
-import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{Encoder, Encoders, Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
 import org.elasticsearch.spark.sql._
 import org.influxdb.InfluxDBFactory
 import org.influxdb.dto.Query
+import org.json.simple.parser.JSONParser
 import security._
-import za.co.absa.abris.avro.functions.to_confluent_avro
-import za.co.absa.abris.avro.read.confluent.SchemaManager
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -1141,64 +1140,76 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
-  def dataFrameToKafka(
-                        bootstrapServers: String,
-                        schemaRegistries: String,
-                        topic: String,
-                        keyField: String,
-                        keyFormat: String,
-                        addlSparkOptions: JSONObject,
-                        valueField: String,
-                        headerField: String,
-                        df: org.apache.spark.sql.DataFrame): Unit = {
-    val commonRegistryConfig = Map(
-      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> topic,
-      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> schemaRegistries
-    )
-    val valueRegistryConfig = commonRegistryConfig ++ Map(
-      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> "topic.name"
-      //, SchemaManager.PARAM_VALUE_SCHEMA_ID -> "latest"
-    )
-    val keyRegistryConfig = commonRegistryConfig ++ Map(
-      SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> "topic.name"
-      //, SchemaManager.PARAM_VALUE_SCHEMA_ID -> "latest"
-    )
+  def dataFrameToKafka(bootstrapServers: String, schemaRegistries: String, topic: String, keyField: String, keySerializer: String, Serializer: String, keySchema: String, valueSchema: String, df: org.apache.spark.sql.DataFrame): Unit = {
 
-    var allColumns = struct(df.columns.head, df.columns.tail: _*)
-    var df_local = df
+    val props = new util.HashMap[String, Object]()
 
-    if (valueField != null) {
-      allColumns = df.col(valueField)
+    var keySerializer_temp = keySerializer
+
+    if (keySerializer_temp == null) {
+      keySerializer_temp = "org.apache.kafka.common.serialization.StringSerializer"
     }
 
-    var isHeaderPresent = df.columns.contains("headers")
 
-    if (!isHeaderPresent) {
-      import org.apache.spark.sql.functions.{lit, struct}
-      df_local = df.withColumn("headers", struct(lit(System.currentTimeMillis()) as 'time))
-    }
+    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, Serializer)
+    props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer_temp)
+    props.put("schema.registry.url", schemaRegistries)
 
-    var sparkOptions = Map("kafka.bootstrap.servers" -> bootstrapServers, "includeHeaders" -> "true")
+    df.toJSON.foreachPartition((partition: Iterator[String]) => {
 
-    if (addlSparkOptions != null) {
-      sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
-    }
-    try {
-      df_local.select((keyFormat match {
-        case "avro" => to_confluent_avro(col(keyField), keyRegistryConfig)
-        case _ => col(keyField).cast(StringType)
-      })
-        as 'key, to_confluent_avro(allColumns, valueRegistryConfig) as 'value, df_local.col("headers"))
-        .write
-        .options(sparkOptions)
-        .option("topic", topic)
-        .format("kafka")
-        .save()
-    } catch {
-      case unknown: Exception => {
-        println(s"Unknown exception: $unknown")
+      val parser = new Schema.Parser()
+      var keySchema_temp: String = keySchema
+
+      if (keySchema_temp == null) {
+        keySchema_temp = "{\n" +
+          "  \"type\": \"string\"\n" +
+          "}"
       }
-    }
+
+      val valueSchema_holder = parser.parse(valueSchema)
+      val keySchema_holder = parser.parse(keySchema_temp)
+
+      val producer = new KafkaProducer[String, GenericRecord](props)
+      val jsonParser = new JSONParser()
+
+      partition.foreach((item: String) => {
+        try {
+          val jsonObject = jsonParser.parse(item).asInstanceOf[org.json.simple.JSONObject]
+          val key_value = jsonObject.get(keyField).toString()
+
+          val value = jsonObject.get("value").toString
+          val value_object = new JSONObject(value)
+
+          val header = jsonObject.get("header").toString
+          import org.apache.avro.generic.GenericData
+          //                    val key_record = new GenericData.Record(keySchema_holder)
+          //                    key_record.put(keyField,key_value)
+
+          val value_record = new GenericData.Record(valueSchema_holder)
+          val keys_value_object = value_object.keys()
+
+          while (keys_value_object.hasNext()) {
+            val key_iter: String = keys_value_object.next().toString
+            value_record.put(key_iter, value_object.get(key_iter))
+          }
+
+          val message = new ProducerRecord[String, GenericRecord](topic, key_value, value_record)
+
+          println(producer.send(message).get())
+
+
+        } catch {
+          case ex: Exception => {
+
+            ex.printStackTrace()
+          }
+        }
+      })
+      producer.flush()
+      producer.close()
+    })
+    break()
   }
 
   def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {
