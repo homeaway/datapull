@@ -1112,7 +1112,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         }
       }
     }
-
     df = sparkSession.read.json(tmp_s3)
     try {
       s3RemoveDirectoryUsingS3Client(tmp_s3)
@@ -1150,7 +1149,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       keySerializer_temp = "org.apache.kafka.common.serialization.StringSerializer"
     }
 
-
     props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, Serializer)
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer_temp)
@@ -1181,7 +1179,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           val value = jsonObject.get("value").toString
           val value_object = new JSONObject(value)
 
-          val header = jsonObject.get("header").toString
+//          val header = jsonObject.get("header").toString
           import org.apache.avro.generic.GenericData
           //                    val key_record = new GenericData.Record(keySchema_holder)
           //                    key_record.put(keyField,key_value)
@@ -1190,14 +1188,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           val keys_value_object = value_object.keys()
 
           while (keys_value_object.hasNext()) {
+
             val key_iter: String = keys_value_object.next().toString
+            println("key:" + key_iter + "value:" + value_object.get(key_iter))
             value_record.put(key_iter, value_object.get(key_iter))
           }
-
           val message = new ProducerRecord[String, GenericRecord](topic, key_value, value_record)
 
           println(producer.send(message).get())
-
 
         } catch {
           case ex: Exception => {
@@ -1232,7 +1230,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
-        url = "jdbc:teradata://" + server + "/DATABASE=" + database + ",DBS_PORT=" + (if (port == null) "1025" else port)
+        url = "jdbc:teradata://" + server + "/TYPE=FASTLOAD,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + (if (port == null) "1025" else port)
       }
 
       else if (platform == "mysql") {
@@ -1302,6 +1300,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     var driver: String = null
     var url: String = null
+    var df_temp = df
 
     if (isWindowsAuthenticated.toBoolean) {
       if (platform == "mssql") {
@@ -1319,7 +1318,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
-        url = "jdbc:teradata://" + server + "/DATABASE=" + database + ",DBS_PORT=" + (if (port == null) "1025" else port)
+        url = "jdbc:teradata://" + server + "/TYPE=FASTLOAD,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + (if (port == null) "1025" else port)
+        df_temp = df.coalesce(1)
       }
 
       else if (platform == "mysql") {
@@ -1367,7 +1367,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     connectionProperties.setProperty("driver", driver)
 
-    df.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
+    df_temp.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
   }
 
   def hiveToDataFrame(cluster: String, sparkSession: org.apache.spark.sql.SparkSession, dbtable: String, username: String, fetchsize: String): org.apache.spark.sql.DataFrame = {
@@ -1424,7 +1424,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         }
         else if (platform == "teradata") {
           driver = "com.teradata.jdbc.TeraDriver"
-          url = "jdbc:teradata://" + server + "/DATABASE=" + database + ",DBS_PORT=" + (if (port == null) "1025" else port)
+          url = "jdbc:teradata://" + server + "/TYPE=FASTLOAD,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + (if (port == null) "1025" else port)
         }
 
         else if (platform == "mysql") {
