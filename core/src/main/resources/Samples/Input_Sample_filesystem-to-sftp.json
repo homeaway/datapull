@@ -1,5 +1,4 @@
 {
-
   "migrations": [
     {
       "source": {
@@ -9,11 +8,12 @@
       },
       "destination": {
         "platform": "sftp",
-        "host": "IP_ADDR_OR_DNS_NAME",
-        "path": "PATH_TO_THE_FILE",
-        "login": "LOGIN_NAME",
-        "password": "PASSWORD",
-        "fileformat": "csv"
+        "host": "htp hostname/IP address",
+        "path": "somepath/somefilename.json",
+        "login": "ftpusername",
+        "pemfilepath": "/mnt/bootstrapfiles/<PEM file name>",
+        "jksfilepath": "s3://<S3 bucket and folder path>/<PEM file name>",
+        "fileformat": "json"
       }
     }
   ],
@@ -22,7 +22,6 @@
     "awsenv": "dev",
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
-    "ec2instanceprofile": "Iam role",
-    "cronexpression":"21 * * * *"
+    "ec2instanceprofile": "Iam role"
   }
 }

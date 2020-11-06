@@ -70,7 +70,7 @@ import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
 
-  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): org.apache.spark.sql.DataFrame = {
+  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String): org.apache.spark.sql.DataFrame = {
 
     if (filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null) {
       throw new Exception("Platform cannot have null values")
@@ -106,7 +106,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         format("com.springml.spark.sftp").
         option("host", host).
         option("username", login).
-        option("password", password).
+        option( if (pemFilePath == "")  "password" else "pem", if (pemFilePath == "")  password else pemFilePath).
         option("fileType", fileFormat).
         load(filePath))
 
@@ -213,7 +213,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String, rowFromJsonString: String, jsonFieldName: String): Unit = {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: String, jsonFieldName: String): Unit = {
 
     if (filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && SparkSession == null) {
       throw new Exception("Platform cannot have null values")
@@ -263,7 +263,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         format("com.springml.spark.sftp").
         option("host", host).
         option("username", login).
-        option("password", password).
+        option( if (pemFilePath == "")  "password" else "pem", if (pemFilePath == "")  password else pemFilePath).
         option("fileType", fileFormat).
         save(filePath)
 
