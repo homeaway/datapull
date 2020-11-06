@@ -219,7 +219,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       throw new Exception("Platform cannot have null values")
     }
 
-    if (filePath.isEmpty() && fileFormat.isEmpty()  && groupByFields.isEmpty()  && s3SaveMode.isEmpty() && login.isEmpty() && sparkSession == null) {
+    if (filePath.isEmpty() && fileFormat.isEmpty() && groupByFields.isEmpty() && s3SaveMode.isEmpty() && login.isEmpty() && sparkSession == null) {
       throw new Exception("Platform cannot have empty values")
     }
 
@@ -270,11 +270,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       df.show()
     } else if (rowFromJsonString.toBoolean) {
 
-      df.foreachPartition((partition:Iterator[Row]) => {
+      df.foreachPartition((partition: Iterator[Row]) => {
 
         val partitionList = new util.ArrayList[String]()
-        partition.foreach ( Row =>
-        partitionList.add(Row.apply(0).toString)
+        partition.foreach(Row =>
+          partitionList.add(Row.apply(0).toString)
         )
         if (!partitionList.isEmpty) {
           val conf: Configuration = new Configuration
@@ -803,7 +803,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       val fileName = pipeline + ".sh"
       import java.io.PrintWriter
       new PrintWriter(fileName) {
-        write(cmd_withcreds); close
+        write(cmd_withcreds);
+        close
       }
       val file = new File(fileName)
       file.setReadable(true, false)
@@ -1188,7 +1189,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
   }
 
   def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {
-
     var driver: String = null
     var url: String = null
     if (isWindowsAuthenticated.toBoolean) {
@@ -1207,7 +1207,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
-        url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+        val helper = new Helper(appConfig)
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
       }
 
       else if (platform == "mysql") {
@@ -1274,10 +1275,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
   }
 
   def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: String, domainName: String): Unit = {
-
     var driver: String = null
     var url: String = null
-
+    var dflocal = df
     if (isWindowsAuthenticated.toBoolean) {
       if (platform == "mssql") {
         driver = "net.sourceforge.jtds.jdbc.Driver"
@@ -1294,7 +1294,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
-        url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+        val helper = new Helper(appConfig)
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
+        dflocal = dflocal.coalesce(1) //to prevent locking, by ensuring only there is one writer per table
       }
 
       else if (platform == "mysql") {
@@ -1324,7 +1326,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     import scala.collection.mutable.Map
-
     var jdbcOptions = Map.empty[String, String]
 
     if (platform == "postgres") {
@@ -1338,11 +1339,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     val connectionProperties = new java.util.Properties()
     connectionProperties.setProperty("user", vaultLogin)
     connectionProperties.setProperty("password", vaultPassword)
-
-
     connectionProperties.setProperty("driver", driver)
 
-    df.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
+    dflocal.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
   }
 
   def hiveToDataFrame(cluster: String, sparkSession: org.apache.spark.sql.SparkSession, dbtable: String, username: String, fetchsize: String): org.apache.spark.sql.DataFrame = {
@@ -1380,7 +1379,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: String, domainName: String): Unit = {
     if (sql_command != "") {
-
+      val helper = new Helper(appConfig)
       var driver: String = null;
       var url: String = null;
       if (isWindowsAuthenticated.toBoolean) {
@@ -1399,7 +1398,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         }
         else if (platform == "teradata") {
           driver = "com.teradata.jdbc.TeraDriver"
-          url = "jdbc:teradata://" + server + ":" + (if (port == null) "1025" else port) + "/" + database
+          val helper = new Helper(appConfig)
+          url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
         }
 
         else if (platform == "mysql") {
