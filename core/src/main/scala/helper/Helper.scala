@@ -26,21 +26,21 @@ import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 class Helper(appConfig: AppConfig) {
 
   /**
-    * Returns the text (content) and response code from a REST URL as a String and int.
-    *
-    * @param url            The full URL to connect to.
-    * @param connectTimeout Sets a specified timeout value, in milliseconds,
-    *                       to be used when opening a communications link to the resource referenced
-    *                       by this URLConnection. If the timeout expires before the connection can
-    *                       be established, a java.net.SocketTimeoutException
-    *                       is raised. A timeout of zero is interpreted as an infinite timeout.
-    *                       Defaults to 10000 ms.
-    * @param readTimeout    If the timeout expires before there is data available
-    *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
-    *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
-    * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
-    *
-    */
+   * Returns the text (content) and response code from a REST URL as a String and int.
+   *
+   * @param url            The full URL to connect to.
+   * @param connectTimeout Sets a specified timeout value, in milliseconds,
+   *                       to be used when opening a communications link to the resource referenced
+   *                       by this URLConnection. If the timeout expires before the connection can
+   *                       be established, a java.net.SocketTimeoutException
+   *                       is raised. A timeout of zero is interpreted as an infinite timeout.
+   *                       Defaults to 10000 ms.
+   * @param readTimeout    If the timeout expires before there is data available
+   *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
+   *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
+   * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
+   *
+   */
   @throws(classOf[java.io.IOException])
   @throws(classOf[java.net.SocketTimeoutException])
   def getHttpResponse(url: String,
@@ -51,19 +51,19 @@ class Helper(appConfig: AppConfig) {
                       jsonBody: String = ""): HttpResponse = {
     import java.net.{HttpURLConnection, URL}
 
-    var responseCode:Int =0
-    var content: String=null
+    var responseCode: Int = 0
+    var content: String = null
     retry()
 
-    def retry():Unit= {
+    def retry(): Unit = {
 
-      var retry_count= 1
+      var retry_count = 1
       val no_of_retries = appConfig.no_of_retries
       var vault_exception = StringBuilder.newBuilder
 
-      val sleepTimeout= appConfig.sleeptimeout
+      val sleepTimeout = appConfig.sleeptimeout
 
-      var connection:HttpURLConnection = null
+      var connection: HttpURLConnection = null
       var exceptions: Boolean = false
 
       while (!exceptions) {
@@ -111,7 +111,7 @@ class Helper(appConfig: AppConfig) {
             Thread.sleep(sleepTimeout)
             retry_count += 1
           }
-        }finally {
+        } finally {
           if (connection != null) {
             connection.disconnect()
           }
@@ -119,29 +119,30 @@ class Helper(appConfig: AppConfig) {
       }
 
     }
-     HttpResponse (responseCode, content)
+
+    HttpResponse(responseCode, content)
   }
 
   /**
-    * Returns the text (content) from a REST URL as a String.
-    *
-    * @param url            The full URL to connect to.
-    * @param connectTimeout Sets a specified timeout value, in milliseconds,
-    *                       to be used when opening a communications link to the resource referenced
-    *                       by this URLConnection. If the timeout expires before the connection can
-    *                       be established, a java.net.SocketTimeoutException
-    *                       is raised. A timeout of zero is interpreted as an infinite timeout.
-    *                       Defaults to 10000 ms.
-    * @param readTimeout    If the timeout expires before there is data available
-    *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
-    *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
-    * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
-    *
-    */
+   * Returns the text (content) from a REST URL as a String.
+   *
+   * @param url            The full URL to connect to.
+   * @param connectTimeout Sets a specified timeout value, in milliseconds,
+   *                       to be used when opening a communications link to the resource referenced
+   *                       by this URLConnection. If the timeout expires before the connection can
+   *                       be established, a java.net.SocketTimeoutException
+   *                       is raised. A timeout of zero is interpreted as an infinite timeout.
+   *                       Defaults to 10000 ms.
+   * @param readTimeout    If the timeout expires before there is data available
+   *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
+   *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
+   * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
+   *
+   */
   @throws(classOf[java.io.IOException])
   @throws(classOf[java.net.SocketTimeoutException])
   def get(url: String,
-          connectTimeout: Int = appConfig.http_timeout ,
+          connectTimeout: Int = appConfig.http_timeout,
           readTimeout: Int = appConfig.http_timeout,
           requestMethod: String = "GET") = {
     import java.net.{HttpURLConnection, URL}
@@ -157,7 +158,7 @@ class Helper(appConfig: AppConfig) {
 
   def GetEC2pkcs7(): String = {
     var pkcs7 = getHttpResponse("http://169.254.169.254/latest/dynamic/instance-identity/pkcs7", 100000, 10000, "GET").ResponseBody
-    pkcs7= pkcs7.split('\n').mkString
+    pkcs7 = pkcs7.split('\n').mkString
     pkcs7
   }
 
@@ -204,8 +205,12 @@ class Helper(appConfig: AppConfig) {
       "mongodb://" + cluster + ":27017/" + database + "." + collection + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
     }
   }
+
+  def buildTeradataURI(server: String, database: String, port: Option[Int]): String = {
+    "jdbc:teradata://" + server + "/TYPE=RAW,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
+  }
 }
 
-case class HttpResponse (ResponseCode: Int, ResponseBody: String)
+case class HttpResponse(ResponseCode: Int, ResponseBody: String)
 
 
