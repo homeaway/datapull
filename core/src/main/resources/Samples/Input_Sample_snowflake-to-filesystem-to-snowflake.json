@@ -1,0 +1,48 @@
+{
+    "migrations": [
+        {
+            "source": {
+                "platform": "snowflake",
+                "url": "youraccountnumber.awsregion.snowflakecomputing.com",
+                "user": "snowflakeuser",
+                "password": "password",
+                "database": "SNOWFLAKE_SAMPLE_DATA",
+                "schema": "TPCDS_SF100TCL",
+                "table": "(Select C_CUSTOMER_SK, C_FIRST_NAME FROM CUSTOMER LIMIT 10) A",
+                "options": {
+                    "postactions": "CREATE SCHEMA \"DEMO_DB\".\"TESTSCHEMA1\";"
+                }
+            },
+            "destination": {
+                "platform": "filesystem",
+                "path": "target/classes/CustomerData_Json",
+                "fileformat": "json",
+                "savemode": "Overwrite"
+            }
+        },
+        {
+            "source": {
+                "platform": "filesystem",
+                "path": "target/classes/CustomerData_Json",
+                "fileformat": "json"
+            },
+            "destination": {
+                "platform": "snowflake",
+                "url": "youraccountnumber.awsregion.snowflakecomputing.com",
+                "user": "snowflakeuser",
+                "password": "password",
+                "database": "DEMO_DB",
+                "schema": "TESTSCHEMA1",
+                "table": "testtable1",
+                "savemode": "Overwrite"
+            }
+        }
+    ],
+    "cluster": {
+        "pipelinename": "ekg",
+        "awsenv": "dev",
+        "portfolio": "Data Engineering Services",
+        "product": "Data Engineering - COE",
+        "ec2instanceprofile": "Iam role"
+    }
+}
