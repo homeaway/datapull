@@ -189,6 +189,7 @@ class Migration extends SparkListener {
 
       val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
 
+      
       if (destinationMap("platform") == "cassandra") {
         destinationMap = destinationMap ++ deriveClusterIPFromConsul(destinationMap)
         dataframeFromTo.dataFrameToCassandra(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("keyspace"), destinationMap("table"), destinationMap("login"), destinationMap("password"), destinationMap("local_dc"), destination.optJSONObject("sparkoptions"), dft, reportRowHtml, destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"))
