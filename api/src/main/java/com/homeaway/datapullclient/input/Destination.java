@@ -55,9 +55,9 @@ public class Destination {
 
     @JsonProperty("database")
     private String database;
-    
-    @JsonProperty("jksfilepath")
-    private String jksfilepath;
+
+    @JsonProperty("jksfiles")
+    private String[] jksfiles;
 
     @Override
     public String toString() {
@@ -72,7 +72,7 @@ public class Destination {
                 ", sparkoptions=" + sparkoptions +
                 ", server='" + server + '\'' +
                 ", database='" + database + '\'' +
-                ", jksfilepath='" + jksfilepath + '\'' +
+                ", jksfilepath='" + jksfiles + '\'' +
                 '}';
     }
 }

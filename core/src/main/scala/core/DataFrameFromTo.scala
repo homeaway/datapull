@@ -70,6 +70,8 @@ import scala.util.control.Breaks._
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
 
+  val helper = new Helper(appConfig)
+
   def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String, isSFTP: Boolean, login: String, host: String, password: String, awsEnv: String, vaultEnv: String): org.apache.spark.sql.DataFrame = {
 
     if (filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null) {
@@ -125,6 +127,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
       } else if (fileFormat == "avro") {
         createOrReplaceTempViewOnDF(sparkSession.read.format("avro").load(s"$filePrefix$filePath"))
+      } else if (fileFormat == "orc") {
+        createOrReplaceTempViewOnDF(sparkSession.read.format("orc").load(s"$filePrefix$filePath"))
       } else {
         //parquet
         createOrReplaceTempViewOnDF(sparkSession.read.option("mergeSchema", mergeSchema).parquet(s"$filePrefix$filePath"))
@@ -265,7 +269,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         option("fileType", fileFormat).
         save(filePath)
 
-      df.show()
     } else if (rowFromJsonString.toBoolean) {
 
       df.foreachPartition((partition:Iterator[Row]) => {
@@ -853,7 +856,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",") + ":27017"
     }
     var uri: String = null
-    val helper = new Helper(appConfig)
+
     var vaultLogin: String = null
     var vaultPassword: String = null
     sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
@@ -917,7 +920,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterName = consul.serviceName
     }
     var uri: String = null
-    val helper = new Helper(appConfig)
+
     var vaultLogin: String = null
     var vaultPassword: String = null
     //if password isn't set, attempt to get from security.Vault
@@ -967,7 +970,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
     var uri: MongoClientURI = null
     //if password isn't set, attempt to get from security.Vault
-    val helper = new Helper(appConfig)
+
     var vaultLogin: String = null
     var vaultPassword: String = null
     //if password isn't set, attempt to get from security.Vault
@@ -987,7 +990,25 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     val response = data.runCommand(org.bson.Document.parse(runCommand))
   }
 
-  def kafkaToDataFrame(bootstrapServers: String, topic: String, offset: String, schemaRegistries: String, keyDeserializer: String, deSerializer: String, s3Location: String, groupId: String, requiredOnlyValue: String, payloadColumnName: String, migrationId: String, jobId: String, sparkSession: org.apache.spark.sql.SparkSession, s3TempFolderDeletionError: mutable.StringBuilder): org.apache.spark.sql.DataFrame = {
+  def kafkaToDataFrame(bootstrapServers: String,
+                       topic: String,
+                       offset: String,
+                       schemaRegistries: String,
+                       keyDeserializer: String,
+                       deSerializer: String,
+                       s3Location: String,
+                       groupId: String,
+                       requiredOnlyValue: String,
+                       payloadColumnName: String,
+                       migrationId: String,
+                       jobId: String,
+                       sparkSession: org.apache.spark.sql.SparkSession,
+                       s3TempFolderDeletionError: mutable.StringBuilder,
+                       keyStorePath: String,
+                       trustStorePath: String,
+                       keyStorePassword: String,
+                       trustStorePassword: String,
+                       keyPassword: String): org.apache.spark.sql.DataFrame = {
 
     var groupId_temp = groupId
 
@@ -997,14 +1018,21 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     println(groupId_temp)
 
     val props = new Properties()
-    props.put("bootstrap.servers", bootstrapServers)
+
     props.put("key.deserializer", keyDeserializer)
     props.put("value.deserializer", deSerializer)
     props.put("group.id", groupId_temp)
     props.put("auto.offset.reset", offset)
-    props.put("schema.registry.url", schemaRegistries)
     props.put("max.poll.records", "500")
     props.put("session.timeout.ms", "120000")
+
+    props.putAll(helper.buildSecureKafkaProperties(bootstrapServers,
+      schemaRegistries,
+      keyStorePath,
+      trustStorePath,
+      keyStorePassword,
+      trustStorePassword,
+      keyPassword))
 
     val consumer = new KafkaConsumer[String, GenericData.Record](props)
 
@@ -1094,6 +1122,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
               if (value != null && value.toString != "") {
 
                 fullJSONObject.put("value", value)
+                println(value)
               }
               list += fullJSONObject.toString()
 
@@ -1139,7 +1168,20 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
-  def dataFrameToKafka(bootstrapServers: String, schemaRegistries: String, topic: String, keyField: String, keySerializer: String, Serializer: String, keySchema: String, valueSchema: String, df: org.apache.spark.sql.DataFrame): Unit = {
+  def dataFrameToKafka(bootstrapServers: String,
+                       schemaRegistries: String,
+                       topic: String,
+                       keyField: String,
+                       keySerializer: String,
+                       Serializer: String,
+                       keySchema: String,
+                       valueSchema: String,
+                       keyStorePath: String,
+                       trustStorePath: String,
+                       keyStorePassword: String,
+                       trustStorePassword: String,
+                       keyPassword: String,
+                       df: org.apache.spark.sql.DataFrame): Unit = {
 
     val props = new util.HashMap[String, Object]()
 
@@ -1148,25 +1190,22 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     if (keySerializer_temp == null) {
       keySerializer_temp = "org.apache.kafka.common.serialization.StringSerializer"
     }
-
-    props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers)
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, Serializer)
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, keySerializer_temp)
-    props.put("schema.registry.url", schemaRegistries)
+
+    props.putAll(helper.buildSecureKafkaProperties(bootstrapServers,
+      schemaRegistries,
+      keyStorePath,
+      trustStorePath,
+      keyStorePassword,
+      trustStorePassword,
+      keyPassword))
 
     df.toJSON.foreachPartition((partition: Iterator[String]) => {
 
       val parser = new Schema.Parser()
-      var keySchema_temp: String = keySchema
-
-      if (keySchema_temp == null) {
-        keySchema_temp = "{\n" +
-          "  \"type\": \"string\"\n" +
-          "}"
-      }
 
       val valueSchema_holder = parser.parse(valueSchema)
-      val keySchema_holder = parser.parse(keySchema_temp)
 
       val producer = new KafkaProducer[String, GenericRecord](props)
       val jsonParser = new JSONParser()
@@ -1175,20 +1214,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         try {
           val jsonObject = jsonParser.parse(item).asInstanceOf[org.json.simple.JSONObject]
           val key_value = jsonObject.get(keyField).toString()
-
           val value = jsonObject.get("value").toString
           val value_object = new JSONObject(value)
 
-//          val header = jsonObject.get("header").toString
           import org.apache.avro.generic.GenericData
-          //                    val key_record = new GenericData.Record(keySchema_holder)
-          //                    key_record.put(keyField,key_value)
-
           val value_record = new GenericData.Record(valueSchema_holder)
           val keys_value_object = value_object.keys()
 
           while (keys_value_object.hasNext()) {
-
             val key_iter: String = keys_value_object.next().toString
             println("key:" + key_iter + "value:" + value_object.get(key_iter))
             value_record.put(key_iter, value_object.get(key_iter))

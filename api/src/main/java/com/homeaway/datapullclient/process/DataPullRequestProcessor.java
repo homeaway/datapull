@@ -183,39 +183,56 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 tasksMap.put(jobName, future);
             }
         } catch (IOException e) {
-            throw new ProcessingException("exception while starting datapull "+e.getLocalizedMessage());
+            throw new ProcessingException("exception while starting datapull " + e.getLocalizedMessage());
         }
 
         if (log.isDebugEnabled())
             log.debug("runDataPull <- return");
     }
 
+    private StringBuilder createBootstrapString(Object[] paths) throws ProcessingException {
+
+        StringBuilder stringBuilder = new StringBuilder();
+
+        for (Object obj : paths) {
+            if (!obj.toString().startsWith("s3://")) {
+                throw new ProcessingException("Invalid bootstrap file path. Please give a valid s3 path");
+            } else {
+                stringBuilder.append(String.format(JKS_FILE_STRING, obj.toString())).append(System.getProperty("line.separator"));
+            }
+        }
+        return stringBuilder;
+    }
+
     private boolean createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException {
         boolean isFileCreated = false;
 
         StringBuilder stringBuilder = new StringBuilder();
-        for (Migration mig : myObjects) {
-            if(mig.getSource()!=null) {
-                if (mig.getSource().getJksfilepath() != null && !mig.getSource().getJksfilepath().isEmpty()) {
-                    stringBuilder.append(String.format(JKS_FILE_STRING, mig.getSource().getJksfilepath()));
-                }
-            }
-            else {
-                Source[] sources = mig.getSources();
+        List list = new ArrayList();
 
-                if(sources!=null && sources.length > 0) {
+        for (Migration mig : myObjects) {
+            if (mig.getSource() != null) {
+                if (mig.getSource().getJksfiles() != null) {
+                    list.addAll(Arrays.asList(mig.getSource().getJksfiles()));
+                }
+            } else {
+                Source[] sources = mig.getSources();
+                if (sources != null && sources.length > 0) {
                     for (Source source : sources) {
-                        if (source.getJksfilepath() != null && !source.getJksfilepath().isEmpty()) {
-                            stringBuilder.append(String.format(JKS_FILE_STRING, source.getJksfilepath()));
+                        if (source.getJksfiles() != null) {
+                            list.addAll(Arrays.asList(mig.getSource().getJksfiles()));
                         }
                     }
                 }
             }
-            if(mig.getDestination().getJksfilepath()!=null && !mig.getDestination().getJksfilepath().isEmpty()){
-                stringBuilder.append(String.format(JKS_FILE_STRING, mig.getDestination().getJksfilepath()));
+            if (mig.getDestination().getJksfiles() != null) {
+                list.addAll(Arrays.asList(mig.getDestination().getJksfiles()));
             }
         }
-        if(stringBuilder.length() > 0){
+        if (!list.isEmpty()) {
+            stringBuilder = createBootstrapString(list.toArray());
+        }
+        if (stringBuilder.length() > 0) {
             saveConfig(bootstrapFilePath, bootstrapFile, stringBuilder.toString());
             isFileCreated = true;
         }
