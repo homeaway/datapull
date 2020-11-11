@@ -228,7 +228,7 @@
         "groupid": "KAFKA_GROUPID",
         "comment_requiredonlyvalue": "Optional, by default we will read both the key and value objects. if you want to get the only value then keep this option to true",
         "requiredonlyvalue": "false",
-        "comment_": "this is the name of the payload column for the topic. for eg, value, body etc. default value for this option is `body` and this option only will have an effect when you have the option `requiredonlyvalue` to true",
+        "comment_payloadcolumnname": "this is the name of the payload column for the topic. for eg, value, body etc. default value for this option is `body` and this option only will have an effect when you have the option `requiredonlyvalue` to true",
         "payloadcolumnname": "body",
         "Comment_keyField": "this is the key to be set for the message from dataset",
         "keyField": "some_keyfield",
@@ -242,13 +242,21 @@
       "destination": {
         "platform": "kafka",
         "comment_bootstrapservers": "this is for bootstrap information of the kafka cluster",
-        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
-        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
+        "bootstrapservers": "KAFKA_BOOTSTRAP_SERVER:9092",
+        "schemaregistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
         "topic": "TOPIC_NAME",
-        "comment_keyField": "required, field in the dataset that should be used as the kafka topic's key field",
-        "keyField": "some_keyfield",
-        "comment_keyFormat": "Optional, by default will be string. If set to avro, the key field will be converted to avro and the schema will be registered in schema registry",
-        "keyFormat": "string"
+        "comment_valuefield": "Optional, defaults to `value`. This field in the dataset is what will become the value of the kafka topic events. The schema of this field should exactly match the avro schema deined in `valueschema`",
+        "valuefield": "value",
+        "comment_valueschema": "Required; Avro schema of the topic's value. Note that non-nullable fields in the dataset cannot be written to nullable avro fields; and vice versa",
+        "valueschema": "{\n    \"type\": \"record\",\n    \"name\": \"recordname1\",\n    \"namespace\": \"com.company.product\",\n    \"doc\": \"* Schema for something\",\n    \"fields\": [\n        {\n            \"name\": \"field1\",\n            \"type\": [\"null\",\"long\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"field2\",\n            \"type\": [\"null\",\"int\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"field3\",\n            \"type\": [\"null\",\"int\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"field4\",\n            \"type\": [\"null\",\"int\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"field5\",\n            \"type\": [\"null\",\"int\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"field6\",\n            \"type\": [\"null\",\"int\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"field7\",\n            \"type\": [\"null\",\"int\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"field8\",\n            \"type\": [\"null\",\"int\"],\n            \"default\":null\n        },\n        {\n            \"name\": \"some_keyfield\",\n            \"type\": \"string\"\n        }\n    ]\n}",
+        "comment_keyfield": "Optional, field in the dataset that should be used as the kafka topic's key field",
+        "keyfield": "some_keyfield",
+        "comment_keyschema": "Optional. If this schema is specified, the keyField is avro-serialised. The schema of the key field should exactly match the avro schema deined in `valueschema` ",
+        "keyschema": "{\n    \"type\": \"record\",\n    \"name\": \"recordname1\",\n    \"namespace\": \"com.company.product\",\n    \"doc\": \"* Schema for something\",\n \"fields\": [\n {\n \"name\": \"field1\",\n  \"type\": [\"null\",\"long\"],\n \"default\":null\n },\n]\n}",
+        "comment_sparkoptions": "Optional, this is to enable users to add/override spark options for kafka writer",
+        "sparkoptions": {
+          "includeHeaders": false
+        }
       },
       "source_influxdb": {
         "platform": "influxdb",

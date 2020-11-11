@@ -58,7 +58,7 @@ import org.influxdb.InfluxDBFactory
 import org.influxdb.dto.Query
 import security._
 import za.co.absa.abris.avro.functions.to_confluent_avro
-import za.co.absa.abris.avro.read.confluent.SchemaManager
+import za.co.absa.abris.avro.read.confluent.{SchemaManager, SchemaManagerFactory}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -1125,66 +1125,46 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
-  def dataFrameToKafka(
-                        bootstrapServers: String,
-                        schemaRegistries: String,
-                        topic: String,
-                        keyField: String,
-                        keyFormat: String,
-                        addlSparkOptions: JSONObject,
-                        valueField: String,
-                        headerField: String,
-                        df: org.apache.spark.sql.DataFrame): Unit = {
+  def dataFrameToKafka(spark: SparkSession, df: org.apache.spark.sql.DataFrame, valueSchemaAsAvroJson: String, valueField: String, topic: String, kafkaBroker: String, schemaRegistryUrl: String, keyField: Option[String] = None, keySchemaAsAvroJson: Option[String] = None, headerField: Option[String] = None, addlSparkOptions: Option[JSONObject] = None): Unit = {
     val commonRegistryConfig = Map(
       SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> topic,
-      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> schemaRegistries
+      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> schemaRegistryUrl
     )
     val valueRegistryConfig = commonRegistryConfig ++ Map(
-      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> "topic.name"
-      //, SchemaManager.PARAM_VALUE_SCHEMA_ID -> "latest"
+      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> "topic.name",
+      SchemaManager.PARAM_VALUE_SCHEMA_VERSION -> "latest"
     )
-    val keyRegistryConfig = commonRegistryConfig ++ Map(
-      SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> "topic.name"
-      //, SchemaManager.PARAM_VALUE_SCHEMA_ID -> "latest"
-    )
+    val valueSchemaManager = SchemaManagerFactory.create(valueRegistryConfig)
+    valueSchemaManager.register(valueSchemaAsAvroJson)
 
-    var allColumns = struct(df.columns.head, df.columns.tail: _*)
-
-    if (valueField != null) {
-      allColumns = df.col(valueField)
+    var keyRegistryConfig: Map[String, String] = Map.empty[String, String]
+    if (!keyField.isEmpty) {
+      keyRegistryConfig = commonRegistryConfig ++ Map(
+        SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> "topic.name",
+        SchemaManager.PARAM_KEY_SCHEMA_VERSION -> "latest"
+      )
+      val keySchemaManager = SchemaManagerFactory.create(keyRegistryConfig)
+      keySchemaManager.register(keySchemaAsAvroJson.getOrElse("{\"type\":\"string\"}"))
     }
+    var dfavro = spark.emptyDataFrame
 
-    val isHeaderPresent = df.columns.contains("headers")
-
-    if (headerField != null) {
-      df.withColumn("headers", df.col(headerField))
-
-    } else if (!isHeaderPresent) {
-      import org.apache.spark.sql.functions.{lit, struct}
-      df.withColumn("headers", struct(lit(System.currentTimeMillis()) as 'time))
+    var columnsToSelect = Seq(to_confluent_avro(df.col(valueField), valueRegistryConfig) as 'value)
+    if (!keyField.isEmpty) {
+      columnsToSelect = columnsToSelect ++ Seq(if (keySchemaAsAvroJson.isEmpty) df.col(keyField.get) else to_confluent_avro(df.col(keyField.get), keyRegistryConfig) as 'key)
     }
-
-    var sparkOptions = Map("kafka.bootstrap.servers" -> bootstrapServers, "includeHeaders" -> "true")
-
-    if (addlSparkOptions != null) {
-      sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
+    var sparkOptions = Map("kafka.bootstrap.servers" -> kafkaBroker, "topic" -> topic)
+    if (!headerField.isEmpty) {
+      columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'headers)
+      sparkOptions = sparkOptions ++ Map("includeHeaders" -> "true")
     }
-    try {
-      df.select((keyFormat match {
-        case "avro" => to_confluent_avro(col(keyField), keyRegistryConfig)
-        case _ => col(keyField).cast(StringType)
-      })
-        as 'key, to_confluent_avro(allColumns, valueRegistryConfig) as 'value, df.col("headers"))
-        .write
-        .options(sparkOptions)
-        .option("topic", topic)
-        .format("kafka")
-        .save()
-    } catch {
-      case unknown: Exception => {
-        println(s"Unknown exception: $unknown")
-      }
+    dfavro = df.select(columnsToSelect: _*)
+    if (!addlSparkOptions.isEmpty) {
+      sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions.get)
     }
+    dfavro.write
+      .options(sparkOptions)
+      .format("kafka")
+      .save()
   }
 
   def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {
