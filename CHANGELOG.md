@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.18] - 2020-11-11
+## [0.1.19] - 2020-11-11
 ### Changed
 - core/pom.xml : Removed old kafka serializer that is incompatible with abris; moved abris dependency to top to prioritize it
 - core/src/main/scala/core/DataFrameFromTo.scala, core/src/main/scala/core/Migration.scala: Fixed code to write to Kafka
 - core/src/main/resources/Samples/Input_Json_Specification.json : Fixed documentation for writing to unsecured Kafka
+
+## [0.1.18] - 2020-11-05
+### Changed
+- Fixed issue of Teradata destination deadlocking
 
 ## [0.1.17] - 2020-10-19
 ### Changed
