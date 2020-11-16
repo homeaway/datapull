@@ -165,12 +165,12 @@ public class DataPullRequestProcessor implements DataPullClientService {
                     s3RepositoryBucketName + "/" + DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
             String filePath = applicationHistoryFolderPath + "/" + jobName;
             String bootstrapFile = jobName + ".sh";
-            boolean addBootStrapAction = false;
+            List<String> bootstrapActionFiles = new ArrayList<>();
             if(myObjects != null && myObjects.length > 0){
-                addBootStrapAction = createBootstrapScript(myObjects, bootstrapFile, applicationHistoryFolderPath);
+                bootstrapActionFiles.addAll(createBootstrapScript(myObjects, bootstrapFile, applicationHistoryFolderPath));
             }
 
-            DataPullTask task = createDataPullTask(filePath, reader, jobName, creator, addBootStrapAction, node.path("sparkjarfile").asText());
+            DataPullTask task = createDataPullTask(filePath, reader, jobName, creator, node.path("sparkjarfile").asText(), bootstrapActionFiles);
             if(!isStart) {
                 json = originalInputJson.equals(json) ? json : originalInputJson;
                 saveConfig(applicationHistoryFolderPath, jobName + ".json", json);
@@ -204,13 +204,13 @@ public class DataPullRequestProcessor implements DataPullClientService {
         return stringBuilder;
     }
 
-    private boolean createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException {
-        boolean isFileCreated = false;
+    private List<String> createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException {
 
         StringBuilder stringBuilder = new StringBuilder();
-        List list = new ArrayList();
+        List<String> list = new ArrayList<>();
 
         for (Migration mig : myObjects) {
+
             if (mig.getSource() != null) {
                 if (mig.getSource().getJksfiles() != null) {
                     list.addAll(Arrays.asList(mig.getSource().getJksfiles()));
@@ -234,19 +234,18 @@ public class DataPullRequestProcessor implements DataPullClientService {
         }
         if (stringBuilder.length() > 0) {
             saveConfig(bootstrapFilePath, bootstrapFile, stringBuilder.toString());
-            isFileCreated = true;
         }
-        return isFileCreated;
+        return list;
     }
 
-    private DataPullTask createDataPullTask(String fileS3Path, ClusterProperties properties, String jobName, String creator, boolean bootstrapAction, String customJarFilePath) {
+    private DataPullTask createDataPullTask(String fileS3Path, ClusterProperties properties, String jobName, String creator, String customJarFilePath, List<String> bootstrapFilesList) {
         String creatorTag = String.join(" ", Arrays.asList(creator.split(",|;")));
-        DataPullTask task = config.getTask(jobName, fileS3Path).withClusterProperties(properties).withCustomJar(customJarFilePath).addBootStrapAction(bootstrapAction)
+        DataPullTask task = config.getTask(jobName, fileS3Path).withClusterProperties(properties).withCustomJar(customJarFilePath).bootstrapFilesList(bootstrapFilesList)
                 .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
-            .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
+                .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull");
 
-        if(properties.getTags() != null && !properties.getTags().isEmpty()){
+        if (properties.getTags() != null && !properties.getTags().isEmpty()) {
             task.addTags(properties.getTags());
         }
 

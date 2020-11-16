@@ -1,44 +1,37 @@
 {
-  "useremailaddress": "chwilliams@expediagroup.com",
-  "parallelmigrations": "false",
+  "useremailaddress": "srigajjala@expediagroup.com",
   "migrations": [
     {
-      "source": {
-        "platform": "mssql",
-        "server": "hastgdb.hahosting.local",
-        "database": "Home_Away",
-        "login": "ekg_services",
-        "awsenv": "stage",
-        "password": "!HA@Stg9*",
-        "alias": "unit_distribution",
-        "table": "(SELECT top 10 LOWER([udi].[udi_uuid]) AS entityId, LOWER([udi].[udi_uuid]) AS entityUuid, CONVERT(DATETIME2, [udi].[udi_updated_date] AT TIME ZONE 'Central Standard Time' AT TIME ZONE 'UTC') AS entityUpdateDate, CAST ([udi].[udi_dch_id] AS VARCHAR(10))  AS distributionChannelEntityId, 'home_away:'+CAST ([udi].[udi_uni_id] AS VARCHAR(10))  AS unitEntityId, GETDATE() AS lastPullDate, [udi].[udi_id],[udi].[udi_uni_id], [udi].[udi_dis_id],[udi].[udi_dch_id],[udi].[udi_distribute] FROM [dbo].[unit_distribution] AS udi  WHERE 1 = 1) A"
-      },
       "destination": {
-        "platform": "mongodb",
-        "cluster": "10.122.5.194",
-        "authenticationdatabase": "ekg_dataservices",
-        "database": "ekg_dataservices",
-        "collection": "unitDistribution2",
-        "login": "ekg_dataservices_appuser",
-        "awsenv": "stage",
-        "vaultenv": "stage",
-        "replicaset": "stage-mongodb-datatools",
-        "password": "d2b8917f-aa2c-4b40-b462-fc99c8b18416"
+        "platform": "kafka",
+        "bootstrapservers": "kafka-1b-us-east-1.egdp-test.aws.away.black:9092",
+        "schemaregistries": "http://kafka-1b-us-east-1.egdp-test.aws.away.black:8081",
+        "valueserializer": "io.confluent.kafka.serializers.KafkaAvroSerializer",
+        "topic": "supply_lodging_potential_rmd_v13",
+        "keyfield": "execution_date",
+        "valueschema": "{\n  \"type\": \"record\",\n  \"name\": \"topLevelRecord\",\n  \"fields\": [\n    {\n      \"name\": \"event_header\",\n      \"type\": {\n        \"type\": \"record\",\n        \"name\": \"event_header\",\n        \"namespace\": \"topLevelRecord\",\n        \"fields\": [\n          {\n            \"name\": \"event_uuid\",\n            \"type\": \"string\"\n          },\n          {\n            \"name\": \"published_timestamp\",\n            \"type\": \"long\"\n          },\n          {\n            \"name\": \"event_context_ids\",\n            \"type\": [\n              {\n                \"type\": \"array\",\n                \"items\": [\n                  {\n                    \"type\": \"record\",\n                    \"name\": \"event_context_ids\",\n                    \"namespace\": \"topLevelRecord.event_header\",\n                    \"fields\": [\n                      {\n                        \"name\": \"type\",\n                        \"type\": \"string\"\n                      },\n                      {\n                        \"name\": \"id\",\n                        \"type\": \"string\"\n                      }\n                    ]\n                  },\n                  \"null\"\n                ]\n              },\n              \"null\"\n            ]\n          }\n        ]\n      }\n    },\n    {\n      \"name\": \"eval_timestamp\",\n      \"type\": \"long\"\n    },\n    {\n      \"name\": \"segment_id\",\n      \"type\": \"string\"\n    },\n    {\n      \"name\": \"is_member\",\n      \"type\": \"boolean\"\n    },\n    {\n      \"name\": \"user_keys\",\n      \"type\": [\n        {\n          \"type\": \"array\",\n          \"items\": [\n            {\n              \"type\": \"record\",\n              \"name\": \"user_keys\",\n              \"namespace\": \"topLevelRecord\",\n              \"fields\": [\n                {\n                  \"name\": \"key_type\",\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                {\n                  \"name\": \"key_value\",\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                }\n              ]\n            },\n            \"null\"\n          ]\n        },\n        \"null\"\n      ]\n    },\n    {\n      \"name\": \"user_context\",\n      \"type\": [\n        {\n          \"type\": \"array\",\n          \"items\": [\n            {\n              \"type\": \"record\",\n              \"name\": \"user_context\",\n              \"namespace\": \"topLevelRecord\",\n              \"fields\": [\n                {\n                  \"name\": \"key_type\",\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                {\n                  \"name\": \"key_value\",\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                }\n              ]\n            },\n            \"null\"\n          ]\n        },\n        \"null\"\n      ]\n    },\n    {\n      \"name\": \"api_support\",\n      \"type\": \"boolean\"\n    }\n  ]\n}",
+        "sql": {
+        },
+        "query": "SELECT struct(named_struct(\n    'event_uuid', event_uuid, 'published_timestamp', ifnull(unix_timestamp(),0), 'event_context_ids', (\n        SELECT collect_set(\n            named_struct('type', 'type', 'id', 'id')\n        ) where 1=0\n    )\n) as event_header, ifnull(unix_timestamp(),0) as eval_timestamp, ifnull(segment_id,'') as segment_id, CAST('true' as Boolean) as is_member, user_keys, user_context as user_context) as value, event_uuid\nFROM (select *, ifnull(uuid(),'') as event_uuid from test) A"
       },
-      "sql": {
-        "query": "select entityId  as _id, unitEntityId, distributionChannelEntityId, CAST(udi_id AS STRING)  as unitDistributionId, CAST(udi_uni_id AS STRING) as udiUnitId,CAST(udi_dis_id AS STRING) as distributionId,CAST(udi_dch_id AS STRING) as udiDchId,  CAST(udi_distribute as BOOLEAN) as udiDistribute,entityUuid, entityUpdateDate, CAST('0000' AS STRING) as systemCode, lastPullDate from unit_distribution"
+      "source": {
+        "platform": "filesystem",
+        "path": "/Users/srigajjala/Downloads/testdata.csv",
+        "fileformat": "csv",
+        "alias": "stage"
       }
     }
   ],
   "cluster": {
-    "pipelinename": "ekg3",
-    "awsenv": "dev",
+    "pipelinename": "core-algorithms-prmd_1",
+    "awsenv": "test",
     "terminateclusterafterexecution": "false",
     "portfolio": "Data Engineering Services",
-    "product": "Data Engineering - COE",
-    "ComponentInfo": "e9dbb688-b8c6-4c25-8978-4161730b8a6c",
-    "ec2instanceprofile": "ekg-loader"
+    "product": "Data Engineering - Core Algorithms PRMD",
+    "ComponentInfo": "f2b18881-4c1c-497b-9431-aabd56c81663",
+    "ec2instanceprofile": "emr-profile-datatech-us-east-1",
+    "emr_service_role": "emr-service-datatech-us-east-1",
+    "ec2_key_name": "datatools",
+    "slave_instance_type": "m4.4xlarge"
   }
 }
-
-

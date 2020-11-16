@@ -52,7 +52,7 @@ import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, Produce
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.jdbc.JdbcDialects
-import org.apache.spark.sql.{Encoder, Encoders, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, Encoder, Encoders, Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
 import org.elasticsearch.spark.sql._
@@ -60,6 +60,8 @@ import org.influxdb.InfluxDBFactory
 import org.influxdb.dto.Query
 import org.json.simple.parser.JSONParser
 import security._
+import za.co.absa.abris.avro.functions.to_confluent_avro
+import za.co.absa.abris.avro.read.confluent.{SchemaManager, SchemaManagerFactory}
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -1168,20 +1170,20 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
-  def dataFrameToKafka(bootstrapServers: String,
-                       schemaRegistries: String,
-                       topic: String,
-                       keyField: String,
-                       keySerializer: String,
-                       Serializer: String,
-                       keySchema: String,
-                       valueSchema: String,
-                       keyStorePath: String,
-                       trustStorePath: String,
-                       keyStorePassword: String,
-                       trustStorePassword: String,
-                       keyPassword: String,
-                       df: org.apache.spark.sql.DataFrame): Unit = {
+  def dataFrameToKafka_test(bootstrapServers: String,
+                            schemaRegistries: String,
+                            topic: String,
+                            keyField: String,
+                            keySerializer: String,
+                            Serializer: String,
+                            keySchema: String,
+                            valueSchema: String,
+                            keyStorePath: String,
+                            trustStorePath: String,
+                            keyStorePassword: String,
+                            trustStorePassword: String,
+                            keyPassword: String,
+                            df: org.apache.spark.sql.DataFrame): Unit = {
 
     val props = new util.HashMap[String, Object]()
 
@@ -1221,6 +1223,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           val value_record = new GenericData.Record(valueSchema_holder)
           val keys_value_object = value_object.keys()
 
+          println(value_record.getSchema)
+
           while (keys_value_object.hasNext()) {
             val key_iter: String = keys_value_object.next().toString
             println("key:" + key_iter + "value:" + value_object.get(key_iter))
@@ -1241,6 +1245,43 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       producer.close()
     })
     break()
+  }
+
+  def dataFrameToKafka(spark: SparkSession, df: DataFrame, valueSchemaAsAvroJson: String, valueField: String, topic: String, kafkaBroker: String, schemaRegistryUrl: String, keyField: Option[String] = None, keySchemaAsAvroJson: Option[String] = None, headerField: Option[String] = None): Unit = {
+    val commonRegistryConfig = Map(
+      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> topic,
+      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> schemaRegistryUrl
+    )
+    val valueRegistryConfig = commonRegistryConfig ++ Map(
+      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> "topic.name",
+      SchemaManager.PARAM_VALUE_SCHEMA_VERSION -> "latest"
+    )
+    val valueSchemaManager = SchemaManagerFactory.create(valueRegistryConfig)
+    valueSchemaManager.register(valueSchemaAsAvroJson)
+    var keyRegistryConfig: Map[String, String] = Map.empty[String, String]
+    if (!keyField.isEmpty) {
+      keyRegistryConfig = commonRegistryConfig ++ Map(
+        SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> "topic.name",
+        SchemaManager.PARAM_KEY_SCHEMA_VERSION -> "latest"
+      )
+      val keySchemaManager = SchemaManagerFactory.create(keyRegistryConfig)
+      keySchemaManager.register(keySchemaAsAvroJson.getOrElse("{\"type\":\"string\"}"))
+    }
+    var dfavro = spark.emptyDataFrame
+    var columnsToSelect = Seq(to_confluent_avro(df.col(valueField), valueRegistryConfig) as 'value)
+    if (!keyField.isEmpty) {
+      columnsToSelect = columnsToSelect ++ Seq(if (keySchemaAsAvroJson.isEmpty) df.col(keyField.get) else to_confluent_avro(df.col(keyField.get), keyRegistryConfig) as 'key)
+    }
+    if (!headerField.isEmpty) {
+      columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
+    }
+    dfavro = df.select(columnsToSelect: _*)
+    dfavro.printSchema()
+    dfavro.write
+      .option("kafka.bootstrap.servers", kafkaBroker)
+      .option("topic", topic)
+      .format("kafka")
+      .save()
   }
 
   def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {
