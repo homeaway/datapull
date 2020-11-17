@@ -295,7 +295,7 @@ object DataPull {
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.enableServerSideEncryption", "true")
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.serverSideEncryptionAlgorithm", "AES256")
       sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.connection.ssl.enabled", "true")
-    } 
+    }
   }
 
   def jsonObjectPropertiesToMap(properties: List[String], jsonObject: JSONObject): Map[String, String] = {

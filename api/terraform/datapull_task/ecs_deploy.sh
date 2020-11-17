@@ -12,7 +12,7 @@ exitAfterFailure(){
 echo "Replace config params"
 export docker_image_name="datatools-datapull-api"
 env=$1
-export AWS_PROFILE="datapull_user"
+export AWS_PROFILE="egdptest"
 
 cd ../../../
 
@@ -143,7 +143,6 @@ docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -
 exitAfterFailure
 
 cd ../api/
-
 
 echo "Uploading API docker image to ECR $docker_image_name"
 

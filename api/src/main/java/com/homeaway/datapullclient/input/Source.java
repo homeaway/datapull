@@ -65,9 +65,9 @@ public class Source {
 
     @JsonProperty("fileformat")
     private String fileformat;
-    
-    @JsonProperty("jksfilepath")
-    private String jksfilepath;
+
+    @JsonProperty("jksfiles")
+    private String[] jksfiles;
 
     @JsonProperty("sparkoptions")
     private SparkOptions sparkoptions;
@@ -88,7 +88,7 @@ public class Source {
                 ", login='" + login + '\'' +
                 ", s3Path='" + s3Path + '\'' +
                 ", fileformat='" + fileformat + '\'' +
-                ", jksfilepath='" + jksfilepath + '\'' +
+                ", jksfilepath='" + jksfiles + '\'' +
                 ", sparkoptions=" + sparkoptions +
                 '}';
     }

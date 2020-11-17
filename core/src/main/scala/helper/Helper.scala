@@ -22,6 +22,8 @@ import java.security.cert.X509Certificate
 
 import config.AppConfig
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
+import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.common.config.SslConfigs
 
 class Helper(appConfig: AppConfig) {
 
@@ -124,21 +126,21 @@ class Helper(appConfig: AppConfig) {
   }
 
   /**
-   * Returns the text (content) from a REST URL as a String.
-   *
-   * @param url            The full URL to connect to.
-   * @param connectTimeout Sets a specified timeout value, in milliseconds,
-   *                       to be used when opening a communications link to the resource referenced
-   *                       by this URLConnection. If the timeout expires before the connection can
-   *                       be established, a java.net.SocketTimeoutException
-   *                       is raised. A timeout of zero is interpreted as an infinite timeout.
-   *                       Defaults to 10000 ms.
-   * @param readTimeout    If the timeout expires before there is data available
-   *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
-   *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
-   * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
-   *
-   */
+    * Returns the text (content) from a REST URL as a String.
+    *
+    * @param url            The full URL to connect to.
+    * @param connectTimeout Sets a specified timeout value, in milliseconds,
+    *                       to be used when opening a communications link to the resource referenced
+    *                       by this URLConnection. If the timeout expires before the connection can
+    *                       be established, a java.net.SocketTimeoutException
+    *                       is raised. A timeout of zero is interpreted as an infinite timeout.
+    *                       Defaults to 10000 ms.
+    * @param readTimeout    If the timeout expires before there is data available
+    *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
+    *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
+    * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
+    *
+    */
   @throws(classOf[java.io.IOException])
   @throws(classOf[java.net.SocketTimeoutException])
   def get(url: String,
@@ -198,9 +200,38 @@ class Helper(appConfig: AppConfig) {
     }
   }
 
-  def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean): String = {
+  def buildSecureKafkaProperties(bootstrapServers: String,
+                                 schemaRegistries: String,
+                                 keyStorePath: String,
+                                 trustStorePath: String,
+                                 keyStorePassword: String,
+                                 trustStorePassword: String,
+                                 keyPassword: String): Map[String, String] = {
+
+    var props = Map("bootstrap.servers" -> bootstrapServers, "schema.registry.url" -> schemaRegistries)
+
+    if (keyStorePath != "null" || trustStorePath != "null") {
+      props += (CommonClientConfigs.SECURITY_PROTOCOL_CONFIG -> "SSL")
+      if (keyStorePath != null)
+        props += (SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG -> keyStorePath)
+      if (trustStorePath != null)
+        props += (SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG -> trustStorePath)
+      if (keyStorePassword != null)
+        props += (SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG -> keyStorePassword)
+      if (trustStorePassword != null)
+        props += (SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG -> trustStorePassword)
+      if (keyPassword != null)
+        props += (SslConfigs.SSL_KEY_PASSWORD_CONFIG -> keyPassword)
+      props += (SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG -> "")
+    }
+
+    props
+
+  }
+
+  def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean, sslEnabled: String): String = {
     if (authenticationEnabled) {
-      "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
+      "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet) + (if (sslEnabled == "true") "&ssl=true&sslInvalidHostNameAllowed=true" else "")
     } else {
       "mongodb://" + cluster + ":27017/" + database + "." + collection + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
     }

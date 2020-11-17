@@ -18,11 +18,15 @@ package com.homeaway.datapullclient.api;
 
 import com.homeaway.datapullclient.data.ResponseEntity;
 import com.homeaway.datapullclient.data.SimpleResponseEntity;
-import io.swagger.annotations.*;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -30,22 +34,23 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping("/api/v1")
 public interface DataPullClientApi {
 
-    String NOTES_TEXT_HTML = "POST /inputJson<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;\"migrations\": [<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\"source\": \"…\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\"destination\": \"…\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\"mappings\": [<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;}<br/>"+
-            "],<br/>"+
-            "\"cluster\": {<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;\"cronexpression\": \"…\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;\"pipelinename\": \"…\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;\"awsenv\": \"…\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;\"portfolio\": \"…\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;\"product\": \"….\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;\"ec2instanceprofile\": \"…\",<br/>"+
-            "&nbsp;&nbsp;&nbsp;&nbsp;\"ComponentInfo\":\"\"<br/>"+
-            "}<br/>"+
+    String NOTES_TEXT_HTML = "POST /inputJson<br/>{<br/>&nbsp;&nbsp;&nbsp;&nbsp;\"migrations\": [<br/>&nbsp;&nbsp;&nbsp;&nbsp;{<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\"source\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\"destination\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;\"mappings\": [<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;}<br/>" +
+            "],<br/>" +
+            "\"cluster\": {<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"emr_security_configuration\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"cronexpression\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"pipelinename\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"awsenv\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"portfolio\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"product\": \"….\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"ec2instanceprofile\": \"…\",<br/>" +
+            "&nbsp;&nbsp;&nbsp;&nbsp;\"ComponentInfo\":\"\"<br/>" +
+            "}<br/>" +
             "}";
 
     String SIMPLE_ENDPOINT_NOTES_TEXT_HTML = "Give the inputs of environment name and pipeline name";
