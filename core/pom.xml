@@ -235,6 +235,7 @@
             <version>2.4.4</version>
             <scope>provided</scope>
         </dependency>
+
         <!--<MONGODB SPARK CONNECTOR>-->
         <dependency>
             <groupId>org.mongodb.spark</groupId>
@@ -245,14 +246,14 @@
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-client</artifactId>
-            <version>3.2.1</version>
+            <version>3.1.0</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>org.apache.hadoop</groupId>
             <artifactId>hadoop-aws</artifactId>
-            <version>3.2.1</version>
+            <version>3.1.0</version>
         </dependency>
 
         <dependency>

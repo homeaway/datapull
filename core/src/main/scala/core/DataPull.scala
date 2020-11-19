@@ -211,7 +211,7 @@ object DataPull {
 
       val cluster = json.getJSONObject("cluster")
       var dataPullLog = new DataPullLog(config, pipelineName)
-      dataPullLog.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, null, 0, "Started", null, sparkSession)
+//      dataPullLog.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, null, 0, "Started", null, sparkSession)
 
       portfolio = cluster.getString("portfolio")
 
