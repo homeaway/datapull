@@ -1,0 +1,32 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "migrations": [
+
+    {
+      "source": {
+        "platform": "teradata",
+        "server": "tddev.karmalab.net",
+        "database": "D_ADS_BKG",
+        "table": "MONETARY_CLASS",
+        "login": "petang",
+        "password": "myownpassword",
+        "iswindowsauthenticated": "true",
+        "domain": "SEA"
+      },
+      "destination": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleData_Json",
+        "fileformat": "json",
+        "groupbyfields": "IntField"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression": "21 * * * *"
+  }
+}
