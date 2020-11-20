@@ -45,7 +45,7 @@ object DataPull {
   def main(args: Array[String]): Unit = {
 
     val yamlMapper = new ObjectMapper(new YAMLFactory());
-    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application.yml");
+    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application-dev.yml");
     val applicationConf = yamlMapper.readTree(inputStream)
     val config = new AppConfig(applicationConf)
     val alert = new Alert(config)
