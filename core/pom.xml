@@ -407,5 +407,16 @@
             <artifactId>snowflake-jdbc</artifactId>
             <version>3.12.13</version>
         </dependency>
+        <dependency>
+            <groupId>com.teradata</groupId>
+            <artifactId>terajdbc4</artifactId>
+            <version>16.10.00.07</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.teradata</groupId>
+            <artifactId>tdgssconfig</artifactId>
+            <version>16.10.00.07</version>
+        </dependency>
     </dependencies>
 </project>
