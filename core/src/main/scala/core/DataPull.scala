@@ -58,8 +58,7 @@ object DataPull {
 
     /*-------------------JSON INPUT-------------------------------------------------------------------------------------------------*/
     var jsonString = ""
-    var isLocal:Boolean = true
-
+    var isLocal: Boolean = true
     if (args.length == 0) {
 
       val dp: String = DataPull.getFile("Samples/" + config.inputjson)
@@ -106,7 +105,7 @@ object DataPull {
     if (jsonString == "") {
       throw new helper.CustomListOfExceptions("No json input available to DataPull")
     }
-
+    val s3Prefix = if (isLocal) "s3a" else "s3"
     if (isLocal) {
       sparkSession = SparkSession.builder.master("local[*]")
         .config("" + config.scheduler, "" + config.mode)
@@ -116,20 +115,19 @@ object DataPull {
         .config("" + config.executor, config.interval)
         .getOrCreate()
     } else {
-      sparkSession = SparkSession.builder //.master("local[*]")
+      sparkSession = SparkSession.builder
         .config("" + config.scheduler, "" + config.mode)
         .appName("DataPull")
         .config("" + config.network, "" + config.timeout)
         .config("" + config.broadcasttimeout, "" + config.btimeout)
         .config("" + config.executor, config.interval)
         .config("" + config.failures, no_of_retries)
-        .config("fs.s3a.multiobjectdelete.enable", true)
+        .config("fs." + s3Prefix + ".multiobjectdelete.enable", true)
         .config("spark.sql.hive.metastore.version", "1.2.1")
         .config("spark.sql.hive.metastore.jars", "builtin")
         .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
         .enableHiveSupport()
         .getOrCreate()
-
 
       val helper = new Helper(config)
       ec2Role = helper.GetEC2Role()
@@ -162,7 +160,7 @@ object DataPull {
         }
         listOfS3Path += jsonMap("s3path")
         setAWSCredentials(sparkSession, jsonMap)
-        val rddjson = sparkSession.sparkContext.wholeTextFiles("s3a://" + jsonMap("s3path"))
+        val rddjson = sparkSession.sparkContext.wholeTextFiles(s3Prefix + "://" + jsonMap("s3path"))
         json = new JSONObject(rddjson.first()._2)
       }
     }
@@ -207,6 +205,7 @@ object DataPull {
         verifymigration = (json.getString("verifymigration") == "true")
       }
     }
+
     if (json.has("cluster")) {
 
       val cluster = json.getJSONObject("cluster")
@@ -259,10 +258,10 @@ object DataPull {
     }
   }
 
-  def getFile(fileName: String, relativeToClass:Boolean = true): String = {
+  def getFile(fileName: String, relativeToClass: Boolean = true): String = {
 
     val result = new StringBuilder("")
-    var file:File = null
+    var file: File = null
     if (relativeToClass) {
       //Get file from resources folder
       val classLoader = getClass().getClassLoader();
@@ -286,16 +285,16 @@ object DataPull {
 
   def setAWSCredentials(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String]): Unit = {
     //sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.impl", "com.amazon.ws.emr.hadoop.fs.EmrFileSystem")
+    val s3Prefix: String = if (sparkSession.sparkContext.master == "local[*]")  "s3a" else "s3"
     if (sourceDestinationMap("awssecretaccesskey") != "") {
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.access.key", sourceDestinationMap("awsaccesskeyid"))
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.secret.key", sourceDestinationMap("awssecretaccesskey"))
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".access.key", sourceDestinationMap("awsaccesskeyid"))
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".secret.key", sourceDestinationMap("awssecretaccesskey"))
     }
-    if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption")  == "true"))
-    {
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.enableServerSideEncryption", "true")
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.serverSideEncryptionAlgorithm", "AES256")
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.connection.ssl.enabled", "true")
-    } 
+    if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption") == "true")) {
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".enableServerSideEncryption", "true")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".serverSideEncryptionAlgorithm", "AES256")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".connection.ssl.enabled", "true")
+    }
   }
 
   def jsonObjectPropertiesToMap(properties: List[String], jsonObject: JSONObject): Map[String, String] = {
@@ -306,7 +305,7 @@ object DataPull {
     var returnList = List.empty[String]
     val jsonArray = new JSONArray(jsonStringArr)
     val length = jsonArray.length()
-    for( i <- 0 to length-1){
+    for (i <- 0 to length - 1) {
       returnList = returnList :+ jsonArray.get(i).toString()
     }
     returnList
@@ -370,15 +369,16 @@ object DataPull {
     }
     returnMap
   }
+
   /**
-    * Binary data to JUUID String representation
-    * Based on: https://github.com/mongodb/mongo-csharp-driver/blob/master/uuidhelpers.js
-    * I used a StringBuilder instead of their liberal use of substrings. ~3-4x faster
-    */
+   * Binary data to JUUID String representation
+   * Based on: https://github.com/mongodb/mongo-csharp-driver/blob/master/uuidhelpers.js
+   * I used a StringBuilder instead of their liberal use of substrings. ~3-4x faster
+   */
   def binaryToJUUID(bytes: Array[Byte]): String = {
-    if (bytes == null ) null
-    else{
-      val sb: StringBuilder  = new StringBuilder;
+    if (bytes == null) null
+    else {
+      val sb: StringBuilder = new StringBuilder;
       val base64Bytes: Array[Byte] = Base64.decodeBase64(bytes)
       val hexChars: Array[Char] = Hex.encodeHex(base64Bytes)
       sb.appendAll(hexChars, 14, 2)

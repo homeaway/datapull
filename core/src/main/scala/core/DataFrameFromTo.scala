@@ -50,15 +50,17 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions.{col, struct}
 import org.apache.spark.sql.jdbc.JdbcDialects
 import org.apache.spark.sql.types.StringType
-import org.apache.spark.sql.{Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
 import org.elasticsearch.spark.sql._
 import org.influxdb.InfluxDBFactory
 import org.influxdb.dto.Query
 import security._
-import za.co.absa.abris.avro.functions.to_confluent_avro
-import za.co.absa.abris.avro.read.confluent.SchemaManager
+import za.co.absa.abris.config.{AbrisConfig, ToAvroConfig, ToStrategyConfigFragment}
+import za.co.absa.abris.avro.functions.to_avro
+import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
+import za.co.absa.abris.avro.registry.SchemaSubject
 
 import scala.collection.JavaConversions._
 import scala.collection.JavaConverters._
@@ -67,6 +69,7 @@ import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 import scala.util.control.Breaks._
 import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
+import org.apache.spark.sql.avro.SchemaConverters.toAvroType
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
 
@@ -92,8 +95,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     var filePrefix = ""
 
     if (isS3) {
-      filePrefix = "s3://"
-      sparkSession.conf.set("fs.s3.connection.maximum", 100)
+      val s3Prefix = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
+      filePrefix = s3Prefix + "://"
+      sparkSession.conf.set("fs." + s3Prefix + ".connection.maximum", 100)
     }
 
     def createOrReplaceTempViewOnDF(df: org.apache.spark.sql.DataFrame): org.apache.spark.sql.DataFrame = {
@@ -234,7 +238,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
     sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     var groupByFieldsArray = groupByFields.split(",")
-    var filePrefix = ""
 
     var dft = sparkSession.emptyDataFrame
 
@@ -253,10 +256,13 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         dft = df.repartition(coalescefilecount)
     }
 
+    var filePrefix = ""
     if (isS3) {
-      filePrefix = "s3://"
-      sparkSession.conf.set("fs.s3.connection.maximum", 100)
+      val s3Prefix = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
+      filePrefix = s3Prefix + "://"
+      sparkSession.conf.set("fs." + s3Prefix + ".connection.maximum", 100)
     }
+
     if (isSFTP) {
 
       df.write.
@@ -414,8 +420,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       } while (result.isTruncated)
 
       val destParts = destArray.map(_.split("/")).filter(x => x.length > destPathLength && !x.contains("_SUCCESS")).map(_ (destPathLength)).distinct.toArray
-      destParts.foreach(x => println(s"TEST Dest Parts: $x"))
-
       sourceParts.foreach { x =>
         if (destParts contains x) {
           val deleteKeys = new ArrayBuffer[String]()
@@ -428,12 +432,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
             reqDest.setContinuationToken(result.getNextContinuationToken)
           } while (result.isTruncated)
 
-          deleteKeys.foreach(println)
           val multiObjectDeleteRequest = new DeleteObjectsRequest(destS3Bucket).withKeys(deleteKeys: _*)
           s3Client.deleteObjects(multiObjectDeleteRequest)
         }
 
-        println(s"""TEST Source:${sourcePrefix + "/" + x}""")
         val reqSource = new ListObjectsV2Request().withBucketName(sourceS3Bucket).withPrefix(sourcePrefix + "/" + x)
         result = new ListObjectsV2Result
 
@@ -443,7 +445,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           copyKeys.foreach { key =>
             val src = key
             val dest = destPrefix + "/" + x + "/" + src.split("/").last
-            println(s"Copying $src to $dest")
             val cReq = new CopyObjectRequest(sourceS3Bucket, src, destS3Bucket, dest)
             s3Client.copyObject(cReq)
           }
@@ -813,8 +814,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       import sys.process._
       val result = "./" + fileName !!
 
-      println("command result = " + result + " pipeline name = " + fileName + " pipeline = " + pipeline);
-
       new File(fileName).delete()
 
       val tokens: Array[String] = cmd_withcreds.split(" ");
@@ -980,8 +979,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     if (groupId_temp == null)
       groupId_temp = UUID.randomUUID().toString + "_" + topic
 
-    println(groupId_temp)
-
     val props = new Properties()
     props.put("bootstrap.servers", bootstrapServers)
     props.put("key.deserializer", keyDeserializer)
@@ -1087,7 +1084,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
             if (list.length >= 80000) {
               df_temp = sparkSession.read.json(sparkSession.sparkContext.parallelize(list))
-              println("writing to s3 after reaching the block size and time now is:" + Instant.now())
               df_temp.write.mode(SaveMode.Append).json(tmp_s3)
               list.clear()
               count = 0
@@ -1102,7 +1098,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     df = sparkSession.read.json(tmp_s3)
     try {
       s3RemoveDirectoryUsingS3Client(tmp_s3)
-      println(s"Deleted temporary S3 folder - $tmp_s3")
     } catch {
       case e: Throwable => e.printStackTrace
         println(s"Unable to delete temporary S3 folder - $tmp_s3")
@@ -1126,66 +1121,60 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
-  def dataFrameToKafka(
-                        bootstrapServers: String,
-                        schemaRegistries: String,
-                        topic: String,
-                        keyField: String,
-                        keyFormat: String,
-                        addlSparkOptions: JSONObject,
-                        valueField: String,
-                        headerField: String,
-                        df: org.apache.spark.sql.DataFrame): Unit = {
-    val commonRegistryConfig = Map(
-      SchemaManager.PARAM_SCHEMA_REGISTRY_TOPIC -> topic,
-      SchemaManager.PARAM_SCHEMA_REGISTRY_URL -> schemaRegistries
-    )
-    val valueRegistryConfig = commonRegistryConfig ++ Map(
-      SchemaManager.PARAM_VALUE_SCHEMA_NAMING_STRATEGY -> "topic.name"
-      //, SchemaManager.PARAM_VALUE_SCHEMA_ID -> "latest"
-    )
-    val keyRegistryConfig = commonRegistryConfig ++ Map(
-      SchemaManager.PARAM_KEY_SCHEMA_NAMING_STRATEGY -> "topic.name"
-      //, SchemaManager.PARAM_VALUE_SCHEMA_ID -> "latest"
-    )
-
-    var allColumns = struct(df.columns.head, df.columns.tail: _*)
-
-    if (valueField != null) {
-      allColumns = df.col(valueField)
+  def dataFrameToKafka(spark: SparkSession, df: DataFrame, valueField: String, topic: String, kafkaBroker: String, schemaRegistryUrl: String, valueSchemaVersion: Option[Int] = None, keyField: Option[String] = None, keySchemaVersion: Option[Int] = None, headerField: Option[String] = None): Unit = {
+    var dfavro = spark.emptyDataFrame
+    var columnsToSelect = Seq(to_avro(df.col(valueField), GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = df.col(valueField), schemaVersion = valueSchemaVersion, isKey = false)) as 'value)
+    if (!keyField.isEmpty) {
+      val keyFieldCol = df.col(keyField.get)
+      columnsToSelect = columnsToSelect ++ Seq(to_avro(keyFieldCol, GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true)) as 'key)
     }
-
-    val isHeaderPresent = df.columns.contains("headers")
-
-    if (headerField != null) {
-      df.withColumn("headers", df.col(headerField))
-
-    } else if (!isHeaderPresent) {
-      import org.apache.spark.sql.functions.{lit, struct}
-      df.withColumn("headers", struct(lit(System.currentTimeMillis()) as 'time))
+    if (!headerField.isEmpty) {
+      columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
     }
+    dfavro = df.select(columnsToSelect: _*)
+    dfavro.printSchema()
+    dfavro.write
+      .option("kafka.bootstrap.servers", kafkaBroker)
+      .option("topic", topic)
+      .option("includeHeaders", (!headerField.isEmpty).toString)
+      .format("kafka")
+      .save()
+  }
 
-    var sparkOptions = Map("kafka.bootstrap.servers" -> bootstrapServers, "includeHeaders" -> "true")
-
-    if (addlSparkOptions != null) {
-      sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
-    }
-    try {
-      df.select((keyFormat match {
-        case "avro" => to_confluent_avro(col(keyField), keyRegistryConfig)
-        case _ => col(keyField).cast(StringType)
-      })
-        as 'key, to_confluent_avro(allColumns, valueRegistryConfig) as 'value, df.col("headers"))
-        .write
-        .options(sparkOptions)
-        .option("topic", topic)
-        .format("kafka")
-        .save()
-    } catch {
-      case unknown: Exception => {
-        println(s"Unknown exception: $unknown")
+  def GetToAvroConfig(topic: String, schemaRegistryUrl: String, dfColumn: Column, schemaVersion: Option[Int] = None, isKey: Boolean = false): ToAvroConfig = {
+    //get the specified schema version
+    //if not specified, then get the latest schema from Schema Registry
+    //if the topic does not have a schema then create and register the schema
+    //applies to both key and value
+    val subject = SchemaSubject.usingTopicNameStrategy(topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
+    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl)
+    val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
+    var toAvroConfig: ToAvroConfig = null
+    if (schemaManager.exists(subject)) {
+      val avroConfigFragment = AbrisConfig
+        .toConfluentAvro
+      var toStrategyConfigFragment: ToStrategyConfigFragment = null
+      if (schemaVersion.isEmpty) {
+        toStrategyConfigFragment = avroConfigFragment.downloadSchemaByLatestVersion
       }
+      else {
+        toStrategyConfigFragment = avroConfigFragment.downloadSchemaByVersion(schemaVersion.get)
+      }
+      toAvroConfig = toStrategyConfigFragment
+        .andTopicNameStrategy(topic, isKey = isKey)
+        .usingSchemaRegistry(schemaRegistryUrl)
     }
+    else {
+      val expression = dfColumn.expr
+      val schema = toAvroType(expression.dataType, expression.nullable)
+      println("avro schema = " + schema.toString())
+      val schemaId = schemaManager.register(subject, schema)
+      toAvroConfig = AbrisConfig
+        .toConfluentAvro
+        .downloadSchemaById(schemaId)
+        .usingSchemaRegistry(schemaRegistryUrl)
+    }
+    toAvroConfig
   }
 
   def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {

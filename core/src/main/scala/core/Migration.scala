@@ -102,7 +102,6 @@ class Migration extends SparkListener {
         override def onStageCompleted(stageCompleted: SparkListenerStageCompleted) {
           processedTableCount += stageCompleted.stageInfo.taskMetrics.inputMetrics.recordsRead
           size_of_the_records += stageCompleted.stageInfo.taskMetrics.inputMetrics.bytesRead
-          println("size on stage :" + size_of_the_records)
         }
       })
     }
@@ -213,7 +212,7 @@ class Migration extends SparkListener {
       } else if (destinationMap("platform") == "mongodb") {
         dataframeFromTo.dataFrameToMongodb(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("database"), destinationMap("authenticationdatabase"), destinationMap("collection"), destinationMap("login"), destinationMap("password"), destinationMap.getOrElse("replicaset", null), destinationMap.getOrElse("replacedocuments", "true"), destinationMap.getOrElse("orderedrecords", "false"), dft, sparkSession, destinationMap.getOrElse("documentfromjsonfield", "false"), destinationMap.getOrElse("jsonfield", "jsonfield"), destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destination.optJSONObject("sparkoptions"), destinationMap.get("maxBatchSize").getOrElse(null), destinationMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean])
       } else if (destinationMap("platform") == "kafka") {
-        dataframeFromTo.dataFrameToKafka(destinationMap("bootstrapservers"), destinationMap("schemaregistries"), destinationMap("topic"), destinationMap("keyfield"), destinationMap.getOrElse("keyformat", "string"), destination.optJSONObject("sparkoptions"), destinationMap.getOrElse("valuefield", null), destinationMap.getOrElse("headerfield", null), dft)
+        dataframeFromTo.dataFrameToKafka(spark = sparkSession, df = dft, valueField = destinationMap.getOrElse("valuefield", "value"), topic = destinationMap("topic"), kafkaBroker = destinationMap("bootstrapservers"), schemaRegistryUrl = destinationMap("schemaregistries"), valueSchemaVersion = (if (destinationMap.get("valueschemaversion") == None) None else Some(destinationMap.getOrElse("valueschemaversion", "1").toInt)), keyField = destinationMap.get("keyfield"), keySchemaVersion = (if (destinationMap.get("keyschemaversion") == None) None else Some(destinationMap.getOrElse("keyschemaversion", "1").toInt)), headerField = destinationMap.get("headerfield"))
       } else if (destinationMap("platform") == "elastic") {
         dataframeFromTo.dataFrameToElastic(destinationMap("awsenv"), destinationMap("clustername"), destinationMap("port"), destinationMap("index"), destinationMap("type"), destinationMap("version"), destinationMap("login"), destinationMap("password"), destinationMap("local_dc"), destination.optJSONObject("sparkoptions"), dft, reportRowHtml, destinationMap("vaultenv"), destinationMap.getOrElse("savemode", "index"), destinationMap.getOrElse("mappingid", null), destinationMap.getOrElse("flag", "false"), destinationMap.getOrElse("secretstore", "vault"), sparkSession)
       }
@@ -506,8 +505,6 @@ class Migration extends SparkListener {
     if (propertiesMap.getOrElse("secretstore", "").equals("aws_secrets_manager")) {
       propertiesMap = extractCredentialsFromSecretManager(propertiesMap)
     }
-    println ("Debug...")
-    println(propertiesMap)
     var platform = propertiesMap("platform")
     var pre_migrate_commands = new JSONArray()
     if (platformObject.has("pre_migrate_commands")) {

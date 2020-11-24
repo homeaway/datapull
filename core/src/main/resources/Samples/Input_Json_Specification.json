@@ -242,13 +242,17 @@
       "destination": {
         "platform": "kafka",
         "comment_bootstrapservers": "this is for bootstrap information of the kafka cluster",
-        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
-        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
+        "bootstrapservers": "KAFKA_BOOTSTRAP_SERVER:9092",
+        "schemaregistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
         "topic": "TOPIC_NAME",
-        "comment_keyField": "required, field in the dataset that should be used as the kafka topic's key field",
-        "keyField": "some_keyfield",
-        "comment_keyFormat": "Optional, by default will be string. If set to avro, the key field will be converted to avro and the schema will be registered in schema registry",
-        "keyFormat": "string"
+        "comment_valuefield": "optional, field in the dataset that should be used as the kafka topics value field. If not specified, DataPull will use the field named value in the resultset",
+        "valuefield": "value",
+        "comment_valueschemaversion": "optional, version of the topic's value schema, if the topic already has a value schema. If this is not specified, the latest version of the valueschema is picked. If there are no value schemas registered for the topic in schema registry, DataPull will register the schema of the valuefield to Schema Registry",
+        "valueschemaversion": "1",
+        "comment_keyfield": "optional, field in the dataset that should be used as the kafka topic's key field",
+        "keyfield": "some_keyfield",
+        "comment_keyschemaversion": "optional, version of the topic's key schema, if the topic already has a key schema. If this is not specified, the latest version of the key schema is picked. If there are no key schemas registered for the topic in schema registry, DataPull will register the schema of the keyfield to Schema Registry",
+        "keyschemaversion": "1"
       },
       "source_influxdb": {
         "platform": "influxdb",
