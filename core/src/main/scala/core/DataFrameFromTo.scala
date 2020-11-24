@@ -1149,6 +1149,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     val subject = SchemaSubject.usingTopicNameStrategy(topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
     val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl)
     val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
+    val expression = dfColumn.expr
+    val dataSchema = toAvroType(expression.dataType, expression.nullable)
+    println((if (isKey) "key" else "value") + " avro schema inferred from data  = " + dataSchema.toString())
     var toAvroConfig: ToAvroConfig = null
     if (schemaManager.exists(subject)) {
       val avroConfigFragment = AbrisConfig
@@ -1165,15 +1168,13 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         .usingSchemaRegistry(schemaRegistryUrl)
     }
     else {
-      val expression = dfColumn.expr
-      val schema = toAvroType(expression.dataType, expression.nullable)
-      println("avro schema = " + schema.toString())
-      val schemaId = schemaManager.register(subject, schema)
+      val schemaId = schemaManager.register(subject, dataSchema)
       toAvroConfig = AbrisConfig
         .toConfluentAvro
         .downloadSchemaById(schemaId)
         .usingSchemaRegistry(schemaRegistryUrl)
     }
+    println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " +toAvroConfig.schemaString)
     toAvroConfig
   }
 
