@@ -6,18 +6,17 @@
       "source": {
         "platform": "teradata",
         "server": "tddev.karmalab.net",
-        "database": "D_ADS_BKG",
-        "table": "MONETARY_CLASS",
-        "login": "petang",
-        "password": "myownpassword",
+        "database": "nishah",
+        "table": "DBC.TABLES",
+        "login": "",
+        "password": "",
         "iswindowsauthenticated": "true",
         "domain": "SEA"
       },
       "destination": {
         "platform": "filesystem",
         "path": "target/classes/SampleData_Json",
-        "fileformat": "json",
-        "groupbyfields": "IntField"
+        "fileformat": "json"
       }
     }
   ],
