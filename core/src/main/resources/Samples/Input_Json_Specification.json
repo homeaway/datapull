@@ -239,7 +239,7 @@
         "comment_headerfield": "Optional, if you want to set header field from a column in the dataset else we add timestamp column as headers field. Please note that it should be of the struct type if it's being build in sql",
         "headerfield": "null"
       },
-      "destination": {
+      "destination_kafka": {
         "platform": "kafka",
         "comment_bootstrapservers": "this is for bootstrap information of the kafka cluster",
         "bootstrapservers": "KAFKA_BOOTSTRAP_SERVER:9092",
@@ -247,10 +247,22 @@
         "topic": "TOPIC_NAME",
         "comment_valuefield": "optional, field in the dataset that should be used as the kafka topics value field. If not specified, DataPull will use the field named value in the resultset",
         "valuefield": "value",
+        "comment_valuesubjectnamingstrategy": "Optional, defaults to TopicNameStrategy. Other options are RecordNameStrategy, TopicRecordNameStrategy. Subject naming strategy to use when getting/setting value's schema subject. Ref https://docs.confluent.io/6.0.0/schema-registry/serdes-develop/index.html#subject-name-strategy",
+        "valuesubjectnamingstrategy": "TopicNameStrategy",
+        "comment_valuesubjectrecordnamespace": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Namespace to use. e.g. if topic = test123, valuesubjectnamingstrategy = TopicRecordNameStrategy, valuesubjectrecordnamespace = com.expediagroup.dataplatform, valuesubjectrecordname = PotentialRmdEntry; then subject name for the topic's value  = test123-com.expediagroup.dataplatform.PotentialRmdEntry",
+        "valuesubjectrecordnamespace": "somenamespace",
+        "comment_valuesubjectrecordname": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Name to use",
+        "valuesubjectrecordname": "somename",
         "comment_valueschemaversion": "optional, version of the topic's value schema, if the topic already has a value schema. If this is not specified, the latest version of the valueschema is picked. If there are no value schemas registered for the topic in schema registry, DataPull will register the schema of the valuefield to Schema Registry",
         "valueschemaversion": "1",
         "comment_keyfield": "optional, field in the dataset that should be used as the kafka topic's key field",
         "keyfield": "some_keyfield",
+        "comment_keysubjectnamingstrategy": "Optional, defaults to TopicNameStrategy. Other options are RecordNameStrategy, TopicRecordNameStrategy. Subject naming strategy to use when getting/setting key's schema subject. Ref https://docs.confluent.io/6.0.0/schema-registry/serdes-develop/index.html#subject-name-strategy",
+        "keysubjectnamingstrategy": "TopicNameStrategy",
+        "comment_keysubjectrecordnamespace": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Namespace to use. e.g. if topic = test123, keysubjectnamingstrategy = TopicRecordNameStrategy, keysubjectrecordnamespace = com.expediagroup.dataplatform, keysubjectrecordname = PotentialRmdEntry; then subject name for the topic's key  = test123-com.expediagroup.dataplatform.PotentialRmdEntry",
+        "keysubjectrecordnamespace": "somenamespace",
+        "comment_keysubjectrecordname": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Name to use",
+        "keysubjectrecordname": "somename",
         "comment_keyschemaversion": "optional, version of the topic's key schema, if the topic already has a key schema. If this is not specified, the latest version of the key schema is picked. If there are no key schemas registered for the topic in schema registry, DataPull will register the schema of the keyfield to Schema Registry",
         "keyschemaversion": "1"
       },

@@ -73,6 +73,8 @@ import org.apache.spark.sql.avro.SchemaConverters.toAvroType
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
 
+  val helper = new Helper(appConfig)
+
   def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String): org.apache.spark.sql.DataFrame = {
 
     if (filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null) {
@@ -838,7 +840,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",") + ":27017"
     }
     var uri: String = null
-    val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
     sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
@@ -902,7 +903,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterName = consul.serviceName
     }
     var uri: String = null
-    val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
     //if password isn't set, attempt to get from security.Vault
@@ -952,7 +952,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
     var uri: MongoClientURI = null
     //if password isn't set, attempt to get from security.Vault
-    val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
     //if password isn't set, attempt to get from security.Vault
@@ -1121,61 +1120,49 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
-  def dataFrameToKafka(spark: SparkSession, df: DataFrame, valueField: String, topic: String, kafkaBroker: String, schemaRegistryUrl: String, valueSchemaVersion: Option[Int] = None, keyField: Option[String] = None, keySchemaVersion: Option[Int] = None, headerField: Option[String] = None): Unit = {
+  def dataFrameToKafka(spark: SparkSession,
+                       df: DataFrame,
+                       valueField: String,
+                       topic: String,
+                       kafkaBroker: String,
+                       schemaRegistryUrl: String,
+                       valueSchemaVersion: Option[Int] = None,
+                       valueSubjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ ,
+                       valueSubjectRecordName: Option[String] = None,
+                       valueSubjectRecordNamespace: Option[String] = None,
+                       keyField: Option[String] = None,
+                       keySchemaVersion: Option[Int] = None,
+                       keySubjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ ,
+                       keySubjectRecordName: Option[String] = None,
+                       keySubjectRecordNamespace: Option[String] = None,
+                       headerField: Option[String] = None,
+                       keyStorePath: Option[String] = None,
+                       trustStorePath: Option[String] = None,
+                       keyStorePassword: Option[String] = None,
+                       trustStorePassword: Option[String] = None,
+                       keyPassword: Option[String] = None
+                      ): Unit = {
     var dfavro = spark.emptyDataFrame
-    var columnsToSelect = Seq(to_avro(df.col(valueField), GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = df.col(valueField), schemaVersion = valueSchemaVersion, isKey = false)) as 'value)
+    var columnsToSelect = Seq(to_avro(df.col(valueField), helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = df.col(valueField), schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace)) as 'value)
     if (!keyField.isEmpty) {
       val keyFieldCol = df.col(keyField.get)
-      columnsToSelect = columnsToSelect ++ Seq(to_avro(keyFieldCol, GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true)) as 'key)
+      columnsToSelect = columnsToSelect ++ Seq(to_avro(keyFieldCol, helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace)) as 'key)
     }
     if (!headerField.isEmpty) {
       columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
     }
+
+    val options = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
+
     dfavro = df.select(columnsToSelect: _*)
     dfavro.printSchema()
     dfavro.write
       .option("kafka.bootstrap.servers", kafkaBroker)
       .option("topic", topic)
+      .options(options)
       .option("includeHeaders", (!headerField.isEmpty).toString)
       .format("kafka")
       .save()
-  }
-
-  def GetToAvroConfig(topic: String, schemaRegistryUrl: String, dfColumn: Column, schemaVersion: Option[Int] = None, isKey: Boolean = false): ToAvroConfig = {
-    //get the specified schema version
-    //if not specified, then get the latest schema from Schema Registry
-    //if the topic does not have a schema then create and register the schema
-    //applies to both key and value
-    val subject = SchemaSubject.usingTopicNameStrategy(topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
-    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl)
-    val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
-    val expression = dfColumn.expr
-    val dataSchema = toAvroType(expression.dataType, expression.nullable)
-    println((if (isKey) "key" else "value") + " avro schema inferred from data  = " + dataSchema.toString())
-    var toAvroConfig: ToAvroConfig = null
-    if (schemaManager.exists(subject)) {
-      val avroConfigFragment = AbrisConfig
-        .toConfluentAvro
-      var toStrategyConfigFragment: ToStrategyConfigFragment = null
-      if (schemaVersion.isEmpty) {
-        toStrategyConfigFragment = avroConfigFragment.downloadSchemaByLatestVersion
-      }
-      else {
-        toStrategyConfigFragment = avroConfigFragment.downloadSchemaByVersion(schemaVersion.get)
-      }
-      toAvroConfig = toStrategyConfigFragment
-        .andTopicNameStrategy(topic, isKey = isKey)
-        .usingSchemaRegistry(schemaRegistryUrl)
-    }
-    else {
-      val schemaId = schemaManager.register(subject, dataSchema)
-      toAvroConfig = AbrisConfig
-        .toConfluentAvro
-        .downloadSchemaById(schemaId)
-        .usingSchemaRegistry(schemaRegistryUrl)
-    }
-    println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " +toAvroConfig.schemaString)
-    toAvroConfig
   }
 
   def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {
@@ -1197,7 +1184,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
-        val helper = new Helper(appConfig)
         url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
       }
 
@@ -1284,7 +1270,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
-        val helper = new Helper(appConfig)
         url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
         dflocal = dflocal.coalesce(1) //to prevent locking, by ensuring only there is one writer per table
       }
@@ -1369,7 +1354,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: String, domainName: String): Unit = {
     if (sql_command != "") {
-      val helper = new Helper(appConfig)
       var driver: String = null;
       var url: String = null;
       if (isWindowsAuthenticated.toBoolean) {
@@ -1388,7 +1372,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         }
         else if (platform == "teradata") {
           driver = "com.teradata.jdbc.TeraDriver"
-          val helper = new Helper(appConfig)
           url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
         }
 
