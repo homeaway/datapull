@@ -235,6 +235,7 @@
             <version>2.4.4</version>
             <scope>provided</scope>
         </dependency>
+
         <!--<MONGODB SPARK CONNECTOR>-->
         <dependency>
             <groupId>org.mongodb.spark</groupId>

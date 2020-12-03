@@ -1188,13 +1188,19 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: String, domainName: String): org.apache.spark.sql.DataFrame = {
+  def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: Boolean, domainName: String): org.apache.spark.sql.DataFrame = {
     var driver: String = null
     var url: String = null
-    if (isWindowsAuthenticated.toBoolean) {
+    val helper = new Helper(appConfig)
+    if (isWindowsAuthenticated) {
       if (platform == "mssql") {
         driver = "net.sourceforge.jtds.jdbc.Driver"
         url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain=" + domainName + ";useNTLMv2=true"
+      }
+      else if (platform == "teradata") {
+        driver = "com.teradata.jdbc.TeraDriver"
+
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated)
       }
     } else {
       if (platform == "mssql") {
@@ -1207,8 +1213,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
-        val helper = new Helper(appConfig)
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated)
       }
 
       else if (platform == "mysql") {
@@ -1274,11 +1279,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: String, domainName: String): Unit = {
+  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: Boolean, domainName: String): Unit = {
     var driver: String = null
     var url: String = null
     var dflocal = df
-    if (isWindowsAuthenticated.toBoolean) {
+    if (isWindowsAuthenticated) {
       if (platform == "mssql") {
         driver = "net.sourceforge.jtds.jdbc.Driver"
         url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
@@ -1295,7 +1300,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
         val helper = new Helper(appConfig)
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated)
         dflocal = dflocal.coalesce(1) //to prevent locking, by ensuring only there is one writer per table
       }
 
@@ -1377,12 +1382,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .insertInto(table)
   }
 
-  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: String, domainName: String): Unit = {
+  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String): Unit = {
     if (sql_command != "") {
       val helper = new Helper(appConfig)
       var driver: String = null;
       var url: String = null;
-      if (isWindowsAuthenticated.toBoolean) {
+      if (isWindowsAuthenticated) {
         if (platform == "mssql") {
           driver = "net.sourceforge.jtds.jdbc.Driver"
           url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
@@ -1399,7 +1404,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         else if (platform == "teradata") {
           driver = "com.teradata.jdbc.TeraDriver"
           val helper = new Helper(appConfig)
-          url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt))
+          url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated )
         }
 
         else if (platform == "mysql") {
