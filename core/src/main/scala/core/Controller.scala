@@ -154,10 +154,10 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
       if (reportEmailAddress != "") {
         val reportBody = reportbodyHtml.toString();
         SendEmail(reportEmailAddress, updatedBodyHtml, applicationId, pipelineName, env, null, authenticatedUser)
-     //   dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Succeeded", reportBody, sparkSession)
+        dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Succeeded", reportBody, sparkSession)
       }
       if (migrationErrors.nonEmpty) {
-     //   dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Failed", migrationErrors.toString(), sparkSession)
+        dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Failed", migrationErrors.toString(), sparkSession)
         if (minexecutiontime != "" && maxexecutiontime != "") {
           elapsedtime = System.currentTimeMillis() - start_time_in_milli
           alerts.AlertLog(jobId, masterNode, ec2Role, portfolio, product, elapsedtime / 1000, minexecutiontime.toLong, maxexecutiontime.toLong, sparkSession, "Failed", reportEmailAddress, pipelineName, awsenv, appConfig.dataToolsEmailAddress)
@@ -168,7 +168,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
         }
       }
       if (migrationErrors.isEmpty) {
-     //   dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Completed", null, sparkSession)
+        dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Completed", null, sparkSession)
         if (minexecutiontime != "" && maxexecutiontime != "") {
           //This will log in case of no exceptions with completed status.
           elapsedtime = System.currentTimeMillis() - start_time_in_milli

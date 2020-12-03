@@ -8,37 +8,37 @@ datapull:
       vault_nonce:
       vault_path_login:
   json:
-    inputjson: Input_Sample_teradata-to-filesystem.json
+    inputjson:
   spark:
-    network: spark.network.timeout
-    timeout: 10000s
-    executor: spark.executor.heartbeatInterval
-    interval: 1000s
-    broadcasttimeout: spark.sql.broadcastTimeout
-    btimeout: 36000
-    scheduler: spark.scheduler.mode
-    mode: FAIR
-    failures: spark.task.maxFailuers
+    network:
+    timeout:
+    executor:
+    interval:
+    broadcasttimeout:
+    btimeout:
+    scheduler:
+    mode:
+    failures:
   miscellaneous:
-    no_of_retries: 16
-    timeout: 1000000ms
+    no_of_retries:
+    timeout:
     consul_url:
-    sleeptimeout: 60000
+    sleeptimeout:
   application:
     region:
   logger:
     s3:
-      loggingfolder: /Users/nishah/Documents/Github/datapull/core/
+      loggingfolder:
     mssql:
       server:
       database:
       login:
       password:
       table:
-      driver: com.microsoft.sqlserver.jdbc.SQLServerDriver
+      driver:
     cloudwatch:
-      groupName: /ecs/datatools-datapull-api
-      streamName: datapull-stream
+      groupName:
+      streamName:
   email:
     smtp:
       emailaddress:

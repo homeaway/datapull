@@ -95,7 +95,7 @@ class Migration extends SparkListener {
     val startTime_in_milli = System.currentTimeMillis()
 
 
-   // dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, null, 0, migrationJSONString, 0, 0, "Started", jobId, sparkSession)
+    dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, null, 0, migrationJSONString, 0, 0, "Started", jobId, sparkSession)
 
     if (preciseCounts == false) {
       sparkSession.sparkContext.addSparkListener(new SparkListener() {
@@ -371,12 +371,12 @@ class Migration extends SparkListener {
 
       val migrationEndTime = Instant.now().toString
 
-//      if (hasExceptions)
+      if (hasExceptions)
 //      //in case of exceptions, the job will be logged in as failed.
-//        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Failed", jobId, sparkSession)
-//      else
+        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Failed", jobId, sparkSession)
+      else
 //      //in case of no exceptions here the job will be logged as completed.
-//        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Completed", jobId, sparkSession)
+        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Completed", jobId, sparkSession)
 
       reportRowHtml.append("<tr><td>")
       for (a <- 0 to sources.length() - 1) {

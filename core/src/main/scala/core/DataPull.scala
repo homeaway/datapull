@@ -45,7 +45,7 @@ object DataPull {
   def main(args: Array[String]): Unit = {
 
     val yamlMapper = new ObjectMapper(new YAMLFactory());
-    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application-dev.yml");
+    val inputStream = this.getClass().getClassLoader().getResourceAsStream("application.yml");
     val applicationConf = yamlMapper.readTree(inputStream)
     val config = new AppConfig(applicationConf)
     val alert = new Alert(config)
@@ -211,7 +211,7 @@ object DataPull {
 
       val cluster = json.getJSONObject("cluster")
       var dataPullLog = new DataPullLog(config, pipelineName)
-//      dataPullLog.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, null, 0, "Started", null, sparkSession)
+      dataPullLog.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, null, 0, "Started", null, sparkSession)
 
       portfolio = cluster.getString("portfolio")
 

@@ -8,8 +8,8 @@
         "server": "tddev.karmalab.net",
         "database": "nishah",
         "table": "DBC.TABLES",
-        "login": "",
-        "password": "",
+        "login": "yourlogin",
+        "password": "yourpassword",
         "iswindowsauthenticated": "true",
         "domain": "SEA"
       },
@@ -21,11 +21,11 @@
     }
   ],
   "cluster": {
-    "pipelinename": "ekg",
+    "pipelinename": "sample_pipeline",
     "awsenv": "dev",
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
     "ec2instanceprofile": "Iam role",
-    "cronexpression": "21 * * * *"
+    "cronexpression":"21 * * * *"
   }
 }
