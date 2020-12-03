@@ -5,7 +5,7 @@
     {
       "source": {
         "platform": "teradata",
-        "server": "tddev.karmalab.net",
+        "server": "IP_address_or_dns_name_of_teradata_server_endpoint",
         "database": "your_database_name",
         "table": "DBC.TABLES",
         "login": "yourlogin",
