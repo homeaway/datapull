@@ -207,7 +207,7 @@ class Helper(appConfig: AppConfig) {
   }
 
   def buildTeradataURI(server: String, database: String, port: Option[Int],isWindowsAuthenticated:String): String = {
-    if(isWindowsAuthenticated.toBoolean)
+    "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=FASTLOAD,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
       {
         "jdbc:teradata://" + server + "/LOGMECH=LDAP,TYPE=FASTLOAD,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
 
@@ -219,5 +219,4 @@ class Helper(appConfig: AppConfig) {
 }
 
 case class HttpResponse(ResponseCode: Int, ResponseBody: String)
-
 
