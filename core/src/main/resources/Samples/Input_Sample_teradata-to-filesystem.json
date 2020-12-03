@@ -6,7 +6,7 @@
       "source": {
         "platform": "teradata",
         "server": "tddev.karmalab.net",
-        "database": "nishah",
+        "database": "your_database_name",
         "table": "DBC.TABLES",
         "login": "yourlogin",
         "password": "yourpassword",
