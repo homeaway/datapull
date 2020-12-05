@@ -1,6 +1,7 @@
 {
   "useremailaddress": "yourid@DOMAIN.com",
   "migrations": [
+
     {
       "source": {
         "platform": "filesystem",
