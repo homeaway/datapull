@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.2.0] - 2020-12-22
+### Changed
+- Fixed install script error, upgraded AWS CLI to v2
+- Fixed the MS DOS batch script for IAM principals
+- Removed unnecessary environment variables
+### Removed
+- Removed the MS DOS batch script for ECS Deploy
+
 ## [0.1.18] - 2020-11-05
 ### Changed
 - Fixed issue of Teradata destination deadlocking
