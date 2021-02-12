@@ -141,6 +141,7 @@ echo "Uploading core Jar to s3"
 docker run -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY -e AWS_DEFAULT_REGION -e AWS_PROFILE -v "${PWD}":/data -v "${HOME}/.aws":"/root/.aws" garland/aws-cli-docker aws s3 cp /data/target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar "$jar_file_path"
 
 exitAfterFailure
+exit 0
 
 cd ../api/
 

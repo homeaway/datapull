@@ -12,14 +12,14 @@
       ],
       "destination": {
         "platform": "kafka",
-        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9091",
-        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
+        "bootstrapservers": "KAFKA_BOOTSTRAP_SERVER:9091",
+        "schemaregistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
         "topic": "TOPIC_NAME",
-        "keyField": "some_keyfield",
+        "keyfield": "some_keyfield",
         "keyFormat": "avro"
       },
       "sql": {
-        "query": "select some_keyfield, struct(startIpNum, endIpNum, locId, isp, organization) as value, struct(unix_timestamp() as time) as header from stage"
+        "query": "select some_keyfield, struct(startIpNum, endIpNum, locId, isp, organization) as value from stage"
       }
     }
   ],
