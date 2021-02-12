@@ -221,6 +221,7 @@
             <version>${spark.version}</version>
             <scope>provided</scope>
         </dependency>
+
         <!--<MONGODB SPARK CONNECTOR 2.4.6 does not exist>-->
         <dependency>
             <groupId>org.mongodb.spark</groupId>

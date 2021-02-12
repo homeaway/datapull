@@ -18,6 +18,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - README.md: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0
 
 
+## [0.2.1] - 2021-01-26
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java: S3 Cross-Account Access Support.
+
+## [0.2.0] - 2020-12-22
+### Changed
+- Fixed install script error, upgraded AWS CLI to v2
+- Fixed the MS DOS batch script for IAM principals
+- Removed unnecessary environment variables
+### Removed
+- Removed the MS DOS batch script for ECS Deploy
+
 
 ## [0.1.18] - 2020-11-05
 ### Changed
