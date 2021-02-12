@@ -27,9 +27,9 @@ class Consul (dnsName: String, config : AppConfig) {
   var serviceName = ""
   var ipAddresses = List.empty[String]
 
-  private val dataCenters = Map("us-aus-1-prod"->"prod.vxe",
-    "us-aus-1-dts"->"dts.vxe",
-    "us-aus-1-itdev"->"dts.vxe")
+  private val dataCenters = Map("us-aus-1-prod" -> "prod.vxe",
+    "us-aus-1-dts" -> "dts.vxe",
+    "us-aus-1-itdev" -> "dts.vxe")
 
   if (IsConsulDNSName()) {
     val dnsParts = dnsName.split("\\.")

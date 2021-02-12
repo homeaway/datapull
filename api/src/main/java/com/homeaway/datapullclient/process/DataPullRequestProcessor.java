@@ -165,12 +165,12 @@ public class DataPullRequestProcessor implements DataPullClientService {
                     s3RepositoryBucketName + "/" + DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
             String filePath = applicationHistoryFolderPath + "/" + jobName;
             String bootstrapFile = jobName + ".sh";
-            boolean addBootStrapAction = false;
+            List<String> bootstrapActionFiles = new ArrayList<>();
             if(myObjects != null && myObjects.length > 0){
-                addBootStrapAction = createBootstrapScript(myObjects, bootstrapFile, applicationHistoryFolderPath);
+                bootstrapActionFiles.addAll(createBootstrapScript(myObjects, bootstrapFile, applicationHistoryFolderPath));
             }
 
-            DataPullTask task = createDataPullTask(filePath, reader, jobName, creator, addBootStrapAction, node.path("sparkjarfile").asText());
+            DataPullTask task = createDataPullTask(filePath, reader, jobName, creator, node.path("sparkjarfile").asText(), bootstrapActionFiles);
             if(!isStart) {
                 json = originalInputJson.equals(json) ? json : originalInputJson;
                 saveConfig(applicationHistoryFolderPath, jobName + ".json", json);
@@ -183,53 +183,69 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 tasksMap.put(jobName, future);
             }
         } catch (IOException e) {
-            throw new ProcessingException("exception while starting datapull "+e.getLocalizedMessage());
+            throw new ProcessingException("exception while starting datapull " + e.getLocalizedMessage());
         }
 
         if (log.isDebugEnabled())
             log.debug("runDataPull <- return");
     }
 
-    private boolean createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException {
-        boolean isFileCreated = false;
+    private StringBuilder createBootstrapString(Object[] paths) throws ProcessingException {
 
         StringBuilder stringBuilder = new StringBuilder();
-        for (Migration mig : myObjects) {
-            if(mig.getSource()!=null) {
-                if (mig.getSource().getJksfilepath() != null && !mig.getSource().getJksfilepath().isEmpty()) {
-                    stringBuilder.append(String.format(JKS_FILE_STRING, mig.getSource().getJksfilepath()));
-                }
-            }
-            else {
-                Source[] sources = mig.getSources();
 
-                if(sources!=null && sources.length > 0) {
+        for (Object obj : paths) {
+            if (!obj.toString().startsWith("s3://")) {
+                throw new ProcessingException("Invalid bootstrap file path. Please give a valid s3 path");
+            } else {
+                stringBuilder.append(String.format(JKS_FILE_STRING, obj.toString())).append(System.getProperty("line.separator"));
+            }
+        }
+        return stringBuilder;
+    }
+
+    private List<String> createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException {
+
+        StringBuilder stringBuilder = new StringBuilder();
+        List<String> list = new ArrayList<>();
+
+        for (Migration mig : myObjects) {
+
+            if (mig.getSource() != null) {
+                if (mig.getSource().getJksfiles() != null) {
+                    list.addAll(Arrays.asList(mig.getSource().getJksfiles()));
+                }
+            } else {
+                Source[] sources = mig.getSources();
+                if (sources != null && sources.length > 0) {
                     for (Source source : sources) {
-                        if (source.getJksfilepath() != null && !source.getJksfilepath().isEmpty()) {
-                            stringBuilder.append(String.format(JKS_FILE_STRING, source.getJksfilepath()));
+                        if (source.getJksfiles() != null) {
+                            list.addAll(Arrays.asList(mig.getSource().getJksfiles()));
                         }
                     }
                 }
             }
-            if(mig.getDestination().getJksfilepath()!=null && !mig.getDestination().getJksfilepath().isEmpty()){
-                stringBuilder.append(String.format(JKS_FILE_STRING, mig.getDestination().getJksfilepath()));
+            if (mig.getDestination().getJksfiles() != null) {
+                list.addAll(Arrays.asList(mig.getDestination().getJksfiles()));
             }
         }
-        if(stringBuilder.length() > 0){
-            saveConfig(bootstrapFilePath, bootstrapFile, stringBuilder.toString());
-            isFileCreated = true;
+        if (!list.isEmpty()) {
+            stringBuilder = createBootstrapString(list.toArray());
         }
-        return isFileCreated;
+        if (stringBuilder.length() > 0) {
+            saveConfig(bootstrapFilePath, bootstrapFile, stringBuilder.toString());
+        }
+        return list;
     }
 
-    private DataPullTask createDataPullTask(String fileS3Path, ClusterProperties properties, String jobName, String creator, boolean bootstrapAction, String customJarFilePath) {
+    private DataPullTask createDataPullTask(String fileS3Path, ClusterProperties properties, String jobName, String creator, String customJarFilePath, List<String> bootstrapFilesList) {
         String creatorTag = String.join(" ", Arrays.asList(creator.split(",|;")));
-        DataPullTask task = config.getTask(jobName, fileS3Path).withClusterProperties(properties).withCustomJar(customJarFilePath).addBootStrapAction(bootstrapAction)
+        DataPullTask task = config.getTask(jobName, fileS3Path).withClusterProperties(properties).withCustomJar(customJarFilePath).bootstrapFilesList(bootstrapFilesList)
                 .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
                 .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull");
 
-        if(properties.getTags() != null && !properties.getTags().isEmpty()){
+        if (properties.getTags() != null && !properties.getTags().isEmpty()) {
             task.addTags(properties.getTags());
         }
 

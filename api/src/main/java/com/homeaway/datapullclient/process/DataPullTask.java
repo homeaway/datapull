@@ -43,6 +43,8 @@ public class DataPullTask implements Runnable {
     private final String jksS3Path;
 
     private static final String BOOTSTRAP_FOLDER = "datapull-opensource/bootstrapfiles";
+    private static final String SPARK_SUBMIT_CONF_DRIVER = "--conf \"spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/mnt/bootstrapfiles/%s\"\t";
+    private static final String SPARK_SUBMIT_CONF_EXECUTOR = "--conf \"spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/mnt/bootstrapfiles/%s\"\t";
 
     private String s3JarPath;
 
@@ -52,7 +54,7 @@ public class DataPullTask implements Runnable {
     private static final String JSON_WITH_INPUT_FILE_PATH = "{\r\n  \"jsoninputfile\": {\r\n    \"s3path\": \"%s\"\r\n  }\r\n}";
     private final Map<String, Tag> emrTags = new HashMap<>();
     private ClusterProperties clusterProperties;
-    private boolean hasBootStrapAction;
+    private List<String> bootstrapFilesList;
 
     public DataPullTask(final String taskId, final String s3File) {
         s3FilePath = s3File;
@@ -103,11 +105,11 @@ public class DataPullTask implements Runnable {
             final ClusterSummary summary = clusters.get(0);
 
             if(summary != null){
-                this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""));
+                this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
             }
         }
         else{
-            final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""));
+            final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
         }
 
         DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
@@ -128,18 +130,26 @@ public class DataPullTask implements Runnable {
         return sparkSubmitParamsList;
     }
 
-    private RunJobFlowResult runTaskInNewCluster(final AmazonElasticMapReduce emr, final String logPath, final String jarPath, final String sparkSubmitParams) {
+    private RunJobFlowResult runTaskInNewCluster(final AmazonElasticMapReduce emr, final String logPath, final String jarPath, final String sparkSubmitParams, final List<String> bootstrapFilesList) {
 
-        final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
+        HadoopJarStepConfig runExampleConfig = null;
 
-        HadoopJarStepConfig runExampleConfig= null;
-
-        if(sparkSubmitParams !=null && !sparkSubmitParams.isEmpty()){
+        if (sparkSubmitParams != null && !sparkSubmitParams.isEmpty()) {
+            final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
                     .withArgs(sparkSubmitParamsList);
-        }
-        else{
+        } else if (!bootstrapFilesList.isEmpty()) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String jksFilePath : bootstrapFilesList) {
+                String[] d = jksFilePath.split("/");
+                stringBuilder.append(String.format(SPARK_SUBMIT_CONF_DRIVER, d[d.length - 1]));
+                stringBuilder.append(String.format(SPARK_SUBMIT_CONF_EXECUTOR, d[d.length - 1]));
+            }
+            runExampleConfig = new HadoopJarStepConfig()
+                    .withJar("command-runner.jar")
+                    .withArgs("spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", stringBuilder.toString(), "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
+        } else {
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
                     .withArgs("spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
@@ -195,6 +205,7 @@ public class DataPullTask implements Runnable {
         final String emrReleaseVersion = emrProperties.getEmrRelease();
         final String serviceRole = emrProperties.getServiceRole();
         final String jobFlowRole = emrProperties.getJobFlowRole();
+        final String emrSecurityConfiguration = Objects.toString(clusterProperties.getEmr_security_configuration(), "");
 
 
         Map<String, String> emrfsProperties = new HashMap<String, String>();
@@ -216,7 +227,11 @@ public class DataPullTask implements Runnable {
                 .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties),myEmrfsConfig)
                 .withInstances(jobConfig);
 
-        if (this.hasBootStrapAction) {
+        if (!emrSecurityConfiguration.isEmpty()) {
+            request.withSecurityConfiguration(emrSecurityConfiguration);
+        }
+
+        if (!bootstrapFilesList.isEmpty()) {
             final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
             bsConfig.setName("bootstrapaction");
             bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath("s3://" + this.jksS3Path));
@@ -232,18 +247,27 @@ public class DataPullTask implements Runnable {
         this.addTags(tags);
     }
 
-    private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
+    private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams, final List<String> bootstrapFilesList) {
 
         final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
 
-        HadoopJarStepConfig runExampleConfig= null;
+        HadoopJarStepConfig runExampleConfig = null;
 
-        if(sparkSubmitParams !=null && !sparkSubmitParams.isEmpty()){
+        if (sparkSubmitParams != null && !sparkSubmitParams.isEmpty()) {
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
                     .withArgs(sparkSubmitParamsList);
-        }
-        else{
+        } else if (!bootstrapFilesList.isEmpty()) {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (String jksFilePath : bootstrapFilesList) {
+                String[] d = jksFilePath.split("/");
+                stringBuilder.append(String.format(SPARK_SUBMIT_CONF_DRIVER, d[d.length - 1]));
+                stringBuilder.append(String.format(SPARK_SUBMIT_CONF_EXECUTOR, d[d.length - 1]));
+            }
+            runExampleConfig = new HadoopJarStepConfig()
+                    .withJar("command-runner.jar")
+                    .withArgs("spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", stringBuilder.toString(), "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
+        } else {
             runExampleConfig = new HadoopJarStepConfig()
                     .withJar("command-runner.jar")
                     .withArgs("spark-submit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
@@ -314,18 +338,18 @@ public class DataPullTask implements Runnable {
         return this;
     }
 
-    public DataPullTask addBootStrapAction(final boolean hasBootStrapAction) {
-        this.hasBootStrapAction = hasBootStrapAction;
-        return this;
-    }
-
     public DataPullTask withCustomJar(final String customJarPath) {
         s3JarPath = customJarPath;
         return this;
     }
 
+    public DataPullTask bootstrapFilesList(final List<String> bootstrapFilesList) {
+        this.bootstrapFilesList = bootstrapFilesList;
+        return this;
+    }
+
     public DataPullTask addTags(final Map<String, String> tags) {
-        tags.forEach((tagName,value) -> {
+        tags.forEach((tagName, value) -> {
             this.addTag(tagName, value);
         });
         return this;

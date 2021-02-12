@@ -60,7 +60,7 @@ public class EMRProperties {
     @Value("${job_flow_role:emr_ec2_datapull_role}")
     private String jobFlowRole;
 
-    @Value( "${emr_release:emr-5.29.0}" )
+    @Value("${emr_release:emr-5.31.0}")
     private String emrRelease;
 
     @Value( "${bootstrap_folder_path:}" )
