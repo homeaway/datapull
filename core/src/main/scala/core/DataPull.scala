@@ -106,6 +106,7 @@ object DataPull {
     if (jsonString == "") {
       throw new helper.CustomListOfExceptions("No json input available to DataPull")
     }
+    val s3Prefix = if (isLocal) "s3a" else "s3"
 
     if (isLocal) {
       sparkSession = SparkSession.builder.master("local[*]")
@@ -123,7 +124,7 @@ object DataPull {
         .config("" + config.broadcasttimeout, "" + config.btimeout)
         .config("" + config.executor, config.interval)
         .config("" + config.failures, no_of_retries)
-        .config("fs.s3a.multiobjectdelete.enable", true)
+        .config("fs." + s3Prefix + ".multiobjectdelete.enable", true)
         .config("spark.sql.hive.metastore.version", "1.2.1")
         .config("spark.sql.hive.metastore.jars", "builtin")
         .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
@@ -162,7 +163,7 @@ object DataPull {
         }
         listOfS3Path += jsonMap("s3path")
         setAWSCredentials(sparkSession, jsonMap)
-        val rddjson = sparkSession.sparkContext.wholeTextFiles("s3a://" + jsonMap("s3path"))
+        val rddjson = sparkSession.sparkContext.wholeTextFiles(s3Prefix + "://" + jsonMap("s3path"))
         json = new JSONObject(rddjson.first()._2)
       }
     }
@@ -286,15 +287,15 @@ object DataPull {
 
   def setAWSCredentials(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String]): Unit = {
     //sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.impl", "com.amazon.ws.emr.hadoop.fs.EmrFileSystem")
+    val s3Prefix: String = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
     if (sourceDestinationMap("awssecretaccesskey") != "") {
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.access.key", sourceDestinationMap("awsaccesskeyid"))
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.secret.key", sourceDestinationMap("awssecretaccesskey"))
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".access.key", sourceDestinationMap("awsaccesskeyid"))
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".secret.key", sourceDestinationMap("awssecretaccesskey"))
     }
-    if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption")  == "true"))
-    {
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.enableServerSideEncryption", "true")
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.serverSideEncryptionAlgorithm", "AES256")
-      sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.connection.ssl.enabled", "true")
+    if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption") == "true")) {
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".enableServerSideEncryption", "true")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".serverSideEncryptionAlgorithm", "AES256")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".connection.ssl.enabled", "true")
     }
   }
 

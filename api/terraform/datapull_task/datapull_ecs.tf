@@ -123,7 +123,7 @@ resource "aws_alb_listener" "datapull-web-apilb-listener" {
 
   port = 8080
   protocol = "HTTP"
-  certificate_arn = var.load_balancer_certificate_arn
+  #certificate_arn = var.load_balancer_certificate_arn
 
   default_action {
     target_group_arn = aws_alb_target_group.datapull-web-api-targetgroup.arn

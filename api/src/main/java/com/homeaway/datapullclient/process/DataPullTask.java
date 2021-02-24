@@ -208,12 +208,12 @@ public class DataPullTask implements Runnable {
         final String emrSecurityConfiguration = Objects.toString(clusterProperties.getEmr_security_configuration(), "");
 
 
-/*        Map<String, String> emrfsProperties = new HashMap<String, String>();
-        emrfsProperties.put("fs.s3.enableServerSideEncryption", "true");
+        Map<String, String> emrfsProperties = new HashMap<String, String>();
+        emrfsProperties.put("fs.s3.canned.acl", "BucketOwnerFullControl");
 
         Configuration myEmrfsConfig = new Configuration()
                 .withClassification("emrfs-site")
-                .withProperties(emrfsProperties);*/
+                .withProperties(emrfsProperties);
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
@@ -224,7 +224,7 @@ public class DataPullTask implements Runnable {
                 .withServiceRole(Objects.toString(this.clusterProperties.getEmrServiceRole(), serviceRole))
                 .withJobFlowRole(Objects.toString(this.clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
                 .withVisibleToAllUsers(true)
-                .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties))
+                .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties),myEmrfsConfig)
                 .withInstances(jobConfig);
 
         if (!emrSecurityConfiguration.isEmpty()) {
