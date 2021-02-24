@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.20] - 2021-02-24
+### Changed
+- core/src/main/scala/core/DataFramFromTo.scala - Fixed few arguments w.r.t the building kafka properties
+- core/src/main/scala/core/Migration.scala
+- core/src/main/scala/helper/Helper.scala
+
 ## [0.1.19] - 2021-02-12
 ### Changed
 - api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java: Upgraded EMR version to 5.31.0
@@ -16,7 +22,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - core/src/main/scala/core/Migration.scala: Removed unnecessary println's, upgraded ABRiS to 4.0.1
 - pom.xml: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0, removed shaded jar, upgraded ABRiS to 4.0.1
 - README.md: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0
-
 
 ## [0.2.1] - 2021-01-26
 ### Changed

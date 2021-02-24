@@ -985,11 +985,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        jobId: String,
                        sparkSession: org.apache.spark.sql.SparkSession,
                        s3TempFolderDeletionError: mutable.StringBuilder,
-                       keyStorePath: String,
-                       trustStorePath: String,
-                       keyStorePassword: String,
-                       trustStorePassword: String,
-                       keyPassword: String): org.apache.spark.sql.DataFrame = {
+                       keyStorePath: Option[String] = None,
+                       trustStorePath: Option[String] = None,
+                       keyStorePassword: Option[String] = None,
+                       trustStorePassword: Option[String] = None,
+                       keyPassword: Option[String] = None): org.apache.spark.sql.DataFrame = {
 
     var groupId_temp = groupId
 
@@ -1007,13 +1007,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     props.put("max.poll.records", "500")
     props.put("session.timeout.ms", "120000")
 
-    props.putAll(helper.buildSecureKafkaProperties(bootstrapServers,
-      schemaRegistries,
-      keyStorePath,
-      trustStorePath,
-      keyStorePassword,
-      trustStorePassword,
-      keyPassword))
+    props.putAll(helper.buildSecureKafkaProperties(keyStorePath = keyStorePath,
+      trustStorePath = trustStorePath,
+      keyStorePassword = keyStorePassword,
+      trustStorePassword = trustStorePassword,
+      keyPassword = keyPassword)
+    )
 
     val consumer = new KafkaConsumer[String, GenericData.Record](props)
 
@@ -1181,7 +1180,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
     }
 
-    val options = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
+    var options = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
 
     dfavro = df.select(columnsToSelect: _*)
     dfavro.printSchema()
