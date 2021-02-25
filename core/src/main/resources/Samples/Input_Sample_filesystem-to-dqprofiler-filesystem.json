@@ -1,0 +1,37 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "migrations": [
+    {
+      "sources": [
+        {
+          "platform": "filesystem",
+          "path": "target/classes/SampleData/HelloWorld.csv",
+          "fileformat": "csv",
+          "alias": "a"
+        }
+      ],
+      "sql": {
+        "query": "SELECT * FROM a"
+      },
+      "dq": {
+        "metricskeytags": {
+          "datasetName": "'HelloWorld'",
+          "RunDate": "CAST(current_date() as string)"
+        }
+      },
+      "destination": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleData_Json",
+        "fileformat": "json"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "ekg",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression": "21 * * * *"
+  }
+}

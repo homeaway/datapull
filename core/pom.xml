@@ -13,7 +13,7 @@
         <spark.version>2.4.6</spark.version>
         <spark.minor.version>2.4</spark.minor.version>
         <maven.plugin.version>3.2.0</maven.plugin.version>
-        <hadoop.version>2.10.0</hadoop.version>
+        <hadoop.version>2.10.1</hadoop.version>
     </properties>
 
     <dependencyManagement>
@@ -386,6 +386,12 @@
             <groupId>net.snowflake</groupId>
             <artifactId>snowflake-jdbc</artifactId>
             <version>3.12.13</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.amazon.deequ/deequ -->
+        <dependency>
+            <groupId>com.amazon.deequ</groupId>
+            <artifactId>deequ</artifactId>
+            <version>1.1.0_spark-${spark.minor.version}-scala-${scala.binary.version}</version>
         </dependency>
     </dependencies>
 </project>

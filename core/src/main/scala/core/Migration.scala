@@ -16,12 +16,12 @@ package core
 import java.io.{FileNotFoundException, PrintWriter, StringWriter}
 import java.time.Instant
 import java.util.UUID
-
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 import com.amazonaws.regions.{DefaultAwsRegionProviderChain, Regions}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import config.AppConfig
 import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials}
+import dq.Metrics
 import helper._
 import logging._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerStageCompleted}
@@ -32,6 +32,7 @@ import security.SecretsManager
 
 import scala.collection.immutable.List
 import scala.collection.mutable.ListBuffer
+import core.DataPull.jsonObjectPropertiesToMap
 
 //this singleton object handles everything to do with a single core.Migration i.e. getting a single source to a destination
 class Migration extends SparkListener {
@@ -178,6 +179,11 @@ class Migration extends SparkListener {
         dft = sparkSession.sql(overrideSql)
       } else {
         dft = df
+      }
+
+      if (migration.has("dq")) {
+        val metrics = new Metrics(config = appConfig, spark = sparkSession, migration.getJSONObject("dq"))
+        dft = metrics.dataframeToMetricsDataFrame(df = dft)
       }
 
       if (preciseCounts == true) {
