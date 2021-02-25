@@ -35,7 +35,7 @@ import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
 import com.mongodb.spark.sql.toSparkSessionFunctions
-import com.mongodb.{MongoClient, MongoClientURI}
+import com.mongodb.{MongoClient, MongoClientURI, MongoCredential, ServerAddress}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
@@ -949,8 +949,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterName = consul.serviceName
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",")
     }
-    var uri: MongoClientURI = null
-    //if password isn't set, attempt to get from security.Vault
 
     var vaultLogin: String = null
     var vaultPassword: String = null
@@ -965,9 +963,20 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         vaultPassword = vaultCreds("password")
       }
     }
-    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled).asInstanceOf[MongoClientURI]
+    
+    val mongoCredential = {
+      MongoCredential.createPlainCredential(authenticationDatabase, login, vaultPassword.toCharArray)
+    }
+
+    var authList = new util.ArrayList[MongoCredential]()
+    authList.add(mongoCredential)
+
+    var connectionString = new ServerAddress(cluster, 27017)
+
+    val uri = new MongoClientURI(s"mongodb://$vaultLogin:$vaultPassword@$clusterNodes/?authSource=$authenticationDatabase&authMechanism=SCRAM-SHA-1")
     val mongoClient = new MongoClient(uri)
-    val data = mongoClient.getDatabase(database)
+    var data = mongoClient.getDatabase(database)
+
     val response = data.runCommand(org.bson.Document.parse(runCommand))
   }
 
