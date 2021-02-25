@@ -965,7 +965,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     val mongoCredential = {
-      MongoCredential.createPlainCredential(authenticationDatabase, login, vaultPassword.toCharArray)
+      MongoCredential.createPlainCredential(authenticationDatabase, vaultLogin, vaultPassword.toCharArray)
     }
 
     var authList = new util.ArrayList[MongoCredential]()
