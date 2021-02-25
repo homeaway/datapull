@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.21] - 2021-02-25
 ### Changed
-- core/src/main/scala/core/DataFramFromTo.scala - No longer useingasInstanceOf[MongoClientURI]
+- core/src/main/scala/core/DataFramFromTo.scala - No longer using asInstanceOf[MongoClientURI]
 
 ## [0.1.20] - 2021-02-24
 - core/src/main/scala/core/DataFramFromTo.scala - Fixed few arguments w.r.t the building kafka properties
