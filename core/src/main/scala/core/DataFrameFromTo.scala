@@ -970,9 +970,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     var authList = new util.ArrayList[MongoCredential]()
     authList.add(mongoCredential)
-
-    var connectionString = new ServerAddress(cluster, 27017)
-
+    
     val uri = new MongoClientURI(s"mongodb://$vaultLogin:$vaultPassword@$clusterNodes/?authSource=$authenticationDatabase&authMechanism=SCRAM-SHA-1")
     val mongoClient = new MongoClient(uri)
     var data = mongoClient.getDatabase(database)
