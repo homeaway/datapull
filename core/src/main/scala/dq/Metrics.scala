@@ -16,19 +16,18 @@ import org.apache.spark.sql.functions.expr
 class Metrics(config: AppConfig, spark: SparkSession, dqJson: JSONObject) {
 
   val metricsFilePath: Option[String] = (if (dqJson.has("metricsfilepath")) Some(dqJson.getString("metricsfilepath")) else None)
-  val metricsKeyTime: Option[Long] = (if (dqJson.has("metricskeytime")) Some(dqJson.getLong("metricskeytime")) else None)
-  import spark.implicits._
-
+  val metricsKeyTime: Long = (if (dqJson.has("metricskeytime")) dqJson.getLong("metricskeytime") else System.currentTimeMillis())
   val metricsKeyTags: Map[String, String] = mapToEvaluatedMap(if (dqJson.has("metricskeytags")) jsonObjectPropertiesToMap(dqJson.getJSONObject("metricskeytags")) else Map.empty[String, String])
+  val metricsHistogramBinsMax: Int = (if (dqJson.has("metricshistogrambinsmax")) dqJson.getInt("metricshistogrambinsmax") else 1000)
 
   def dataframeToMetricsJsonFile(df: DataFrame): Unit = {
     //create the measures/metrics/profile storage (will be re-used if already exists)
     val metricsStorage: MetricsRepository =
       FileSystemMetricsRepository(spark, metricsFilePath.getOrElse("/mnt/metrics.json"))
-    val resultKey = ResultKey(metricsKeyTime.getOrElse(System.currentTimeMillis()), metricsKeyTags)
+    val resultKey = ResultKey(metricsKeyTime, metricsKeyTags)
     val result = ColumnProfilerRunner()
       .onData(df)
-      .withLowCardinalityHistogramThreshold(1000)
+      .withLowCardinalityHistogramThreshold(metricsHistogramBinsMax)
       .useRepository(metricsStorage)
       .saveOrAppendResult(resultKey)
       .run()
@@ -39,10 +38,10 @@ class Metrics(config: AppConfig, spark: SparkSession, dqJson: JSONObject) {
     val metricsStorage: MetricsRepository = {
       (if (metricsFilePath.isEmpty) (new InMemoryMetricsRepository()) else FileSystemMetricsRepository(spark, metricsFilePath.get))
     }
-    val resultKey = ResultKey(metricsKeyTime.getOrElse(System.currentTimeMillis()), metricsKeyTags)
+    val resultKey = ResultKey(metricsKeyTime, metricsKeyTags)
     val result = ColumnProfilerRunner()
       .onData(df)
-      .withLowCardinalityHistogramThreshold(1000)
+      .withLowCardinalityHistogramThreshold(metricsHistogramBinsMax)
       .useRepository(metricsStorage)
       .saveOrAppendResult(resultKey)
       .run()
