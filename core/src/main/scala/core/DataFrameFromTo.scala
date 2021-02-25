@@ -35,7 +35,7 @@ import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
 import com.mongodb.spark.sql.toSparkSessionFunctions
-import com.mongodb.{MongoClient, MongoClientURI, MongoCredential, ServerAddress}
+import com.mongodb.{MongoClient, MongoClientURI, MongoCredential}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
@@ -970,7 +970,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     var authList = new util.ArrayList[MongoCredential]()
     authList.add(mongoCredential)
-    
+
     val uri = new MongoClientURI(s"mongodb://$vaultLogin:$vaultPassword@$clusterNodes/?authSource=$authenticationDatabase&authMechanism=SCRAM-SHA-1")
     val mongoClient = new MongoClient(uri)
     var data = mongoClient.getDatabase(database)
