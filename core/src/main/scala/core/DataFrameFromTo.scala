@@ -963,7 +963,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         vaultPassword = vaultCreds("password")
       }
     }
-    
+
     val mongoCredential = {
       MongoCredential.createPlainCredential(authenticationDatabase, login, vaultPassword.toCharArray)
     }

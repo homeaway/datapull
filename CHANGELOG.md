@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.20] - 2021-02-24
+## [0.1.21] - 2021-02-25
 ### Changed
+- core/src/main/scala/core/DataFramFromTo.scala - No longer useingasInstanceOf[MongoClientURI]
+
+## [0.1.20] - 2021-02-24
 - core/src/main/scala/core/DataFramFromTo.scala - Fixed few arguments w.r.t the building kafka properties
 - core/src/main/scala/core/Migration.scala
 - core/src/main/scala/helper/Helper.scala
