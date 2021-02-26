@@ -949,8 +949,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterName = consul.serviceName
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",")
     }
-    var uri: MongoClientURI = null
-    //if password isn't set, attempt to get from security.Vault
 
     var vaultLogin: String = null
     var vaultPassword: String = null
@@ -965,9 +963,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         vaultPassword = vaultCreds("password")
       }
     }
-    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled).asInstanceOf[MongoClientURI]
+
+
+    val uri = new MongoClientURI(helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled))
     val mongoClient = new MongoClient(uri)
     val data = mongoClient.getDatabase(database)
+
     val response = data.runCommand(org.bson.Document.parse(runCommand))
   }
 
