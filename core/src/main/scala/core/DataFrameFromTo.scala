@@ -963,17 +963,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         vaultPassword = vaultCreds("password")
       }
     }
-
-    val mongoCredential = {
-      MongoCredential.createPlainCredential(authenticationDatabase, vaultLogin, vaultPassword.toCharArray)
-    }
-    var connectionString = new ServerAddress(cluster, 27017)
-    var authList = new util.ArrayList[MongoCredential]()
-    authList.add(mongoCredential)
+    
 
     val uri = new MongoClientURI(helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled))
     val mongoClient = new MongoClient(uri)
-    var data = mongoClient.getDatabase(database)
+    val data = mongoClient.getDatabase(database)
 
     val response = data.runCommand(org.bson.Document.parse(runCommand))
   }
