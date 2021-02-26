@@ -35,7 +35,7 @@ import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
 import com.mongodb.spark.MongoSpark
 import com.mongodb.spark.config.{ReadConfig, WriteConfig}
 import com.mongodb.spark.sql.toSparkSessionFunctions
-import com.mongodb.{MongoClient, MongoClientURI, MongoCredential, ServerAddress}
+import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
@@ -963,7 +963,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         vaultPassword = vaultCreds("password")
       }
     }
-    
+
 
     val uri = new MongoClientURI(helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled))
     val mongoClient = new MongoClient(uri)
