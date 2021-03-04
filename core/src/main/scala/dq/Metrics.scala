@@ -55,7 +55,9 @@ class Metrics(config: AppConfig, spark: SparkSession, dqJson: JSONObject) {
     var analyzerContextDF = {
       //TODO: need to override successMetricsAsDataFrame since it doesn't distinguish betwen the bins of the metric and datatype histograme. This will also allow us to avoid the need for the rlike computed column hack to differentiate the histograms
       successMetricsAsDataFrame(sparkSession = spark, analyzerContext = analyserContext)
-        .withColumn("metric", expr("case when name rlike '^Histogram\\.((abs)|(ratio))\\.((Boolean)|(Fractional)|(Integral)|(String)|(Unknown))$' then 'HistogramDataType' else substring_index(name, '.', 1) end"))
+        .withColumn("metric", expr("case when name rlike '^Histogram\\.((abs)|(ratio))\\.((Boolean)|(Fractional)|(Integral)|(String)|(Unknown))$' then 'HistogramDataType' else split(name, '[\\.]')[1] end"))
+        .withColumn("metric_type", expr("split(name, '[\\.]')[2]"))
+        .withColumn("metric_key", expr("replace(name, substring_index(name, '.', 2) + '.', '')"))
         .withColumn(DATASET_DATE_FIELD, lit(resultKey.dataSetDate))
     }
 
