@@ -4,6 +4,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.21] - 2021-02-25
+### Changed
+- core/src/main/scala/core/DataFramFromTo.scala - No longer using asInstanceOf[MongoClientURI]
+
+## [0.1.20] - 2021-02-24
+- core/src/main/scala/core/DataFramFromTo.scala - Fixed few arguments w.r.t the building kafka properties
+- core/src/main/scala/core/Migration.scala
+- core/src/main/scala/helper/Helper.scala
+
+## [0.1.19] - 2021-02-12
+### Changed
+- api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java: Upgraded EMR version to 5.31.0
+- core/docker_spark_server/Dockerfile: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0
+- core/src/main/resources/Samples/Input_Json_Specification.json: Upgraded Kafka destination spec to match abris 4.0.1 capabilities
+- core/src/main/resources/Samples/Input_Sample_Join_Heterogeneous_Sources.json: Fixed file spelling
+- core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json: Upgraded example to match abris 4.0.1 capabilities
+- core/src/main/scala/core/DataFramFromTo.scala: Removed unnecessary println's, Use s3a when running locally, s3 otherwise, upgraded ABRiS to 4.0.1
+- core/src/main/scala/core/DataPull.scala: Use s3a when running locally, s3 otherwise
+- core/src/main/scala/core/Migration.scala: Removed unnecessary println's, upgraded ABRiS to 4.0.1
+- pom.xml: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0, removed shaded jar, upgraded ABRiS to 4.0.1
+- README.md: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0
+
+## [0.2.1] - 2021-01-26
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java: S3 Cross-Account Access Support.
+
+## [0.2.0] - 2020-12-22
+### Changed
+- Fixed install script error, upgraded AWS CLI to v2
+- Fixed the MS DOS batch script for IAM principals
+- Removed unnecessary environment variables
+### Removed
+- Removed the MS DOS batch script for ECS Deploy
+
+
+## [0.1.18] - 2020-11-05
+### Changed
+- Fixed issue of Teradata destination deadlocking
+
+## [0.1.17] - 2020-10-19
+### Changed
+- core/pom.xml : Remove hive JDBC dependency that was causing Spark SQL to fail
+- core/src/main/scala/core/DataFrameFromTo.scala, core/src/main/scala/core/DataPull.scala, core/src/main/scala/core/Migration.scala, core/src/main/scala/logging/DataPullLog.scala, core/src/test/scala/DataFrameFromToFileSystem.scala : Added support RSA key based auth for SFTP
+- core/src/main/resources/Samples/Input_Sample_filesystem-to-sftp.json : Updated to show RSA Key based auth
+- core/src/main/resources/Samples/Input_Json_Specification.json : Added documentation for using sftp with password or RSA key auth
+
 ## [0.1.16] - 2020-10-18
 ### Changed
 - README.md : Minor path fixes for running DataPull in a local Docker container

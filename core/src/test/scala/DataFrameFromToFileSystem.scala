@@ -30,7 +30,7 @@ class DataFrameFromToFileSystem extends FunSuite with BeforeAndAfter {
       val vaultEnv = null
 
 
-      DataFrameFromToInstance.fileToDataFrame(filePath,fileFormat,delimiter,charset,mergeSchema,sparkSession,false,"",false,login,host,password,awsEnv,vaultEnv)
+      DataFrameFromToInstance.fileToDataFrame(filePath,fileFormat,delimiter,charset,mergeSchema,sparkSession,false,"",false,login,host,password,"", awsEnv,vaultEnv)
     }
     assert(thrown.getMessage === "Platform cannot have null values")
   }

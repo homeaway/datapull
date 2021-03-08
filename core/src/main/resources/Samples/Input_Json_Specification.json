@@ -4,9 +4,9 @@
   "useremailaddress": "YOUR_ID@DOMAIN.com",
   "comment_precisecounts": "optional. If provided true, then we persist the dataframe to provide the accurate counts which will add additional time for the datapull",
   "precisecounts": false,
-  "migration_failure_threshold":"1",
-  "comment_failure_threshold":"Number of acceptable failures in a given set of migrations",
-  "comment_jsoninputfile": "optional. The EMR API rejects JSON inputs that are too long. In that event (and/or to maintain versioned inputs) you can provide this JSON as a .json file uploaded in S3, using this element",	
+  "migration_failure_threshold": "1",
+  "comment_failure_threshold": "Number of acceptable failures in a given set of migrations",
+  "comment_jsoninputfile": "optional. The EMR API rejects JSON inputs that are too long. In that event (and/or to maintain versioned inputs) you can provide this JSON as a .json file uploaded in S3, using this element",
   "jsoninputfile": {
     "s3path": "bucketname/folder/input.json",
     "comment_awsaccesskeyid": "optional, if EMR runs in same environment as S3. Please replace this expired id with your own.",
@@ -28,7 +28,7 @@
       "source_file": {
         "platform": "filesystem",
         "path": "/FOLDER/SUB_FOLDER/",
-        "comment_fileformat": "Supported formats are parquet, json, csv,tsv",
+        "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
         "fileformat": "parquet",
         "comment_groupbyfields": "optional. Applies only to destinations. If specified, the records are group in nested subfolders named field1=value etc",
         "groupbyfields": "field1,field2",
@@ -40,7 +40,7 @@
       "source_s3": {
         "platform": "s3",
         "s3path": "BUCKET_NAME/FOLDER_PATH",
-        "comment_fileformat": "Supported formats are parquet, json, csv, orc, avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
+        "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
         "fileformat": "parquet",
         "comment_groupbyfields": "optional. Applies only to destinations. If specified, the records are group in nested subfolders named field1=value etc",
         "groupbyfields": "field1,field2",
@@ -193,7 +193,7 @@
         "clustername": "IP_ADDR_OR_DNS_NAME",
         "port": "9201",
         "index": "Name of Index, equivalent of database",
-        "comment_savemode":"Optional, the default value is upsert and please check here more information on this 'https://www.elastic.co/guide/en/elasticsearch/hadoop/current/configuration.html#_operation': ",
+        "comment_savemode": "Optional, the default value is upsert and please check here more information on this 'https://www.elastic.co/guide/en/elasticsearch/hadoop/current/configuration.html#_operation': ",
         "savemode": "upsert",
         "mappingid": "Optional:Any unique field of your data",
         "type": "type of index,equivalent of table.",
@@ -205,8 +205,7 @@
           {
             "shell": "curl -XDELETE http://IP_ADDR_OR_DNS_NAME:PORT/INDEX_NAME"
           }
-        ]
-      ,
+        ],
         "comment_pre_migrate_command": "This is to execute shell commands ie mainly curl commands for elastic search",
         "pre_migrate_commands": [
           {
@@ -214,9 +213,9 @@
           }
         ]
       },
-      "source_kafka":{
-        "platform" : "kafka",
-        "comment_bootstrapservers":"this is for bootstrap information of the kafka cluster",
+      "source_kafka": {
+        "platform": "kafka",
+        "comment_bootstrapservers": "this is for bootstrap information of the kafka cluster",
         "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
         "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
         "topic": "TOPIC_NAME",
@@ -240,16 +239,32 @@
         "comment_headerfield": "Optional, if you want to set header field from a column in the dataset else we add timestamp column as headers field. Please note that it should be of the struct type if it's being build in sql",
         "headerfield": "null"
       },
-      "destination": {
+      "destination_kafka": {
         "platform": "kafka",
         "comment_bootstrapservers": "this is for bootstrap information of the kafka cluster",
-        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9092",
-        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
+        "bootstrapservers": "KAFKA_BOOTSTRAP_SERVER:9092",
+        "schemaregistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
         "topic": "TOPIC_NAME",
-        "comment_keyField": "required, field in the dataset that should be used as the kafka topic's key field",
-        "keyField": "some_keyfield",
-        "comment_keyFormat": "Optional, by default will be string. If set to avro, the key field will be converted to avro and the schema will be registered in schema registry",
-        "keyFormat": "string"
+        "comment_valuefield": "optional, field in the dataset that should be used as the kafka topics value field. If not specified, DataPull will use the field named value in the resultset",
+        "valuefield": "value",
+        "comment_valuesubjectnamingstrategy": "Optional, defaults to TopicNameStrategy. Other options are RecordNameStrategy, TopicRecordNameStrategy. Subject naming strategy to use when getting/setting value's schema subject. Ref https://docs.confluent.io/6.0.0/schema-registry/serdes-develop/index.html#subject-name-strategy",
+        "valuesubjectnamingstrategy": "TopicNameStrategy",
+        "comment_valuesubjectrecordnamespace": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Namespace to use. e.g. if topic = test123, valuesubjectnamingstrategy = TopicRecordNameStrategy, valuesubjectrecordnamespace = com.expediagroup.dataplatform, valuesubjectrecordname = PotentialRmdEntry; then subject name for the topic's value  = test123-com.expediagroup.dataplatform.PotentialRmdEntry",
+        "valuesubjectrecordnamespace": "somenamespace",
+        "comment_valuesubjectrecordname": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Name to use",
+        "valuesubjectrecordname": "somename",
+        "comment_valueschemaversion": "optional, version of the topic's value schema, if the topic already has a value schema. If this is not specified, the latest version of the valueschema is picked. If there are no value schemas registered for the topic in schema registry, DataPull will register the schema of the valuefield to Schema Registry",
+        "valueschemaversion": "1",
+        "comment_keyfield": "optional, field in the dataset that should be used as the kafka topic's key field",
+        "keyfield": "some_keyfield",
+        "comment_keysubjectnamingstrategy": "Optional, defaults to TopicNameStrategy. Other options are RecordNameStrategy, TopicRecordNameStrategy. Subject naming strategy to use when getting/setting key's schema subject. Ref https://docs.confluent.io/6.0.0/schema-registry/serdes-develop/index.html#subject-name-strategy",
+        "keysubjectnamingstrategy": "TopicNameStrategy",
+        "comment_keysubjectrecordnamespace": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Namespace to use. e.g. if topic = test123, keysubjectnamingstrategy = TopicRecordNameStrategy, keysubjectrecordnamespace = com.expediagroup.dataplatform, keysubjectrecordname = PotentialRmdEntry; then subject name for the topic's key  = test123-com.expediagroup.dataplatform.PotentialRmdEntry",
+        "keysubjectrecordnamespace": "somenamespace",
+        "comment_keysubjectrecordname": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Name to use",
+        "keysubjectrecordname": "somename",
+        "comment_keyschemaversion": "optional, version of the topic's key schema, if the topic already has a key schema. If this is not specified, the latest version of the key schema is picked. If there are no key schemas registered for the topic in schema registry, DataPull will register the schema of the keyfield to Schema Registry",
+        "keyschemaversion": "1"
       },
       "source_influxdb": {
         "platform": "influxdb",
@@ -264,24 +279,30 @@
         "comment_vaultenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials"
       },
       "destination_influxDB": {
-      "platform": "influxdb",
-      "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
-      "awsenv": "dev",
-      "comment_cluster": "This element accepts both IPs and Consul DNS names. Consul DNS names are required if Vault integration is used to fetch the credentials",
+        "platform": "influxdb",
+        "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
+        "awsenv": "dev",
+        "comment_cluster": "This element accepts both IPs and Consul DNS names. Consul DNS names are required if Vault integration is used to fetch the credentials",
         "cluster": "IP_ADDR_OR_DNS_NAME",
         "database": "DATABASE_NAME",
-      "comment_measurement":"destination measurement .This accept measurement field name/column .Only one column can be selected for measurements.If measurement is empty then provide the provide the measurment in the SQl query ",
-      "measurement": "measurement field name",
-      "comment_tags":"This is optional comma separated column name in destination table/measurement",
-      "tags":[ "tag1","tag2"],
-      "comment_fields":"comma separated column name in destination table/measurement.At least one field is required",
-      "fields":[ "field1","field2"],
+        "comment_measurement": "destination measurement .This accept measurement field name/column .Only one column can be selected for measurements.If measurement is empty then provide the provide the measurment in the SQl query ",
+        "measurement": "measurement field name",
+        "comment_tags": "This is optional comma separated column name in destination table/measurement",
+        "tags": [
+          "tag1",
+          "tag2"
+        ],
+        "comment_fields": "comma separated column name in destination table/measurement.At least one field is required",
+        "fields": [
+          "field1",
+          "field2"
+        ],
         "login": "LOGIN_NAME",
-      "comment_password": "optional. Required if Vault integration is not used",
+        "comment_password": "optional. Required if Vault integration is not used",
         "password": "PASSWORD",
-      "comment_vaultenv":"optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
-      "vaultenv":"dev"
-    },
+        "comment_vaultenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
+        "vaultenv": "dev"
+      },
       "source_mongodb": {
         "platform": "mongodb",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
@@ -383,7 +404,7 @@
           "comment_createormerge": "Optional, defaults to MERGE. Can either be CREATE or MERGE, and denotes whether Neo4j does a CREATE (insert, possibly leading to duplicates, but very fast) or a MERGE (upsert, no duplicates but slower) operation",
           "createormerge": "MERGE",
           "comment_createnodekeyconstraint": "Optional, defaults to true. If true, Data Pull creates a node key constraint for all the key properties of the node",
-          "createnodekeyconstraint" : true
+          "createnodekeyconstraint": true
         },
         "comment_node2": "Optional. Information about the second (of possible two) classes of nodes to be upserted.",
         "node2": {
@@ -418,6 +439,20 @@
         "options": {
           "postactions": "DROP SCHEMA \"DEMO_DB\".\"TESTSCHEMA1\";"
         }
+      },
+      "destination_sftp": {
+        "platform": "sftp",
+        "host": "htp hostname/IP address",
+        "path": "somepath/somefilename.json",
+        "login": "ftpusername",
+        "comment_password": "Optional; password for ftpusername. This attribute is optional/ignored if the pemfilepath attribute is specified.",
+        "password": "ftppassword",
+        "comment_pemfilepath": "Optional; local file path for the PEM RSA private key file for ftpusername. This attribute is not needed if the password attribute is specified. The password attribute is optional/ignored if the pemfilepath attribute is specified. When running on EMR, the jksfilepath should be specified as the S3 location of the PEM file in the format s3://<S3 bucket and folder path>/<PEM file name>, and the pemfilepath should be of the format /mnt/bootstrapfiles/<PEM file name>",
+        "pemfilepath": "/mnt/bootstrapfiles/<PEM file name>",
+        "comment_jksfilepath": "Optional; When running on EMR, the jksfilepath should be specified as the S3 location of the PEM file in the format s3://<S3 bucket and folder path>/<PEM file name>, and the pemfilepath should be of the format /mnt/bootstrapfiles/<PEM file name>",
+        "jksfilepath": "s3://<S3 bucket and folder path>/<PEM file name>",
+        "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
+        "fileformat": "json"
       }
     }
   ],

@@ -22,25 +22,32 @@ import java.security.cert.X509Certificate
 
 import config.AppConfig
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
+import org.apache.kafka.clients.CommonClientConfigs
+import org.apache.kafka.common.config.SslConfigs
+import org.apache.spark.sql.Column
+import org.apache.spark.sql.avro.SchemaConverters
+import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
+import za.co.absa.abris.avro.registry.SchemaSubject
+import za.co.absa.abris.config.{AbrisConfig, ToAvroConfig, ToSchemaDownloadingConfigFragment, ToStrategyConfigFragment}
 
 class Helper(appConfig: AppConfig) {
 
   /**
-    * Returns the text (content) and response code from a REST URL as a String and int.
-    *
-    * @param url            The full URL to connect to.
-    * @param connectTimeout Sets a specified timeout value, in milliseconds,
-    *                       to be used when opening a communications link to the resource referenced
-    *                       by this URLConnection. If the timeout expires before the connection can
-    *                       be established, a java.net.SocketTimeoutException
-    *                       is raised. A timeout of zero is interpreted as an infinite timeout.
-    *                       Defaults to 10000 ms.
-    * @param readTimeout    If the timeout expires before there is data available
-    *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
-    *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
-    * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
-    *
-    */
+   * Returns the text (content) and response code from a REST URL as a String and int.
+   *
+   * @param url            The full URL to connect to.
+   * @param connectTimeout Sets a specified timeout value, in milliseconds,
+   *                       to be used when opening a communications link to the resource referenced
+   *                       by this URLConnection. If the timeout expires before the connection can
+   *                       be established, a java.net.SocketTimeoutException
+   *                       is raised. A timeout of zero is interpreted as an infinite timeout.
+   *                       Defaults to 10000 ms.
+   * @param readTimeout    If the timeout expires before there is data available
+   *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
+   *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
+   * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
+   *
+   */
   @throws(classOf[java.io.IOException])
   @throws(classOf[java.net.SocketTimeoutException])
   def getHttpResponse(url: String,
@@ -51,19 +58,19 @@ class Helper(appConfig: AppConfig) {
                       jsonBody: String = ""): HttpResponse = {
     import java.net.{HttpURLConnection, URL}
 
-    var responseCode:Int =0
-    var content: String=null
+    var responseCode: Int = 0
+    var content: String = null
     retry()
 
-    def retry():Unit= {
+    def retry(): Unit = {
 
-      var retry_count= 1
+      var retry_count = 1
       val no_of_retries = appConfig.no_of_retries
       var vault_exception = StringBuilder.newBuilder
 
-      val sleepTimeout= appConfig.sleeptimeout
+      val sleepTimeout = appConfig.sleeptimeout
 
-      var connection:HttpURLConnection = null
+      var connection: HttpURLConnection = null
       var exceptions: Boolean = false
 
       while (!exceptions) {
@@ -111,7 +118,7 @@ class Helper(appConfig: AppConfig) {
             Thread.sleep(sleepTimeout)
             retry_count += 1
           }
-        }finally {
+        } finally {
           if (connection != null) {
             connection.disconnect()
           }
@@ -119,7 +126,8 @@ class Helper(appConfig: AppConfig) {
       }
 
     }
-     HttpResponse (responseCode, content)
+
+    HttpResponse(responseCode, content)
   }
 
   /**
@@ -141,7 +149,7 @@ class Helper(appConfig: AppConfig) {
   @throws(classOf[java.io.IOException])
   @throws(classOf[java.net.SocketTimeoutException])
   def get(url: String,
-          connectTimeout: Int = appConfig.http_timeout ,
+          connectTimeout: Int = appConfig.http_timeout,
           readTimeout: Int = appConfig.http_timeout,
           requestMethod: String = "GET") = {
     import java.net.{HttpURLConnection, URL}
@@ -157,7 +165,7 @@ class Helper(appConfig: AppConfig) {
 
   def GetEC2pkcs7(): String = {
     var pkcs7 = getHttpResponse("http://169.254.169.254/latest/dynamic/instance-identity/pkcs7", 100000, 10000, "GET").ResponseBody
-    pkcs7= pkcs7.split('\n').mkString
+    pkcs7 = pkcs7.split('\n').mkString
     pkcs7
   }
 
@@ -197,15 +205,77 @@ class Helper(appConfig: AppConfig) {
     }
   }
 
-  def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean): String = {
+  def buildSecureKafkaProperties(keyStorePath: Option[String],
+                                 trustStorePath: Option[String],
+                                 keyStorePassword: Option[String],
+                                 trustStorePassword: Option[String],
+                                 keyPassword: Option[String]): Map[String, String] = {
+
+    var props = Map[String, String]()
+
+    if ((!keyStorePath.isEmpty) || (!trustStorePath.isEmpty)) {
+      props += (CommonClientConfigs.SECURITY_PROTOCOL_CONFIG -> "SSL")
+      props += (SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG -> "")
+      if (!keyStorePath.isEmpty)
+        props += (SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG -> keyStorePath.get)
+      if (!trustStorePath.isEmpty)
+        props += (SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG -> trustStorePath.get)
+      if (!keyStorePassword.isEmpty)
+        props += (SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG -> keyStorePassword.get)
+      if (!trustStorePassword.isEmpty)
+        props += (SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG -> trustStorePassword.get)
+      if (!keyPassword.isEmpty)
+        props += (SslConfigs.SSL_KEY_PASSWORD_CONFIG -> keyPassword.get)
+    }
+    props
+  }
+
+
+  def GetToAvroConfig(topic: String, schemaRegistryUrl: String, dfColumn: Column, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None): ToAvroConfig = {
+    //get the specified schema version
+    //if not specified, then get the latest schema from Schema Registry
+    //if the topic does not have a schema then create and register the schema
+    //applies to both key and value
+    val subject = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) SchemaSubject.usingTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) SchemaSubject.usingRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else SchemaSubject.usingTopicNameStrategy(topicName = topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
+    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl)
+    val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
+    val expression = dfColumn.expr
+    val dataSchema = SchemaConverters.toAvroType(expression.dataType, expression.nullable)
+    println((if (isKey) "key" else "value") + " subject = " + subject.asString)
+    println((if (isKey) "key" else "value") + " avro schema inferred from data  = " + dataSchema.toString())
+    var toAvroConfig: ToAvroConfig = null
+    if (schemaManager.exists(subject)) {
+      val avroConfigFragment = AbrisConfig
+        .toConfluentAvro
+      val toStrategyConfigFragment: ToStrategyConfigFragment = if (schemaVersion.isEmpty) avroConfigFragment.downloadSchemaByLatestVersion
+      else avroConfigFragment.downloadSchemaByVersion(schemaVersion.get)
+      val schemaDownloadingConfigFragment: ToSchemaDownloadingConfigFragment = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) toStrategyConfigFragment.andTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) toStrategyConfigFragment.andRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else toStrategyConfigFragment.andTopicNameStrategy(topic, isKey = isKey)
+      toAvroConfig = schemaDownloadingConfigFragment
+        .usingSchemaRegistry(schemaRegistryUrl)
+    }
+    else {
+      val schemaId = schemaManager.register(subject, dataSchema)
+      toAvroConfig = AbrisConfig
+        .toConfluentAvro
+        .downloadSchemaById(schemaId)
+        .usingSchemaRegistry(schemaRegistryUrl)
+    }
+    println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " + toAvroConfig.schemaString)
+    toAvroConfig
+  }
+
+  def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean, sslEnabled: String): String = {
     if (authenticationEnabled) {
-      "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
+      "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet) + (if (sslEnabled == "true") "&ssl=true&sslInvalidHostNameAllowed=true" else "")
     } else {
       "mongodb://" + cluster + ":27017/" + database + "." + collection + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
     }
   }
+
+  def buildTeradataURI(server: String, database: String, port: Option[Int],isWindowsAuthenticated:Boolean = false): String = {
+    "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=FASTLOAD,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
+
+  }
 }
 
-case class HttpResponse (ResponseCode: Int, ResponseBody: String)
-
-
+case class HttpResponse(ResponseCode: Int, ResponseBody: String)
