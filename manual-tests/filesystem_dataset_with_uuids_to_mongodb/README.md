@@ -1,5 +1,11 @@
 # Test writing dataset with UUID in filesystem to MongoDB
 
+## What is tested?
+1. Data can be read from a CSV file in the filesystem
+1. Data can be written to a MongoDB cluster with authentication
+1. DataPull will create the MongoDB collection if it doesn't exist already
+1. DataPull will write UUIDs to MongoDB in MongoDB's UUID datatype , if DataPull's uuidToBinary() Spark SQL function is used
+
 ## Pre-requisites
 
 1. Docker Desktop
@@ -7,7 +13,7 @@
 1. Robo3T installed on the host machine
 
 ## Steps
-,
+
 1. Open a terminal pointing to the root folder of this repo
 1. Please run DataPull locally in a Dockerised environment, by following all the steps defined in the section "Build and execute within a Dockerised Spark environment" of the [README file in the repo's root folder](../../README.md). 
 1. Confirm the previous step ran successfully, and that you are in the correct folder, by running the following command in the terminal. It should return at least one json file.
@@ -40,11 +46,11 @@
     1. Authentication
         1. User Name: mongoadmin
         1. Password: secret
-1. Using Robo3T, confirm that
+1. Using Robo3T, assert that
     1. There exists a database named `testdb`
     1. There exists a collection named `testcollection` within `testdb`
-    1. The collection `testcollection` has documents that include a UUID field uuidfield with valud UUID values
-1. If the previous step is confirmed, then this test is successful; else the test has failed. Please report the failure to the DataPull project team. 
+    1. The collection `testcollection` has documents that include a UUID field `uuidfield` with valid UUID values
+1. If the previous step is asserted, then this test is successful; else the test has failed. On failure, please report the failure to the DataPull project team. 
 
 ### Cleanup
 In terminal, run 
