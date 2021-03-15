@@ -4,9 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.23] - 2021-03-14
+### Added
+- manual-tests/filesyste_dataset_to_kafka* - Added manual test instructions to test data movement from filesystem to kafka topic
+### Changed
+- core/pom.xml - Removed redundant dependency that causes runtime conflict for kafka clients
+- manual-tests/README.md - Centralised steps to confirm datapull works locally, prior to doing the manual tests
+- README.md, manual-tests/filesystem_dataset_with_uuids_to_mongodb/README.md - Updated spark submit command with necessary kafka runtime dependency
+
 ## [0.1.22] - 2021-03-08
 ### Added
-- manual_tests/* - Added manual test instructions and supporting material
+- manual-tests/* - Added manual test instructions and supporting material
 ### Changed
 - core/docker_spark_server/Dockerfile - Updated the download mirrors and versions for Apache Spark and Hadoop binaries
 - pom.xml - Updated hadoop version to commonly supported version
