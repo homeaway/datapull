@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.22] - 2021-03-08
 ### Added
 - manual-tests/* - Added manual test instructions and supporting material
+
 ### Changed
 - core/docker_spark_server/Dockerfile - Updated the download mirrors and versions for Apache Spark and Hadoop binaries
 - pom.xml - Updated hadoop version to commonly supported version
