@@ -16,7 +16,7 @@
         "schemaregistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
         "topic": "TOPIC_NAME",
         "keyfield": "some_keyfield",
-        "keyFormat": "avro"
+        "keyformat": "string"
       },
       "sql": {
         "query": "select some_keyfield, struct(startIpNum, endIpNum, locId, isp, organization) as value from stage"
