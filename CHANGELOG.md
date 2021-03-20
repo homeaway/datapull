@@ -9,7 +9,7 @@ Added support for string event format for Kafka destinations
 ### Changed
 - core/src/main/scala/core/{DataFrameFromTo.scala, Migration.scala} - Added support for string event format for Kafka destinations
 - core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json - Updated example to use string format for kafka event key
-- core/src/main/resources/Samples/Unput_Json_Specification.json - Updated spec to support string event format for Kafka destinations
+- core/src/main/resources/Samples/Input_Json_Specification.json - Updated spec to support string event format for Kafka destinations
 - manual-tests/filesystem_dataset_to_kafka/{README.md, datapull_input.json} - Updated manual test to test for string event format
 
 ## [0.1.23] - 2021-03-14
