@@ -141,7 +141,6 @@ echo "Uploading core Jar to s3"
 docker run --rm -v "$(pwd)":/data -v "${HOME}/.aws":"/root/.aws" amazon/aws-cli --profile ${AWS_PROFILE} s3 cp /data/target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar "$jar_file_path"
 
 exitAfterFailure
-exit 0
 
 cd ../api/
 
