@@ -428,7 +428,7 @@ class Migration extends SparkListener {
         propertiesMap("table")
       } else {
         "(" + sqlQuery + ") S"
-      }, propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("primarykey"), propertiesMap("lowerBound"), propertiesMap("upperBound"), propertiesMap("numPartitions"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("sslenabled", "false"), propertiesMap.getOrElse("vault", null), platformObject.optJSONObject("jdbcoptions"), propertiesMap.getOrElse("isWindowsAuthenticated", "false").toBoolean , propertiesMap.getOrElse("domain", null))
+      }, propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("primarykey"), propertiesMap("lowerBound"), propertiesMap("upperBound"), propertiesMap("numPartitions"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("sslenabled", "false"), propertiesMap.getOrElse("port", null), platformObject.optJSONObject("jdbcoptions"), propertiesMap.getOrElse("isWindowsAuthenticated", "false").toBoolean , propertiesMap.getOrElse("domain", null))
     } else if (platform == "cassandra") {
       //DO NOT bring in the pre-migrate command in here, else it might run when getting the final counts
       propertiesMap = propertiesMap ++ deriveClusterIPFromConsul(jsonObjectPropertiesToMap(List("cluster", "cluster_key", "consul_dc"), platformObject))
