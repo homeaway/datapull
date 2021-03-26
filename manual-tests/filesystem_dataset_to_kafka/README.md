@@ -6,6 +6,7 @@
 1. Default (TopicNameStrategy) and specifc (RecordNameStrategy) subject naming strategies work for schema
 1. Schema is registered to schema registry, if not present
 1. Topic is created, if not present
+1. Kafka event key and value can be written in avro and string formats
 
 
 ## Pre-requisites
@@ -33,7 +34,7 @@
 1. Open the url http://localhost:9021/clusters on your host machine, to open Confluent Control Center for the dockerised Kafka environment. Using the left nav of Confluent Control Center, navigate to `CO Cluster 1 > Topics` and conform that 
    1. there is a topic named `hello_world`
    1. the topic has 10 events
-   1. each event has an avro key and an avro value
+   1. each event has an string key and an avro value
    1. the schema for the key is shown (the fact that the value's schema is not shown seems to be a limitation of the Kafka Control Center)
    1. the value's schema can be queried using Schema Registry API, by opening http://localhost:8081/subjects/somevaluerecordnamespace.somevaluerecordname/versions/1
 
