@@ -18,7 +18,8 @@
         "keyfield": "HelloField",
         "valuesubjectnamingstrategy": "RecordNameStrategy",
         "valuesubjectrecordnamespace": "somevaluerecordnamespace",
-        "valuesubjectrecordname": "somevaluerecordname"
+        "valuesubjectrecordname": "somevaluerecordname",
+        "keyformat": "string"
       },
       "sql": {
         "query": "select HelloField, struct(WorldField, IntField) as value from fs"

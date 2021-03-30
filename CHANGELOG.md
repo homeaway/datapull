@@ -4,9 +4,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.23] - 2021-03-30
+## [0.1.26] - 2021-03-30
 ### Added
 - Added new Tagging elements.
+
+## [0.1.25] - 2021-03-24
+### changed
+- Migration.scala - Fix port issue
+
+## [0.1.24] - 2021-03-20
+Added support for string event format for Kafka destinations
+### Added
+ - .gitattributes - Force *.sh files to be handled with LF line endings regardless of OS, by git
+### Changed
+- core/src/main/scala/core/{DataFrameFromTo.scala, Migration.scala} - Added support for string event format for Kafka destinations
+- core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json - Updated example to use string format for kafka event key
+- core/src/main/resources/Samples/Input_Json_Specification.json - Updated spec to support string event format for Kafka destinations
+- manual-tests/filesystem_dataset_to_kafka/{README.md, datapull_input.json} - Updated manual test to test for string event format
+- api/terraform/*/*.sh - changed line endings from CRLF to LF
+- api/terraform/datapull_task/ecs_deploy.sh - removed `exit 0` from some previous debug accidentally committed
 
 ## [0.1.23] - 2021-03-14
 ### Added
