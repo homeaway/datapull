@@ -244,6 +244,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
                 .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull")
+                .addTag("Brand", properties.getBrand())
                 .addTag("Application", properties.getApplication()).addTag("CostCenter","66003");
 
         if (properties.getTags() != null && !properties.getTags().isEmpty()) {
