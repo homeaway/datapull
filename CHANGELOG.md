@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.23] - 2021-03-30
+### Added
+- Added new Tagging elements.
+
 ## [0.1.23] - 2021-03-14
 ### Added
 - manual-tests/filesyste_dataset_to_kafka* - Added manual test instructions to test data movement from filesystem to kafka topic
