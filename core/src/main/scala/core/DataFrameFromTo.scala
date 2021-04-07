@@ -23,7 +23,6 @@ import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util
 import java.util.{Calendar, Properties, UUID}
-
 import com.amazonaws.services.logs.model.{DescribeLogStreamsRequest, InputLogEvent, PutLogEventsRequest}
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
@@ -39,6 +38,7 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
+
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import javax.mail.{Message, Session, Transport}
 import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
@@ -49,7 +49,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.jdbc.JdbcDialects
-import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
+import org.apache.spark.sql.{DataFrame, DataFrameReader, Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
 import org.elasticsearch.spark.sql._
@@ -67,13 +67,13 @@ import scala.util.control.Breaks._
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
   val helper = new Helper(appConfig)
-  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String): org.apache.spark.sql.DataFrame = {
+  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: Boolean = false, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String): org.apache.spark.sql.DataFrame = {
 
-    if (filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null) {
+    if (filePath == null && fileFormat == null && delimiter == null && charset == null && sparkSession == null && login == null && host == null && password == null) {
       throw new Exception("Platform cannot have null values")
     }
 
-    if (filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null) {
+    if (filePath == null && fileFormat == null && delimiter == null && charset == null && sparkSession == null && login == null && host == null && password == null) {
       throw new Exception("Platform cannot have empty values")
     }
 
@@ -111,24 +111,22 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     else {
-      if (fileFormat == "json") {
-        createOrReplaceTempViewOnDF(sparkSession.read.json(s"$filePrefix$filePath"))
-      } else if (fileFormat == "csv") {
-        createOrReplaceTempViewOnDF(sparkSession.read.format("csv")
+      var outputDfReader: DataFrameReader = null
+      outputDfReader = sparkSession.read.format(fileFormat)
+      if (fileFormat == "csv") {
+        outputDfReader = outputDfReader
           .option("delimiter", delimiter)
           .option("mode", "DROPMALFORMED")
           .option("header", "true") //reading the headers
           .option("charset", charset)
-          .csv(s"$filePrefix$filePath"))
-
-      } else if (fileFormat == "avro") {
-        createOrReplaceTempViewOnDF(sparkSession.read.format("avro").load(s"$filePrefix$filePath"))
-      } else if (fileFormat == "orc") {
-        createOrReplaceTempViewOnDF(sparkSession.read.format("orc").load(s"$filePrefix$filePath"))
-      } else {
-        //parquet
-        createOrReplaceTempViewOnDF(sparkSession.read.option("mergeSchema", mergeSchema).parquet(s"$filePrefix$filePath"))
       }
+      else if (fileFormat == "parquet") {
+        outputDfReader = outputDfReader
+          .option("mergeSchema", mergeSchema.toString.toLowerCase)
+      }
+      createOrReplaceTempViewOnDF(
+        outputDfReader.load(s"$filePrefix$filePath")
+      )
     }
   }
 
