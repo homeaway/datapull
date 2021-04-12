@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.26] - 2021-04-12
+### changed
+- Controller.scala - Throw an exception to end the execution with exit code 1 when at least one migration has an error. 
+
 ## [0.1.25] - 2021-03-24
 ### changed
 - Migration.scala - Fix port issue
