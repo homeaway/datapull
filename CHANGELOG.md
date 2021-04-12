@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.20] - 2021-02-12
+## [0.1.26] - 2021-04-12
 ### Changed
 - api/src/main/java/com/homeaway/datapullclient/config/DataPullClientConfig.java
 - api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
@@ -13,17 +13,56 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
 -
 
+## [0.1.25] - 2021-03-24
+### changed
+- Migration.scala - Fix port issue
+
+## [0.1.24] - 2021-03-20
+Added support for string event format for Kafka destinations
+### Added
+ - .gitattributes - Force *.sh files to be handled with LF line endings regardless of OS, by git
+### Changed
+- core/src/main/scala/core/{DataFrameFromTo.scala, Migration.scala} - Added support for string event format for Kafka destinations
+- core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json - Updated example to use string format for kafka event key
+- core/src/main/resources/Samples/Input_Json_Specification.json - Updated spec to support string event format for Kafka destinations
+- manual-tests/filesystem_dataset_to_kafka/{README.md, datapull_input.json} - Updated manual test to test for string event format
+- api/terraform/*/*.sh - changed line endings from CRLF to LF
+- api/terraform/datapull_task/ecs_deploy.sh - removed `exit 0` from some previous debug accidentally committed
+
+## [0.1.23] - 2021-03-14
+### Added
+- manual-tests/filesyste_dataset_to_kafka* - Added manual test instructions to test data movement from filesystem to kafka topic
+### Changed
+- core/pom.xml - Removed redundant dependency that causes runtime conflict for kafka clients
+- manual-tests/README.md - Centralised steps to confirm datapull works locally, prior to doing the manual tests
+- README.md, manual-tests/filesystem_dataset_with_uuids_to_mongodb/README.md - Updated spark submit command with necessary kafka runtime dependency
+
+## [0.1.22] - 2021-03-08
+### Added
+- manual-tests/* - Added manual test instructions and supporting material
+
+### Changed
+- core/docker_spark_server/Dockerfile - Updated the download mirrors and versions for Apache Spark and Hadoop binaries
+- pom.xml - Updated hadoop version to commonly supported version
+- README.md - Updated with referece to manual tests
+
+## [0.1.21] - 2021-02-25
+### Changed
+- core/src/main/scala/core/DataFramFromTo.scala - No longer using asInstanceOf[MongoClientURI]
+
+## [0.1.20] - 2021-02-24
+- core/src/main/scala/core/DataFramFromTo.scala - Fixed few arguments w.r.t the building kafka properties
+- core/src/main/scala/core/Migration.scala
+- core/src/main/scala/helper/Helper.scala
+
 ## [0.1.19] - 2021-02-12
 ### Changed
-
 - api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java: Upgraded EMR version to 5.31.0
 - core/docker_spark_server/Dockerfile: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0
-- core/src/main/resources/Samples/Input_Json_Specification.json: Upgraded Kafka destination spec to match abris 4.0.1
-  capabilities
+- core/src/main/resources/Samples/Input_Json_Specification.json: Upgraded Kafka destination spec to match abris 4.0.1 capabilities
 - core/src/main/resources/Samples/Input_Sample_Join_Heterogeneous_Sources.json: Fixed file spelling
 - core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json: Upgraded example to match abris 4.0.1 capabilities
-- core/src/main/scala/core/DataFramFromTo.scala: Removed unnecessary println's, Use s3a when running locally, s3
-  otherwise, upgraded ABRiS to 4.0.1
+- core/src/main/scala/core/DataFramFromTo.scala: Removed unnecessary println's, Use s3a when running locally, s3 otherwise, upgraded ABRiS to 4.0.1
 - core/src/main/scala/core/DataPull.scala: Use s3a when running locally, s3 otherwise
 - core/src/main/scala/core/Migration.scala: Removed unnecessary println's, upgraded ABRiS to 4.0.1
 - pom.xml: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0, removed shaded jar, upgraded ABRiS to 4.0.1

@@ -67,6 +67,7 @@ import scala.util.control.Breaks._
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
   val helper = new Helper(appConfig)
+
   def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: String, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean, secretstore: String, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String): org.apache.spark.sql.DataFrame = {
 
     if (filePath == null && fileFormat == null && delimiter == null && charset == null && mergeSchema == null && sparkSession == null && login == null && host == null && password == null) {
@@ -104,7 +105,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         format("com.springml.spark.sftp").
         option("host", host).
         option("username", login).
-        option( if (pemFilePath == "")  "password" else "pem", if (pemFilePath == "")  password else pemFilePath).
+        option(if (pemFilePath == "") "password" else "pem", if (pemFilePath == "") password else pemFilePath).
         option("fileType", fileFormat).
         load(filePath))
 
@@ -263,7 +264,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         format("com.springml.spark.sftp").
         option("host", host).
         option("username", login).
-        option( if (pemFilePath == "")  "password" else "pem", if (pemFilePath == "")  password else pemFilePath).
+        option(if (pemFilePath == "") "password" else "pem", if (pemFilePath == "") password else pemFilePath).
         option("fileType", fileFormat).
         save(filePath)
 
@@ -949,8 +950,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterName = consul.serviceName
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",")
     }
-    var uri: MongoClientURI = null
-    //if password isn't set, attempt to get from security.Vault
 
     var vaultLogin: String = null
     var vaultPassword: String = null
@@ -965,9 +964,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         vaultPassword = vaultCreds("password")
       }
     }
-    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled).asInstanceOf[MongoClientURI]
+
+
+    val uri = new MongoClientURI(helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled))
     val mongoClient = new MongoClient(uri)
     val data = mongoClient.getDatabase(database)
+
     val response = data.runCommand(org.bson.Document.parse(runCommand))
   }
 
@@ -985,11 +987,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        jobId: String,
                        sparkSession: org.apache.spark.sql.SparkSession,
                        s3TempFolderDeletionError: mutable.StringBuilder,
-                       keyStorePath: String,
-                       trustStorePath: String,
-                       keyStorePassword: String,
-                       trustStorePassword: String,
-                       keyPassword: String): org.apache.spark.sql.DataFrame = {
+                       keyStorePath: Option[String] = None,
+                       trustStorePath: Option[String] = None,
+                       keyStorePassword: Option[String] = None,
+                       trustStorePassword: Option[String] = None,
+                       keyPassword: Option[String] = None): org.apache.spark.sql.DataFrame = {
 
     var groupId_temp = groupId
 
@@ -1007,13 +1009,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     props.put("max.poll.records", "500")
     props.put("session.timeout.ms", "120000")
 
-    props.putAll(helper.buildSecureKafkaProperties(bootstrapServers,
-      schemaRegistries,
-      keyStorePath,
-      trustStorePath,
-      keyStorePassword,
-      trustStorePassword,
-      keyPassword))
+    props.putAll(helper.buildSecureKafkaProperties(keyStorePath = keyStorePath,
+      trustStorePath = trustStorePath,
+      keyStorePassword = keyStorePassword,
+      trustStorePassword = trustStorePassword,
+      keyPassword = keyPassword)
+    )
 
     val consumer = new KafkaConsumer[String, GenericData.Record](props)
 
@@ -1168,20 +1169,31 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        trustStorePath: Option[String] = None,
                        keyStorePassword: Option[String] = None,
                        trustStorePassword: Option[String] = None,
-                       keyPassword: Option[String] = None
+                       keyPassword: Option[String] = None,
+                       keyFormat: String,
+                       valueFormat: String
                       ): Unit = {
 
     var dfavro = spark.emptyDataFrame
-    var columnsToSelect = Seq(to_avro(df.col(valueField), helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = df.col(valueField), schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace)) as 'value)
+    val valueFieldCol = df.col(valueField)
+    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = valueFieldCol, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace)
+    var columnsToSelect = Seq((valueFormat match {
+      case "avro" => to_avro(valueFieldCol, valueAvroConfig)
+      case _ => valueFieldCol
+    }) as 'value)
     if (!keyField.isEmpty) {
       val keyFieldCol = df.col(keyField.get)
-      columnsToSelect = columnsToSelect ++ Seq(to_avro(keyFieldCol, helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace)) as 'key)
+      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace)
+      columnsToSelect = columnsToSelect ++ Seq((keyFormat match {
+        case "avro" => to_avro(keyFieldCol, keyAvroConfig)
+        case _ => keyFieldCol
+      }) as 'key)
     }
     if (!headerField.isEmpty) {
       columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
     }
 
-    val options = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
+    var options = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
 
     dfavro = df.select(columnsToSelect: _*)
     dfavro.printSchema()
@@ -1208,7 +1220,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
 
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated)
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
       }
     } else {
       if (platform == "mssql") {
@@ -1222,7 +1234,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       else if (platform == "teradata") {
         driver = "com.teradata.jdbc.TeraDriver"
 
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated)
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
 
       }
 
@@ -1311,7 +1323,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         driver = "com.teradata.jdbc.TeraDriver"
 
         val helper = new Helper(appConfig)
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated)
+        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
         dflocal = dflocal.coalesce(1) //to prevent locking, by ensuring only there is one writer per table
       }
 
@@ -1416,7 +1428,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           driver = "com.teradata.jdbc.TeraDriver"
 
           val helper = new Helper(appConfig)
-          url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt),isWindowsAuthenticated )
+          url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
 
         }
 

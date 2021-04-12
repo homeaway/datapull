@@ -205,34 +205,31 @@ class Helper(appConfig: AppConfig) {
     }
   }
 
-  def buildSecureKafkaProperties(bootstrapServers: String,
-                                 schemaRegistries: String,
-                                 keyStorePath: String,
-                                 trustStorePath: String,
-                                 keyStorePassword: String,
-                                 trustStorePassword: String,
-                                 keyPassword: String): Map[String, String] = {
+  def buildSecureKafkaProperties(keyStorePath: Option[String],
+                                 trustStorePath: Option[String],
+                                 keyStorePassword: Option[String],
+                                 trustStorePassword: Option[String],
+                                 keyPassword: Option[String]): Map[String, String] = {
 
-    var props = Map("bootstrap.servers" -> bootstrapServers, "schema.registry.url" -> schemaRegistries)
+    var props = Map[String, String]()
 
-    if (keyStorePath != "null" || trustStorePath != "null") {
+    if ((!keyStorePath.isEmpty) || (!trustStorePath.isEmpty)) {
       props += (CommonClientConfigs.SECURITY_PROTOCOL_CONFIG -> "SSL")
-      if (keyStorePath != null)
-        props += (SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG -> keyStorePath)
-      if (trustStorePath != null)
-        props += (SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG -> trustStorePath)
-      if (keyStorePassword != null)
-        props += (SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG -> keyStorePassword)
-      if (trustStorePassword != null)
-        props += (SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG -> trustStorePassword)
-      if (keyPassword != null)
-        props += (SslConfigs.SSL_KEY_PASSWORD_CONFIG -> keyPassword)
       props += (SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG -> "")
+      if (!keyStorePath.isEmpty)
+        props += (SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG -> keyStorePath.get)
+      if (!trustStorePath.isEmpty)
+        props += (SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG -> trustStorePath.get)
+      if (!keyStorePassword.isEmpty)
+        props += (SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG -> keyStorePassword.get)
+      if (!trustStorePassword.isEmpty)
+        props += (SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG -> trustStorePassword.get)
+      if (!keyPassword.isEmpty)
+        props += (SslConfigs.SSL_KEY_PASSWORD_CONFIG -> keyPassword.get)
     }
-
     props
-
   }
+
 
   def GetToAvroConfig(topic: String, schemaRegistryUrl: String, dfColumn: Column, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None): ToAvroConfig = {
     //get the specified schema version

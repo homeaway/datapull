@@ -1,0 +1,35 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "migrations": [
+    {
+      "sources": [
+        {
+          "platform": "filesystem",
+          "path": "target/classes/SampleData/HelloWorld.csv",
+          "fileformat": "csv",
+          "alias": "fs"
+        }
+      ],
+      "sql": {
+        "query": "SELECT *, uuidToBinary(uuid()) as uuidfield FROM fs"
+      },
+      "destination": {
+        "platform": "mongodb",
+        "cluster": "mongoserver",
+        "authenticationdatabase": "admin",
+        "database": "testdb",
+        "collection": "testcollection",
+        "login": "mongoadmin",
+        "password": "secret"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "ComponentInfo": "YOUR_Component-UUID_dominion"
+  }
+}

@@ -13,7 +13,7 @@
         <spark.version>2.4.6</spark.version>
         <spark.minor.version>2.4</spark.minor.version>
         <maven.plugin.version>3.2.0</maven.plugin.version>
-        <hadoop.version>2.10.0</hadoop.version>
+        <hadoop.version>2.10.1</hadoop.version>
     </properties>
 
     <dependencyManagement>
@@ -282,11 +282,6 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>0.11.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>io.confluent</groupId>
-            <artifactId>kafka-avro-serializer</artifactId>
-            <version>3.3.0</version>
         </dependency>
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>
