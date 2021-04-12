@@ -23,6 +23,7 @@ import java.util.concurrent.Executors
 import com.amazonaws.services.simpleemail.model.{Body, Content, Destination}
 import config.AppConfig
 import javax.mail._
+import helper._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import logging._
 import org.codehaus.jettison.json.JSONArray
@@ -41,6 +42,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
   val alerts = new Alert(appConfig)
   val dataPullLogs = new DataPullLog(appConfig, pipeline)
   var env:String= null
+  val helper = new Helper(appConfig)
 
   def neatifyReportHtml(reportRowsHtml: String, reportCounts: Boolean, custom_retries: Boolean): String = {
     //make a table out of the body
@@ -166,6 +168,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
             SendEmail(failureEmailAddress, updatedBodyHtml, applicationId, pipelineName, env, "Data Pull job failed for the Pipeline:" + awsenv + "- " + pipelineName + "-Pipeline (" + applicationId + ")", authenticatedUser)
           }
         }
+        throw new helper.CustomListOfExceptions(migrationErrors.mkString("\n"))
       }
       if (migrationErrors.isEmpty) {
         dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Completed", null, sparkSession)
