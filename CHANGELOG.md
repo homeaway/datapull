@@ -6,11 +6,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 ## [0.1.20] - 2021-02-12
-
 ### Changed
+- api/src/main/java/com/homeaway/datapullclient/config/DataPullClientConfig.java
+- api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+-
 
 ## [0.1.19] - 2021-02-12
-
 ### Changed
 
 - api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java: Upgraded EMR version to 5.31.0
