@@ -42,9 +42,8 @@ public class DataPullTask implements Runnable {
 
     private final String jksS3Path;
 
-    private static final String BOOTSTRAP_FOLDER = "datapull-opensource/bootstrapfiles";
-    private static final String SPARK_SUBMIT_CONF_DRIVER = "--conf \"spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/mnt/bootstrapfiles/%s\"\t";
-    private static final String SPARK_SUBMIT_CONF_EXECUTOR = "--conf \"spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/mnt/bootstrapfiles/%s\"\t";
+    private static final String SPARK_SUBMIT_CONF_DRIVER = "\t--conf \"spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/mnt/bootstrapfiles/%s\"\t";
+    private static final String SPARK_SUBMIT_CONF_EXECUTOR = "\t--conf \"spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/mnt/bootstrapfiles/%s\"\t";
 
     private String s3JarPath;
 
@@ -56,11 +55,11 @@ public class DataPullTask implements Runnable {
     private ClusterProperties clusterProperties;
     private List<String> bootstrapFilesList;
 
-    public DataPullTask(final String taskId, final String s3File) {
+    public DataPullTask(final String taskId, final String s3File, final String jksFilePath) {
         s3FilePath = s3File;
         this.taskId = taskId;
         jsonS3Path = this.s3FilePath + ".json";
-        jksS3Path = s3File + ".sh";
+        jksS3Path = jksFilePath;
     }
 
     public static List<String> toList(final String[] array) {
@@ -97,18 +96,20 @@ public class DataPullTask implements Runnable {
         final String logFilePath = dataPullProperties.getLogFilePath();
         final String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
         final String logPath = logFilePath == null || logFilePath.equals("") ?
-                "s3://"+s3RepositoryBucketName+"/" + "datapull-opensource/logs/SparkLogs" : logFilePath;
+                "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/logs/SparkLogs" : logFilePath;
 
-        s3JarPath = "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar";
+        s3JarPath = s3JarPath == null || s3JarPath.equals("") ?
+                "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar" : s3JarPath;
 
-        if(!clusters.isEmpty()){
+//        s3JarPath = "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar";
+
+        if (!clusters.isEmpty()) {
             final ClusterSummary summary = clusters.get(0);
 
-            if(summary != null){
+            if (summary != null) {
                 this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
             }
-        }
-        else{
+        } else {
             final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
         }
 

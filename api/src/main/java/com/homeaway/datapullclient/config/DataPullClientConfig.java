@@ -48,8 +48,8 @@ public class DataPullClientConfig {
 
     @Bean
     @Scope("prototype")
-    public DataPullTask getTask(String taskId, String json) {
-        return new DataPullTask(taskId, json);
+    public DataPullTask getTask(String taskId, String json, String jksFile) {
+        return new DataPullTask(taskId, json, jksFile);
     }
 
     @Bean

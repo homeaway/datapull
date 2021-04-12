@@ -1,12 +1,21 @@
 # Change Log
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 ## [0.1.26] - 2021-04-12
+
 ### changed
 - Controller.scala - Throw an exception to end the execution with exit code 1 when at least one migration has an error. 
+
+### Changed
+- api/src/main/java/com/homeaway/datapullclient/config/DataPullClientConfig.java
+- api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
 
 ## [0.1.25] - 2021-03-24
 ### changed
@@ -62,6 +71,7 @@ Added support for string event format for Kafka destinations
 - core/src/main/scala/core/Migration.scala: Removed unnecessary println's, upgraded ABRiS to 4.0.1
 - pom.xml: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0, removed shaded jar, upgraded ABRiS to 4.0.1
 - README.md: Upgraded Spark version to 2.4.6, downgraded Hadoop version to 2.10.0
+
 
 ## [0.2.1] - 2021-01-26
 ### Changed
