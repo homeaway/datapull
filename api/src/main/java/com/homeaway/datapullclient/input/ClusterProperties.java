@@ -97,6 +97,9 @@ public class ClusterProperties {
     @JsonAlias({"Application", "application"})
     private String application;
 
+    @JsonAlias({"CostCenter", "costcenter"})
+    private String costCenter;
+
     @JsonAlias({"Tags", "tags"})
     private Map<String, String> tags = new HashMap<String, String>();
 
@@ -126,6 +129,7 @@ public class ClusterProperties {
                 ", product='" + product + '\'' +
                 ", team='" + team + '\'' +
                 ", env='" + env + '\'' +
+                ", costCenter='" + costCenter + '\'' +
                 '}';
     }
 }
