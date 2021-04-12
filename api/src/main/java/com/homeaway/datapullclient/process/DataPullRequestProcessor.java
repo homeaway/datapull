@@ -77,6 +77,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private String env;
 
     private static final String DATAPULL_HISTORY_FOLDER = "datapull-opensource/history";
+    private static final String BOOTSTRAP_FOLDER = "datapull-opensource/bootstrapfiles";
 
     private final Map<String, Future<?>> tasksMap = new ConcurrentHashMap<>();
 
@@ -163,14 +164,17 @@ public class DataPullRequestProcessor implements DataPullClientService {
             String jobName = pipelineEnv + PIPELINE_NAME_DELIMITER + EMR + PIPELINE_NAME_DELIMITER + pipeline + PIPELINE_NAME_DELIMITER + PIPELINE_NAME_SUFFIX;
             String applicationHistoryFolderPath = applicationHistoryFolder == null || applicationHistoryFolder.isEmpty() ?
                     s3RepositoryBucketName + "/" + DATAPULL_HISTORY_FOLDER : applicationHistoryFolder;
+            String bootstrapFilePath = s3RepositoryBucketName + "/" + BOOTSTRAP_FOLDER;
             String filePath = applicationHistoryFolderPath + "/" + jobName;
             String bootstrapFile = jobName + ".sh";
+            String jksFilePath = bootstrapFilePath + "/" + bootstrapFile;
             List<String> bootstrapActionFiles = new ArrayList<>();
+            String bootstrapActionStringFromUser = Objects.toString(reader.getBootstrapactionstring(), "");
             if(myObjects != null && myObjects.length > 0){
-                bootstrapActionFiles.addAll(createBootstrapScript(myObjects, bootstrapFile, applicationHistoryFolderPath));
+                bootstrapActionFiles.addAll(createBootstrapScript(myObjects, bootstrapFile, bootstrapFilePath, bootstrapActionStringFromUser));
             }
 
-            DataPullTask task = createDataPullTask(filePath, reader, jobName, creator, node.path("sparkjarfile").asText(), bootstrapActionFiles);
+            DataPullTask task = createDataPullTask(filePath, jksFilePath, reader, jobName, creator, node.path("sparkjarfile").asText(), bootstrapActionFiles);
             if(!isStart) {
                 json = originalInputJson.equals(json) ? json : originalInputJson;
                 saveConfig(applicationHistoryFolderPath, jobName + ".json", json);
@@ -190,7 +194,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
             log.debug("runDataPull <- return");
     }
 
-    private StringBuilder createBootstrapString(Object[] paths) throws ProcessingException {
+    private StringBuilder createBootstrapString(Object[] paths, String bootstrapActionStringFromUser) throws ProcessingException {
 
         StringBuilder stringBuilder = new StringBuilder();
 
@@ -201,10 +205,13 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 stringBuilder.append(String.format(JKS_FILE_STRING, obj.toString())).append(System.getProperty("line.separator"));
             }
         }
+        if (bootstrapActionStringFromUser != null && !bootstrapActionStringFromUser.isEmpty()) {
+            stringBuilder.append(bootstrapActionStringFromUser);
+        }
         return stringBuilder;
     }
 
-    private List<String> createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath) throws ProcessingException {
+    private List<String> createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath, String bootstrapActionStringFromUser) throws ProcessingException {
 
         StringBuilder stringBuilder = new StringBuilder();
         List<String> list = new ArrayList<>();
@@ -220,17 +227,19 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 if (sources != null && sources.length > 0) {
                     for (Source source : sources) {
                         if (source.getJksfiles() != null) {
-                            list.addAll(Arrays.asList(mig.getSource().getJksfiles()));
+                            list.addAll(Arrays.asList(source.getJksfiles()));
                         }
                     }
                 }
             }
-            if (mig.getDestination().getJksfiles() != null) {
-                list.addAll(Arrays.asList(mig.getDestination().getJksfiles()));
+            if (mig.getDestination() != null) {
+                if (mig.getDestination().getJksfiles() != null) {
+                    list.addAll(Arrays.asList(mig.getDestination().getJksfiles()));
+                }
             }
         }
         if (!list.isEmpty()) {
-            stringBuilder = createBootstrapString(list.toArray());
+            stringBuilder = createBootstrapString(list.toArray(), bootstrapActionStringFromUser);
         }
         if (stringBuilder.length() > 0) {
             saveConfig(bootstrapFilePath, bootstrapFile, stringBuilder.toString());
@@ -238,9 +247,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
         return list;
     }
 
-    private DataPullTask createDataPullTask(String fileS3Path, ClusterProperties properties, String jobName, String creator, String customJarFilePath, List<String> bootstrapFilesList) {
+    private DataPullTask createDataPullTask(String fileS3Path, String jksFilePath, ClusterProperties properties, String jobName, String creator, String customJarFilePath, List<String> bootstrapFilesList) {
         String creatorTag = String.join(" ", Arrays.asList(creator.split(",|;")));
-        DataPullTask task = config.getTask(jobName, fileS3Path).withClusterProperties(properties).withCustomJar(customJarFilePath).bootstrapFilesList(bootstrapFilesList)
+        DataPullTask task = config.getTask(jobName, fileS3Path, jksFilePath).withClusterProperties(properties).withCustomJar(customJarFilePath).bootstrapFilesList(bootstrapFilesList)
                 .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
                 .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull")
