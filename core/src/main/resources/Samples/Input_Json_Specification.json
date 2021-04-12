@@ -264,7 +264,11 @@
         "comment_keysubjectrecordname": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Name to use",
         "keysubjectrecordname": "somename",
         "comment_keyschemaversion": "optional, version of the topic's key schema, if the topic already has a key schema. If this is not specified, the latest version of the key schema is picked. If there are no key schemas registered for the topic in schema registry, DataPull will register the schema of the keyfield to Schema Registry",
-        "keyschemaversion": "1"
+        "keyschemaversion": "1",
+        "comment_keyformat": "Optional, by default will be avro. Can also be string. If string is chosen, the key field should be of type string. If the field is a complex data type like a struct, you can use the to_json() spark sql command",
+        "keyformat": "avro",
+        "comment_valueformat": "Optional, by default will be avro. Can also be string. If string is chosen, the value field should be of type string. If the field is a complex data type like a struct, you can use the to_json() spark sql command",
+        "valueformat": "avro"
       },
       "source_influxdb": {
         "platform": "influxdb",
