@@ -94,6 +94,8 @@ public class ClusterProperties {
     @JsonAlias({"Tags", "tags"})
     private Map<String, String> tags = new HashMap<String, String>();
 
+    @JsonProperty("bootstrapactionstring")
+    private String bootstrapactionstring;
 
     private String env;
 
@@ -119,6 +121,7 @@ public class ClusterProperties {
                 ", portfolio='" + portfolio + '\'' +
                 ", product='" + product + '\'' +
                 ", team='" + team + '\'' +
+                ", bootstrapactionstring='" + bootstrapactionstring + '\'' +
                 ", env='" + env + '\'' +
                 '}';
     }
