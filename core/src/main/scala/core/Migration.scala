@@ -251,7 +251,7 @@ class Migration extends SparkListener {
           trustStorePassword = destinationMap.get("truststorepassword"),
           keyPassword = destinationMap.get("keypassword"),
           isStream = df.isStreaming,
-          keyFormat = destinationMap.getOrElse("keyformat", "string"),
+          keyFormat = destinationMap.getOrElse("keyformat", "avro"),
           valueFormat = destinationMap.getOrElse("valueformat", "avro"),
           addlSparkOptions = (if (destination.optJSONObject("sparkoptions") == null) None else Some(destination.optJSONObject("sparkoptions")))
         )
@@ -468,11 +468,31 @@ class Migration extends SparkListener {
 
     if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
       val sqlQuery = mssqlPlatformQueryFromS3File(sparkSession, platformObject)
-      dataframeFromTo.rdbmsToDataFrame(platform, propertiesMap("awsenv"), propertiesMap("server"), propertiesMap("database"), if (sqlQuery == "") {
-        propertiesMap("table")
-      } else {
-        "(" + sqlQuery + ") S"
-      }, propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("primarykey"), propertiesMap("lowerBound"), propertiesMap("upperBound"), propertiesMap("numPartitions"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("sslenabled", "false"), propertiesMap.getOrElse("vault", null), platformObject.optJSONObject("jdbcoptions"), propertiesMap.getOrElse("isWindowsAuthenticated", "false").toBoolean, propertiesMap.getOrElse("domain", null))
+      dataframeFromTo.rdbmsToDataFrame(
+        platform = platform,
+        awsEnv = propertiesMap("awsenv"),
+        server = propertiesMap("server"),
+        database = propertiesMap("database"),
+        table = if (sqlQuery == "") {
+          propertiesMap("table")
+        } else {
+          "(" + sqlQuery + ") S"
+        },
+        login = propertiesMap("login"),
+        password = propertiesMap("password"),
+        sparkSession = sparkSession,
+        primarykey = propertiesMap("primarykey"),
+        lowerbound = propertiesMap("lowerBound"),
+        upperbound = propertiesMap("upperBound"),
+        numofpartitions = propertiesMap("numPartitions"),
+        vaultEnv = propertiesMap("vaultenv"),
+        secretStore = propertiesMap.getOrElse("secretstore", "vault"),
+        sslEnabled = propertiesMap.getOrElse("sslenabled", "false"),
+        port = propertiesMap.getOrElse("port", null),
+        addlJdbcOptions = platformObject.optJSONObject("jdbcoptions"),
+        isWindowsAuthenticated = propertiesMap.getOrElse("isWindowsAuthenticated", "false").toBoolean,
+        domainName = propertiesMap.getOrElse("domain", null)
+      )
     } else if (platform == "cassandra") {
       //DO NOT bring in the pre-migrate command in here, else it might run when getting the final counts
       propertiesMap = propertiesMap ++ deriveClusterIPFromConsul(jsonObjectPropertiesToMap(List("cluster", "cluster_key", "consul_dc"), platformObject))
@@ -559,7 +579,7 @@ class Migration extends SparkListener {
         keyStorePassword = propertiesMap.get("keystorepassword"),
         trustStorePassword = propertiesMap.get("truststorepassword"),
         keyPassword = propertiesMap.get("keypassword"),
-        keyFormat = propertiesMap.getOrElse("keyformat", "string"),
+        keyFormat = propertiesMap.getOrElse("keyformat", "avro"),
         valueFormat = propertiesMap.getOrElse("valueformat", "avro"),
         addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
         isStream = propertiesMap.getOrElse("isstream", "false").toBoolean)
