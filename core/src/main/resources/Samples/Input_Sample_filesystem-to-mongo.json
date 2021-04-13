@@ -4,7 +4,7 @@
     {
       "source": {
         "platform": "filesystem",
-        "path": "target/classes/SampleData/HelloWorld.csv",
+        "path": "target/classes/SampleData/HelloWorld/HelloWorld.csv",
         "fileformat": "csv"
       },
       "destination": {

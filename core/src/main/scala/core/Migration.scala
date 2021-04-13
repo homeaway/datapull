@@ -208,12 +208,51 @@ class Migration extends SparkListener {
 
         dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", "vault"), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], true, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("pemfilepath", ""), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
       }
+      else if (destinationMap("platform") == "console") {
+        val numRows: Int = destinationMap.getOrElse("numrows", "20").toInt
+        val truncateData: Boolean = destinationMap.getOrElse("truncate", "true").toBoolean
+        if (df.isStreaming) {
+          val query = dft.writeStream
+            .outputMode(destinationMap.getOrElse("outputmode", "append"))
+            .format("console")
+            .option("numRows", numRows.toString)
+            .option("truncate", truncateData.toString)
+            .start()
+        }
+        else {
+          df.show(numRows = numRows, truncate = truncateData)
+        }
+      }
       else if (destinationMap("platform") == "hive") {
         dataframeFromTo.dataFrameToHive(destinationMap("table"), destinationMap.getOrElse("savemode", "Append"), dft)
       } else if (destinationMap("platform") == "mongodb") {
         dataframeFromTo.dataFrameToMongodb(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("database"), destinationMap("authenticationdatabase"), destinationMap("collection"), destinationMap("login"), destinationMap("password"), destinationMap.getOrElse("replicaset", null), destinationMap.getOrElse("replacedocuments", "true"), destinationMap.getOrElse("orderedrecords", "false"), dft, sparkSession, destinationMap.getOrElse("documentfromjsonfield", "false"), destinationMap.getOrElse("jsonfield", "jsonfield"), destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destination.optJSONObject("sparkoptions"), destinationMap.get("maxBatchSize").getOrElse(null), destinationMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean], destinationMap.getOrElse("sslenabled", "false"))
       } else if (destinationMap("platform") == "kafka") {
-        dataframeFromTo.dataFrameToKafka(spark = sparkSession, df = dft, valueField = destinationMap.getOrElse("valuefield", "value"), topic = destinationMap("topic"), kafkaBroker = destinationMap("bootstrapservers"), schemaRegistryUrl = destinationMap("schemaregistries"), valueSchemaVersion = (if (destinationMap.get("valueschemaversion") == None) None else Some(destinationMap.getOrElse("valueschemaversion", "1").toInt)), valueSubjectNamingStrategy = destinationMap.getOrElse("valuesubjectnamingstrategy", "TopicNameStrategy"), valueSubjectRecordName = destinationMap.get("valuesubjectrecordname"), valueSubjectRecordNamespace = destinationMap.get("valuesubjectrecordnamespace"), keyField = destinationMap.get("keyfield"), keySchemaVersion = (if (destinationMap.get("keyschemaversion") == None) None else Some(destinationMap.getOrElse("keyschemaversion", "1").toInt)), keySubjectNamingStrategy = destinationMap.getOrElse("keysubjectnamingstrategy", "TopicNameStrategy"), keySubjectRecordName = destinationMap.get("keysubjectrecordname"), keySubjectRecordNamespace = destinationMap.get("keysubjectrecordnamespace"), headerField = destinationMap.get("headerfield"), keyStorePath = destinationMap.get("keystorepath"), trustStorePath = destinationMap.get("truststorepath"), keyStorePassword = destinationMap.get("keystorepassword"), trustStorePassword = destinationMap.get("truststorepassword"), keyPassword = destinationMap.get("keypassword"))
+        dataframeFromTo.dataFrameToKafka(
+          spark = sparkSession,
+          df = dft,
+          valueField = destinationMap.getOrElse("valuefield", "value"),
+          topic = destinationMap("topic"),
+          kafkaBroker = destinationMap("bootstrapservers"),
+          schemaRegistryUrl = destinationMap("schemaregistries"),
+          valueSchemaVersion = (if (destinationMap.get("valueschemaversion") == None) None else Some(destinationMap.getOrElse("valueschemaversion", "1").toInt)),
+          valueSubjectNamingStrategy = destinationMap.getOrElse("valuesubjectnamingstrategy", "TopicNameStrategy"),
+          valueSubjectRecordName = destinationMap.get("valuesubjectrecordname"),
+          valueSubjectRecordNamespace = destinationMap.get("valuesubjectrecordnamespace"),
+          keyField = destinationMap.get("keyfield"),
+          keySchemaVersion = (if (destinationMap.get("keyschemaversion") == None) None else Some(destinationMap.getOrElse("keyschemaversion", "1").toInt)),
+          keySubjectNamingStrategy = destinationMap.getOrElse("keysubjectnamingstrategy", "TopicNameStrategy"),
+          keySubjectRecordName = destinationMap.get("keysubjectrecordname"),
+          keySubjectRecordNamespace = destinationMap.get("keysubjectrecordnamespace"),
+          headerField = destinationMap.get("headerfield"),
+          keyStorePath = destinationMap.get("keystorepath"),
+          trustStorePath = destinationMap.get("truststorepath"),
+          keyStorePassword = destinationMap.get("keystorepassword"),
+          trustStorePassword = destinationMap.get("truststorepassword"),
+          keyPassword = destinationMap.get("keypassword"),
+          isStream = df.isStreaming,
+          addlSparkOptions = (if (destination.optJSONObject("sparkoptions") == null) None else Some(destination.optJSONObject("sparkoptions")))
+        )
       } else if (destinationMap("platform") == "elastic") {
         dataframeFromTo.dataFrameToElastic(destinationMap("awsenv"), destinationMap("clustername"), destinationMap("port"), destinationMap("index"), destinationMap("type"), destinationMap("version"), destinationMap("login"), destinationMap("password"), destinationMap("local_dc"), destination.optJSONObject("sparkoptions"), dft, reportRowHtml, destinationMap("vaultenv"), destinationMap.getOrElse("savemode", "index"), destinationMap.getOrElse("mappingid", null), destinationMap.getOrElse("flag", "false"), destinationMap.getOrElse("secretstore", "vault"), sparkSession)
       }
@@ -297,6 +336,9 @@ class Migration extends SparkListener {
         )
       }
 
+      if (dft.isStreaming) {
+        sparkSession.streams.awaitAnyTermination()
+      }
 
       def prePostFortmpS3(datastore: JSONObject): Unit = {
         var customized_object = new JSONObject()
@@ -436,7 +478,22 @@ class Migration extends SparkListener {
     } else if (platform == "s3") {
       sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
       setAWSCredentials(sparkSession, propertiesMap)
-      dataframeFromTo.fileToDataFrame(propertiesMap("s3path"), propertiesMap("fileformat"), propertiesMap.getOrElse("delimiter", ","), propertiesMap.getOrElse("charset", "utf-8"), propertiesMap.getOrElse("mergeschema", "false").toBoolean, sparkSession, true, propertiesMap.getOrElse("secretstore", "vault"), false, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("pemfilepath", ""), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
+      dataframeFromTo.fileToDataFrame(
+        filePath = propertiesMap("s3path"),
+        fileFormat = propertiesMap("fileformat"),
+        delimiter = propertiesMap.getOrElse("delimiter", ","),
+        charset = propertiesMap.getOrElse("charset", "utf-8"),
+        mergeSchema = propertiesMap.getOrElse("mergeschema", "false").toBoolean,
+        sparkSession = sparkSession,
+        isS3 = true,
+        secretstore = propertiesMap.getOrElse("secretstore", "vault"),
+        login = propertiesMap.getOrElse("login", "false"),
+        host = propertiesMap.getOrElse("host", "false"),
+        password = propertiesMap.getOrElse("password", "false"),
+        pemFilePath = propertiesMap.getOrElse("pemfilepath", ""),
+        awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
+        vaultEnv = propertiesMap.getOrElse("vaultEnv", "false")
+      )
     } else if (platform == "filesystem") {
       sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
       dataframeFromTo.fileToDataFrame(
@@ -446,9 +503,28 @@ class Migration extends SparkListener {
         charset = propertiesMap.getOrElse("charset", "utf-8"),
         mergeSchema = propertiesMap.getOrElse("mergeschema", "false").toBoolean,
         sparkSession = sparkSession,
-        isS3 = false,
         secretstore = propertiesMap.getOrElse("secretstore", "vault"),
-        isSFTP = false,
+        login = propertiesMap.getOrElse("login", "false"),
+        host = propertiesMap.getOrElse("host", "false"),
+        password = propertiesMap.getOrElse("password", "false"),
+        pemFilePath = propertiesMap.getOrElse("pemfilepath", ""),
+        awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
+        vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
+        isStream = propertiesMap.getOrElse("isstream", "false").toBoolean,
+        addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions")))
+      )
+    }
+
+    else if (platform == "sftp") {
+      dataframeFromTo.fileToDataFrame(
+        filePath = propertiesMap("path"),
+        fileFormat = propertiesMap("fileformat"),
+        delimiter = propertiesMap.getOrElse("delimiter", ","),
+        charset = propertiesMap.getOrElse("charset", "utf-8"),
+        mergeSchema = propertiesMap.getOrElse("mergeschema", "false").toBoolean,
+        sparkSession = sparkSession,
+        secretstore = propertiesMap.getOrElse("secretstore", "vault"),
+        isSFTP = true,
         login = propertiesMap.getOrElse("login", "false"),
         host = propertiesMap.getOrElse("host", "false"),
         password = propertiesMap.getOrElse("password", "false"),
@@ -457,17 +533,32 @@ class Migration extends SparkListener {
         vaultEnv = propertiesMap.getOrElse("vaultEnv", "false")
       )
     }
-
-    else if (platform == "sftp") {
-      dataframeFromTo.fileToDataFrame(propertiesMap("path"), propertiesMap("fileformat"), propertiesMap.getOrElse("delimiter", ","), propertiesMap.getOrElse("charset", "utf-8"), propertiesMap.getOrElse("mergeschema", "false").toBoolean, sparkSession, false, propertiesMap.getOrElse("secretstore", "vault"), true, propertiesMap.getOrElse("login", "false"), propertiesMap.getOrElse("host", "false"), propertiesMap.getOrElse("password", "false"), propertiesMap.getOrElse("pemfilepath", ""), propertiesMap.getOrElse("awsEnv", "false"), propertiesMap.getOrElse("vaultEnv", "false"))
-    }
     else if (platform == "hive") {
       dataframeFromTo.hiveToDataFrame(propertiesMap("url"), sparkSession, propertiesMap("dbtable"), propertiesMap.getOrElse("username", ""), propertiesMap.getOrElse("fetchsize", ""))
     } else if (platform == "mongodb") {
       dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("tmpfilelocation", null), propertiesMap.getOrElse("samplesize", null), propertiesMap.getOrElse("sslenabled", "false"))
     }
     else if (platform == "kafka") {
-      dataframeFromTo.kafkaToDataFrame(propertiesMap("bootstrapservers"), propertiesMap("topic"), propertiesMap("offset"), propertiesMap("schemaregistries"), propertiesMap.getOrElse("keydeserializer", "org.apache.kafka.common.serialization.StringDeserializer"), propertiesMap("valuedeserializer"), propertiesMap.getOrElse("s3location", appConfig.s3bucket.toString + "/datapull-opensource/logs/"), propertiesMap.getOrElse("groupid", null), propertiesMap.getOrElse("requiredonlyvalue", "false"), propertiesMap.getOrElse("payloadcolumnname", "value"), migrationId, jobId, sparkSession, s3TempFolderDeletionError, propertiesMap.get("keystorepath"), propertiesMap.get("truststorepath"), propertiesMap.get("keystorepassword"), propertiesMap.get("truststorepassword"), propertiesMap.get("keypassword"))
+      dataframeFromTo.kafkaToDataFrame(
+        spark = sparkSession,
+        kafkaBroker = propertiesMap("bootstrapservers"),
+        schemaRegistryUrl = propertiesMap("schemaregistries"),
+        topic = propertiesMap("topic"),
+        valueSchemaVersion = (if (propertiesMap.get("valueschemaversion") == None) None else Some(propertiesMap.getOrElse("valueschemaversion", "1").toInt)),
+        valueSubjectNamingStrategy = propertiesMap.getOrElse("valuesubjectnamingstrategy", "TopicNameStrategy"),
+        valueSubjectRecordName = propertiesMap.get("valuesubjectrecordname"),
+        valueSubjectRecordNamespace = propertiesMap.get("valuesubjectrecordnamespace"),
+        keySchemaVersion = (if (propertiesMap.get("keyschemaversion") == None) None else Some(propertiesMap.getOrElse("keyschemaversion", "1").toInt)),
+        keySubjectNamingStrategy = propertiesMap.getOrElse("keysubjectnamingstrategy", "TopicNameStrategy"),
+        keySubjectRecordName = propertiesMap.get("keysubjectrecordname"),
+        keySubjectRecordNamespace = propertiesMap.get("keysubjectrecordnamespace"),
+        keyStorePath = propertiesMap.get("keystorepath"),
+        trustStorePath = propertiesMap.get("truststorepath"),
+        keyStorePassword = propertiesMap.get("keystorepassword"),
+        trustStorePassword = propertiesMap.get("truststorepassword"),
+        keyPassword = propertiesMap.get("keypassword"),
+        addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
+        isStream = propertiesMap.getOrElse("isstream", "false").toBoolean)
     }
     else if (platform == "elastic") {
       dataframeFromTo.ElasticToDataframe(propertiesMap("awsenv"), propertiesMap("clustername"), propertiesMap("port"), propertiesMap("index"), propertiesMap("type"), propertiesMap("version"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), sparkSession)

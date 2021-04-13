@@ -2,19 +2,25 @@
   "useremailaddress": "YOUR_ID@DOMAIN.com",
   "migrations": [
     {
-      "source": {
-        "platform" : "kafka",
-        "bootstrapServers": "KAFKA_BOOTSTRAP_SERVER:9091",
-        "schemaRegistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
-        "topic": "TOPIC_NAME",
-        "offset":"earliest",
-        "deSerializer": "com.kafka.avro.ReflectDecoderAvroDeserializer",
-        "s3location": "s3a://BUCKET_NAME/FOLDER_PATH/"
-      },
+      "sources": [
+        {
+          "platform": "kafka",
+          "bootstrapservers": "KAFKA_BOOTSTRAP_SERVER:9091",
+          "schemaregistries": "http://KAFKA_SCHEMA_REGISTRY:8082",
+          "topic": "TOPIC_NAME",
+          "valuesubjectnamingstrategy": "RecordNameStrategy",
+          "valuesubjectrecordnamespace": "somevaluerecordnamespace",
+          "valuesubjectrecordname": "somevaluerecordname",
+          "alias": "kf"
+        }
+      ],
       "destination": {
         "platform": "s3",
         "s3path": "BUCKET_NAME/FOLDER_PATH",
         "fileformat": "json"
+      },
+      "sql": {
+        "query": "select key as HelloField, value.WorldField as WorldField, value.IntField as IntField from kf"
       }
     }
   ],
