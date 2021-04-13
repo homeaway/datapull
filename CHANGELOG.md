@@ -18,6 +18,7 @@ Converted Kafka source to use ABRiS and support spark streaming, support streami
 - core/src/main/scala/core/Migration.scala - add Console as a destination for batch and stream, support streaming etc for file source and Kafka; refactored some function calls to use explicit parameter names
 - core/src/main/scala/helper/Helper.scala - Added support for Kafka as a source, using ABRiS
 - core/src/test/scala/DataFrameFromToFileSystem.scala - updated default value of mergeSchema option for parquet files, to false from null
+- core/src/main/scala/core/DataPull.scala Removed unused code
 
 ## [0.1.27] - 2021-04-12
 ### Changed
