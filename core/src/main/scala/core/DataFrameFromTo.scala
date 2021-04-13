@@ -38,7 +38,6 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
-
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import javax.mail.{Message, Session, Transport}
 import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
@@ -1022,6 +1021,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        keyStorePassword: Option[String] = None,
                        trustStorePassword: Option[String] = None,
                        keyPassword: Option[String] = None,
+                       keyFormat: String = "string",
+                       valueFormat: String = "avro",
                        addlSparkOptions: Option[JSONObject] = None,
                        isStream: Boolean = false): DataFrame = {
     var sparkOptions: Map[String, String] = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
@@ -1069,8 +1070,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .withColumnRenamed("key", "keyBinary")
       .withColumnRenamed("value", "valueBinary")
     dft = dft
-      .withColumn("key", from_avro(dft.col("keyBinary"), fromKeyAvroConfig))
-      .withColumn("value", from_avro(dft.col("valueBinary"), fromValueAvroConfig))
+      .withColumn("key", keyFormat match {
+        case "avro" => from_avro(dft.col("keyBinary"), fromKeyAvroConfig)
+        case _ => dft.col("keyBinary").cast("String")
+      })
+      .withColumn("value", valueFormat match {
+        case "avro" => from_avro(dft.col("valueBinary"), fromValueAvroConfig)
+        case _ => dft.col("valueBinary").cast("String")
+      })
     dft = dft
       .drop("keyBinary")
       .drop("valueBinary")
@@ -1113,15 +1120,26 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        keyStorePassword: Option[String] = None,
                        trustStorePassword: Option[String] = None,
                        keyPassword: Option[String] = None,
+                       keyFormat: String,
+                       valueFormat: String,
                        isStream: Boolean = false,
                        addlSparkOptions: Option[JSONObject] = None
                       ): Unit = {
 
     var dfavro = spark.emptyDataFrame
-    var columnsToSelect = Seq(to_avro(df.col(valueField), helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = df.col(valueField), schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace)) as 'value)
+    val valueFieldCol = df.col(valueField)
+    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = valueFieldCol, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace)
+    var columnsToSelect = Seq((valueFormat match {
+      case "avro" => to_avro(valueFieldCol, valueAvroConfig)
+      case _ => valueFieldCol
+    }) as 'value)
     if (!keyField.isEmpty) {
       val keyFieldCol = df.col(keyField.get)
-      columnsToSelect = columnsToSelect ++ Seq(to_avro(keyFieldCol, helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace)) as 'key)
+      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace)
+      columnsToSelect = columnsToSelect ++ Seq((keyFormat match {
+        case "avro" => to_avro(keyFieldCol, keyAvroConfig)
+        case _ => keyFieldCol
+      }) as 'key)
     }
     if (!headerField.isEmpty) {
       columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)

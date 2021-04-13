@@ -23,6 +23,7 @@ import java.util.concurrent.Executors
 import com.amazonaws.services.simpleemail.model.{Body, Content, Destination}
 import config.AppConfig
 import javax.mail._
+import helper._
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import logging._
 import org.codehaus.jettison.json.JSONArray
@@ -33,14 +34,15 @@ import scala.concurrent.duration.Duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.control.Breaks
 
-class Controller(appConfig: AppConfig, pipeline : String)  {
+class Controller(appConfig: AppConfig, pipeline: String) {
 
   val reportbodyHtml = StringBuilder.newBuilder
   var s3TempFolderDeletionError = StringBuilder.newBuilder
   var migrationErrors = ListBuffer[String]()
   val alerts = new Alert(appConfig)
   val dataPullLogs = new DataPullLog(appConfig, pipeline)
-  var env:String= null
+  var env: String = null
+  val helper = new Helper(appConfig)
 
   def neatifyReportHtml(reportRowsHtml: String, reportCounts: Boolean, custom_retries: Boolean): String = {
     //make a table out of the body
@@ -50,9 +52,9 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
     emailBody = emailBody.replaceFirst("EMAILHEADERCONTENT", "<h2>DataPull Report</h2>")
     emailBody = emailBody.replaceFirst("EMAILBODYCONTENT", java.util.regex.Matcher.quoteReplacement(reportTableHtml))
     emailBody = emailBody.replaceFirst("EMAILFOOTERCONTENT", "<h5>If you have questions or concerns, please contact the slack channel #des-coe-tools for assistance</h5>")
-    if(s3TempFolderDeletionError.nonEmpty){
-      emailBody = emailBody.replaceFirst("S3FOLDERDELETIONERROR", "<tr>\n   <td align=\"center\" valign=\"top\">\n   <table border=\"0\" cellpadding=\"5\" cellspacing=\"0\" width=\"100%\" id=\"notification\">\n  <tr>\n  <td align=\"left\" valign=\"top\">\n      "+s3TempFolderDeletionError+"      \n    </td>\n   </tr>\n   </table>\n    </td>\n  </tr>\n")
-    }else{
+    if (s3TempFolderDeletionError.nonEmpty) {
+      emailBody = emailBody.replaceFirst("S3FOLDERDELETIONERROR", "<tr>\n   <td align=\"center\" valign=\"top\">\n   <table border=\"0\" cellpadding=\"5\" cellspacing=\"0\" width=\"100%\" id=\"notification\">\n  <tr>\n  <td align=\"left\" valign=\"top\">\n      " + s3TempFolderDeletionError + "      \n    </td>\n   </tr>\n   </table>\n    </td>\n  </tr>\n")
+    } else {
       emailBody = emailBody.replaceFirst("S3FOLDERDELETIONERROR", "")
 
     }
@@ -61,7 +63,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
 
   def performmigration(migrations: JSONArray, parallelmigrationflag: Boolean, reportEmailAddress: String, verifymigration: Boolean, reportCounts: Boolean, no_of_retries: Int, custom_retries: Boolean, jobId: String, sparkSession: org.apache.spark.sql.SparkSession, masterNode: String, ec2Role: String, portfolio: String, product: String, jsonString: String, stepSubmissionTime: String, minexecutiontime: String, maxexecutiontime: String, start_time_in_milli: Long, applicationId: String, pipelineName: String, awsenv: String, preciseCounts: Boolean, failureThreshold: Int, authenticatedUser: String, failureEmailAddress: String): Unit = {
     try {
-      env= awsenv
+      env = awsenv
       if (parallelmigrationflag) {
         var migrationJsonStringArray = List.empty[String]
         for (i <- 0 to migrations.length() - 1) {
@@ -90,9 +92,11 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
         }
 
         val migration = new Migration()
+
         def runner(migrationJsonString: String) = Future {
           migration.migrate(migrationJsonString, reportEmailAddress, poolId, verifymigration, reportCounts, no_of_retries, custom_retries, jobId, sparkSession.sparkContext.isLocal, preciseCounts, appConfig, pipelineName)
         }
+
         try {
           val futures = migrationJsonStringArray map (i => runner(i))
 
@@ -101,7 +105,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
             reportbodyHtml.append(migrationResult("reportRowHtml"))
             if (migrationResult("migrationError") != null)
               migrationErrors += migrationResult("migrationError")
-            if(migrationResult("deletionError") != null){
+            if (migrationResult("deletionError") != null) {
               s3TempFolderDeletionError.append(migrationResult("deletionError")).append("<br>")
             }
           })
@@ -116,20 +120,20 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
       }
       else {
         val breakableLoop = new Breaks;
-        breakableLoop.breakable{
+        breakableLoop.breakable {
           for (i <- 0 to migrations.length() - 1) {
             var migration = new Migration()
             val migrationResult: Map[String, String] = migration.migrate(migrations.getJSONObject(i).toString(), reportEmailAddress, i.toString, verifymigration, reportCounts, no_of_retries, custom_retries, jobId, sparkSession.sparkContext.isLocal, preciseCounts, appConfig, pipelineName)
             reportbodyHtml.append(migrationResult("reportRowHtml"))
             if (migrationResult("migrationError") != null)
               migrationErrors += migrationResult("migrationError")
-            if(migrationResult("deletionError") != null){
+            if (migrationResult("deletionError") != null) {
               s3TempFolderDeletionError.append(migrationResult("deletionError")).append("<br>")
 
             }
-            if(!migrationErrors.isEmpty){
-              if(migrationErrors.size >= failureThreshold){
-                reportAbortForAllPendingMigrations(i+1, migrations)
+            if (!migrationErrors.isEmpty) {
+              if (migrationErrors.size >= failureThreshold) {
+                reportAbortForAllPendingMigrations(i + 1, migrations)
                 breakableLoop.break();
               }
             }
@@ -166,6 +170,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
             SendEmail(failureEmailAddress, updatedBodyHtml, applicationId, pipelineName, env, "Data Pull job failed for the Pipeline:" + awsenv + "- " + pipelineName + "-Pipeline (" + applicationId + ")", authenticatedUser)
           }
         }
+        throw new helper.CustomListOfExceptions(migrationErrors.mkString("\n"))
       }
       if (migrationErrors.isEmpty) {
         dataPullLogs.dataPullLogging(jobId, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, Instant.now().toString, System.currentTimeMillis() - start_time_in_milli, "Completed", null, sparkSession)
@@ -199,59 +204,59 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
 
     if (appConfig.smtpServerAddress != "SMTP_SERVER") {
       if (!isNullOrEmpty(emailAddress)) {
-      if (!isNullOrEmpty(appConfig.smtpServerAddress)) {
-        val properties = System.getProperties
-        properties.put("mail.smtp.host", appConfig.smtpServerAddress)
+        if (!isNullOrEmpty(appConfig.smtpServerAddress)) {
+          val properties = System.getProperties
+          properties.put("mail.smtp.host", appConfig.smtpServerAddress)
 
-        if (appConfig.smtpTlsEnable == "true") {
-          properties.put("mail.smtp.starttls.enable", "true")
-        }
-
-        if (appConfig.smtpPort != "") {
-          properties.put("mail.smtp.port", appConfig.smtpPort)
-        }
-
-        if (appConfig.smtpAuthEnable == "true") {
-
-          properties.put("mail.smtp.auth", "true")
-
-          username = appConfig.smtpUsername
-          password = appConfig.smtpPassword
-
-          if (password == "" || password == null) {
-
-            val secretService = new SecretService(appConfig.smtpPasswordSecretStore, appConfig)
-            password = secretService.getSecret(appConfig.smtpPasswordVaultPath, appConfig.smtpPasswordVaultKey, env)
-
+          if (appConfig.smtpTlsEnable == "true") {
+            properties.put("mail.smtp.starttls.enable", "true")
           }
-          session = Session.getDefaultInstance(properties, new MailAuthenticator(username, password))
-        } else {
-          session = Session.getDefaultInstance(properties)
+
+          if (appConfig.smtpPort != "") {
+            properties.put("mail.smtp.port", appConfig.smtpPort)
+          }
+
+          if (appConfig.smtpAuthEnable == "true") {
+
+            properties.put("mail.smtp.auth", "true")
+
+            username = appConfig.smtpUsername
+            password = appConfig.smtpPassword
+
+            if (password == "" || password == null) {
+
+              val secretService = new SecretService(appConfig.smtpPasswordSecretStore, appConfig)
+              password = secretService.getSecret(appConfig.smtpPasswordVaultPath, appConfig.smtpPasswordVaultKey, env)
+
+            }
+            session = Session.getDefaultInstance(properties, new MailAuthenticator(username, password))
+          } else {
+            session = Session.getDefaultInstance(properties)
+          }
+
+          val message = new MimeMessage(session)
+
+          // Set the from, to, subject, body text
+          message.setFrom(new InternetAddress(appConfig.dataToolsEmailAddress))
+          message.setRecipients(Message.RecipientType.TO, toAddresses)
+          message.setRecipients(Message.RecipientType.BCC, "" + appConfig.dataToolsEmailAddress)
+          message.setSubject(subject_local)
+          message.setContent(htmlContent, "text/html; charset=utf-8")
+          // And send it
+          Transport.send(message)
         }
+        else if (!isNullOrEmpty(appConfig.sesFromEmail)) {
+          import com.amazonaws.services.simpleemail.model.SendEmailRequest
+          val emailFrom = appConfig.sesFromEmail
+          val request = new SendEmailRequest().withSource(emailFrom)
+            .withDestination(new Destination().withToAddresses(toAddresses.split(",|;"): _*))
+            .withMessage(new com.amazonaws.services.simpleemail.model.Message().withBody(new Body().withHtml(new Content().withData(htmlContent).withCharset("UTF-8"))).withSubject(new Content().withData(subject_local)))
 
-        val message = new MimeMessage(session)
+          request.setReturnPath(emailFrom);
 
-        // Set the from, to, subject, body text
-        message.setFrom(new InternetAddress(appConfig.dataToolsEmailAddress))
-        message.setRecipients(Message.RecipientType.TO, toAddresses)
-        message.setRecipients(Message.RecipientType.BCC, "" + appConfig.dataToolsEmailAddress)
-        message.setSubject(subject_local)
-        message.setContent(htmlContent, "text/html; charset=utf-8")
-        // And send it
-        Transport.send(message)
+          val result = appConfig.getSESClient().sendEmail(request);
+        }
       }
-      else if (!isNullOrEmpty(appConfig.sesFromEmail)) {
-        import com.amazonaws.services.simpleemail.model.SendEmailRequest
-        val emailFrom = appConfig.sesFromEmail
-        val request = new SendEmailRequest().withSource(emailFrom)
-          .withDestination(new Destination().withToAddresses(toAddresses.split(",|;"): _*))
-          .withMessage(new com.amazonaws.services.simpleemail.model.Message().withBody(new Body().withHtml(new Content().withData(htmlContent).withCharset("UTF-8"))).withSubject(new Content().withData(subject_local)))
-
-        request.setReturnPath(emailFrom);
-
-        val result = appConfig.getSESClient().sendEmail(request);
-      }
-    }
     }
   }
 
@@ -264,7 +269,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
   }
 
   def reportAbortForAllPendingMigrations(startIndex: Int, migrations: JSONArray) = {
-    val migration  = new Migration();
+    val migration = new Migration();
     for (i <- startIndex to migrations.length() - 1) {
       val migrationJSON = migrations.getJSONObject(i)
       var sources = new JSONArray()
@@ -284,7 +289,7 @@ class Controller(appConfig: AppConfig, pipeline : String)  {
       val destination = migrationJSON.getJSONObject("destination")
       reportRowHtml.append("</td><td>")
       reportRowHtml.append(migration.printableSourceTargetInfo(destination) + "</td>")
-      reportRowHtml.append( "</td><td colspan=\"" + ("4") + "\"\">" + "SKIPPED!!!" + "</td></tr>")
+      reportRowHtml.append("</td><td colspan=\"" + ("4") + "\"\">" + "SKIPPED!!!" + "</td></tr>")
       reportbodyHtml.append(reportRowHtml)
     }
   }

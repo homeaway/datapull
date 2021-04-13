@@ -257,6 +257,10 @@
         "truststorepassword": "passwrod_for_jks_file",
         "comment_keypassword": "Optional. Password for SSL key. Ref https://kafka.apache.org/25/javadoc/org/apache/kafka/common/config/SslConfigs.html#SSL_KEY_PASSWORD_CONFIG",
         "keypassword": "some_password",
+        "comment_keyformat": "Optional, by default will be string. Can also be avro. If string is chosen, the key field should be of type string. If the field is a complex data type like a struct, you can use the to_json() spark sql command",
+        "keyformat": "string",
+        "comment_valueformat": "Optional, by default will be avro. Can also be string. If string is chosen, the value field should be of type string. If the field is a complex data type like a struct, you can use the to_json() spark sql command",
+        "valueformat": "avro",
         "comment_sparkoptions": "Optional, this is to enable users to use structured streaming-specific configurations. These options will supercede explicitely named options above. For example, setting topic in sparkoptions will supercede the value of the topic attribute above. All options can be found at the official spark documentation: http://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html#kafka-specific-configurations",
         "sparkoptions": {
           "comment_startingOffsets": "Optional, defaults to \"latest\" for streaming, \"earliest\" for batch. You can also use startingOffsetsByTimestamp which takes precendence over this. Ref http://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html#kafka-specific-configurations for more information",
@@ -282,7 +286,7 @@
         "keyField": "some_keyfield",
         "Comment_valuefield": "Deprecated",
         "valuefield": "some_value",
-        "comment_keyFormat": "Depcrecated. Optional, you can set the serializer type for the key between string and avro, Default: string",
+        "comment_keyFormat": "Depcrecated, use keyformat attributed instead. Optional, you can set the serializer type for the key between string and avro, Default: string",
         "keyFormat": "string"
       },
       "destination_kafka": {
@@ -325,7 +329,11 @@
         "comment_keypassword": "Optional. Password for SSL key. Ref https://kafka.apache.org/25/javadoc/org/apache/kafka/common/config/SslConfigs.html#SSL_KEY_PASSWORD_CONFIG",
         "keypassword": "some_password",
         "comment_sparkoptions": "Optional, this is to enable users to use structured streaming-specific configurations. These options will supercede explicitely named options above. For example, setting topic in sparkoptions will supercede the value of the topic attribute above. All options can be found at the official spark documentation: http://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html#kafka-specific-configurations",
-        "sparkoptions": {}
+        "sparkoptions": {},
+        "comment_keyformat": "Optional, by default will be string. Can also be avro. If string is chosen, the key field should be of type string. If the field is a complex data type like a struct, you can use the to_json() spark sql command",
+        "keyformat": "string",
+        "comment_valueformat": "Optional, by default will be avro. Can also be string. If string is chosen, the value field should be of type string. If the field is a complex data type like a struct, you can use the to_json() spark sql command",
+        "valueformat": "avro"
       },
       "source_influxdb": {
         "platform": "influxdb",

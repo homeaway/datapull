@@ -251,6 +251,8 @@ class Migration extends SparkListener {
           trustStorePassword = destinationMap.get("truststorepassword"),
           keyPassword = destinationMap.get("keypassword"),
           isStream = df.isStreaming,
+          keyFormat = destinationMap.getOrElse("keyformat", "string"),
+          valueFormat = destinationMap.getOrElse("valueformat", "avro"),
           addlSparkOptions = (if (destination.optJSONObject("sparkoptions") == null) None else Some(destination.optJSONObject("sparkoptions")))
         )
       } else if (destinationMap("platform") == "elastic") {
@@ -557,6 +559,8 @@ class Migration extends SparkListener {
         keyStorePassword = propertiesMap.get("keystorepassword"),
         trustStorePassword = propertiesMap.get("truststorepassword"),
         keyPassword = propertiesMap.get("keypassword"),
+        keyFormat = propertiesMap.getOrElse("keyformat", "string"),
+        valueFormat = propertiesMap.getOrElse("valueformat", "avro"),
         addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
         isStream = propertiesMap.getOrElse("isstream", "false").toBoolean)
     }

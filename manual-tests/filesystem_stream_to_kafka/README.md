@@ -34,16 +34,21 @@
    1. each event has an avro key and an avro value
    1. the schema for the key is shown (the fact that the value's schema is not shown seems to be a limitation of the Kafka Control Center)
    1. the value's schema can be queried using Schema Registry API, by opening http://localhost:8081/subjects/somevaluerecordnamespace.somevaluerecordname/versions/1   
-
+   
 1. Open the folder core/target/classes/SampleData_Json/HelloWorld and confirm that there is at least one JSON file with the following fields
    1. string field `HelloField`
    1. string field `WorldField`
    1. integer field `IntField`
    
-1. Clone one of the JSON files in core/target/classes/SampleData_Json/HelloWorld, into the same folder as a new JSON file. CHeck in the Confluent Control Center to confirm that the topic `hello_world2` now contains more than 5 events. 
+1. On a different terminal but with the same path, run `sudo chown -R $(whoami):$(whoami) .`. If you don't do this, you will get permission error when attempting the next step.
+
+1. Clone one of the JSON files in core/target/classes/SampleData_Json/HelloWorld, into the same folder as a new JSON file. 
+   
+1. Check in the Confluent Control Center to confirm that the topic `hello_world2` now contains more than 5 events. 
 
 ### Cleanup
 - Stop the spark app by pressing Ctrl+C at the terminal
 - Clean up dockerised kafka cluster by running
-```shell script
-CONFLUENT_VERSION="5.5.2" docker-compose -f docker_kafka_server/docker-compose.yml down
+   ```shell script
+   CONFLUENT_VERSION="5.5.2" docker-compose -f docker_kafka_server/docker-compose.yml down
+   ```
