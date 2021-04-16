@@ -869,7 +869,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       clusterNodes = clusterNodes + "," + consul.ipAddresses.mkString(",") + ":27017"
     }
     var uri: String = null
-    val helper = new Helper(appConfig)
     var vaultLogin: String = null
     var vaultPassword: String = null
     sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
@@ -1169,47 +1168,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: Boolean, domainName: String): org.apache.spark.sql.DataFrame = {
+  def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: Boolean, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String]): org.apache.spark.sql.DataFrame = {
+    val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled)
+    val driver: String = configMap("driver")
+    val url: String = configMap("url")
 
-    var driver: String = null
-    var url: String = null
-    val helper = new Helper(appConfig)
-    if (isWindowsAuthenticated) {
-      if (platform == "mssql") {
-        driver = "net.sourceforge.jtds.jdbc.Driver"
-        url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
-      }
-      else if (platform == "teradata") {
-        driver = "com.teradata.jdbc.TeraDriver"
-
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
-      }
-    } else {
-      if (platform == "mssql") {
-        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
-      }
-      else if (platform == "oracle") {
-        driver = "oracle.jdbc.driver.OracleDriver"
-        url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
-      }
-      else if (platform == "teradata") {
-        driver = "com.teradata.jdbc.TeraDriver"
-
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
-
-      }
-
-      else if (platform == "mysql") {
-        driver = "com.mysql.jdbc.Driver"
-        url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
-      }
-
-      else if (platform == "postgres") {
-        driver = "org.postgresql.Driver"
-        url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
-      }
-    }
     val consul = new Consul(server, appConfig)
     var clusterName = server
     if (consul.IsConsulDNSName()) {
@@ -1263,42 +1226,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: String, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: Boolean, domainName: String): Unit = {
-    var driver: String = null
-    var url: String = null
-    var dflocal = df
-    if (isWindowsAuthenticated) {
-      if (platform == "mssql") {
-        driver = "net.sourceforge.jtds.jdbc.Driver"
-        url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
-      }
-    } else {
-      if (platform == "mssql") {
-        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
-      }
-      else if (platform == "oracle") {
-        driver = "oracle.jdbc.driver.OracleDriver"
-        url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
-      }
-      else if (platform == "teradata") {
-        driver = "com.teradata.jdbc.TeraDriver"
-
-        val helper = new Helper(appConfig)
-        url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
-        dflocal = dflocal.coalesce(1) //to prevent locking, by ensuring only there is one writer per table
-      }
-
-      else if (platform == "mysql") {
-        driver = "com.mysql.jdbc.Driver"
-        url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
-      }
-
-      else if (platform == "postgres") {
-        driver = "org.postgresql.Driver"
-        url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
-      }
-    }
+  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: Boolean = false, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String] = None): Unit = {
+    val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled)
+    val driver: String = configMap("driver")
+    val url: String = configMap("url")
 
     val consul = new Consul(server, appConfig)
     var clusterName = server
@@ -1330,8 +1261,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     connectionProperties.setProperty("user", vaultLogin)
     connectionProperties.setProperty("password", vaultPassword)
     connectionProperties.setProperty("driver", driver)
-
-    dflocal.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
+    var df_temp = df
+    if (platform == "teradata") {
+      df_temp = df.coalesce(1)
+    }
+    df_temp.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
   }
 
   def hiveToDataFrame(cluster: String, sparkSession: org.apache.spark.sql.SparkSession, dbtable: String, username: String, fetchsize: String): org.apache.spark.sql.DataFrame = {
@@ -1370,40 +1304,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
   def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String): Unit = {
     if (sql_command != "") {
 
-      var driver: String = null;
-      var url: String = null;
-      if (isWindowsAuthenticated) {
-        if (platform == "mssql") {
-          driver = "net.sourceforge.jtds.jdbc.Driver"
-          url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain= " + domainName + ";useNTLMv2=true"
-        }
-      } else {
-        if (platform == "mssql") {
-          driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-          url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
-        }
-        else if (platform == "oracle") {
-          driver = "oracle.jdbc.driver.OracleDriver"
-          url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
-        }
-        else if (platform == "teradata") {
-          driver = "com.teradata.jdbc.TeraDriver"
-
-          val helper = new Helper(appConfig)
-          url = helper.buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated)
-
-        }
-
-        else if (platform == "mysql") {
-          driver = "com.mysql.jdbc.Driver"
-          url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
-        }
-
-        else if (platform == "postgres") {
-          driver = "org.postgresql.Driver"
-          url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == "true") "?sslmode=require" else "")
-        }
-      }
+      val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled)
+      val driver: String = configMap("driver")
+      val url: String = configMap("url")
 
       val consul = new Consul(server, appConfig)
       var clusterName = server

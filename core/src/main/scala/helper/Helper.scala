@@ -33,6 +33,50 @@ import za.co.absa.abris.config.{AbrisConfig, FromAvroConfig, FromStrategyConfigF
 class Helper(appConfig: AppConfig) {
 
   /**
+   * Returns the text (content) from a REST URL as a String.
+   *
+   * @param url            The full URL to connect to.
+   * @param connectTimeout Sets a specified timeout value, in milliseconds,
+   *                       to be used when opening a communications link to the resource referenced
+   *                       by this URLConnection. If the timeout expires before the connection can
+   *                       be established, a java.net.SocketTimeoutException
+   *                       is raised. A timeout of zero is interpreted as an infinite timeout.
+   *                       Defaults to 10000 ms.
+   * @param readTimeout    If the timeout expires before there is data available
+   *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
+   *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
+   * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
+   *
+   */
+  @throws(classOf[java.io.IOException])
+  @throws(classOf[java.net.SocketTimeoutException])
+  def get(url: String,
+          connectTimeout: Int = appConfig.http_timeout,
+          readTimeout: Int = appConfig.http_timeout,
+          requestMethod: String = "GET") = {
+    import java.net.{HttpURLConnection, URL}
+    val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
+    connection.setConnectTimeout(connectTimeout)
+    connection.setReadTimeout(readTimeout)
+    connection.setRequestMethod(requestMethod)
+    val inputStream = connection.getInputStream
+    val content = scala.io.Source.fromInputStream(inputStream).mkString
+    if (inputStream != null) inputStream.close
+    content
+  }
+
+  def GetEC2pkcs7(): String = {
+    var pkcs7 = getHttpResponse("http://169.254.169.254/latest/dynamic/instance-identity/pkcs7", 100000, 10000, "GET").ResponseBody
+    pkcs7 = pkcs7.split('\n').mkString
+    pkcs7
+  }
+
+  def GetEC2Role(): String = {
+    var role = getHttpResponse("http://169.254.169.254/latest/meta-data/iam/security-credentials/", 100000, 10000, "GET").ResponseBody
+    role
+  }
+
+  /**
    * Returns the text (content) and response code from a REST URL as a String and int.
    *
    * @param url            The full URL to connect to.
@@ -293,6 +337,45 @@ class Helper(appConfig: AppConfig) {
     fromAvroConfig
   }
 
+  def buildRdbmsURI(platform: String, server: String, port: String, database: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], sslEnabled: Boolean): Map[String, String] = {
+
+    var driver: String = null
+    var url: String = null
+
+    if (platform == "mssql") {
+      if (isWindowsAuthenticated) {
+        driver = "net.sourceforge.jtds.jdbc.Driver"
+        url = "jdbc:jtds:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + "/" + database + ";domain=" + domainName + ";useNTLMv2=true"
+      }
+      else {
+        driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
+      }
+    }
+    else if (platform == "oracle") {
+      driver = "oracle.jdbc.driver.OracleDriver"
+      url = "jdbc:oracle:thin:@//" + server + ":" + (if (port == null) "1521" else port) + "/" + database
+    }
+    else if (platform == "teradata") {
+      driver = "com.teradata.jdbc.TeraDriver"
+      url = buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated, typeForTeradata = typeForTeradata)
+    }
+    else if (platform == "mysql") {
+      driver = "com.mysql.jdbc.Driver"
+      url = "jdbc:mysql://" + server + ":" + (if (port == null) "3306" else port) + "/" + database + "?rewriteBatchedStatements=true&cachePrepStmts=true"
+    }
+
+    else if (platform == "postgres") {
+      driver = "org.postgresql.Driver"
+      url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == true) "?sslmode=require" else "")
+    }
+    Map("driver" -> driver, "url" -> url)
+  }
+
+  def buildTeradataURI(server: String, database: String, port: Option[Int], isWindowsAuthenticated: Boolean, typeForTeradata: Option[String]): String = {
+    "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
+  }
+
   def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean, sslEnabled: String): String = {
     if (authenticationEnabled) {
       "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet) + (if (sslEnabled == "true") "&ssl=true&sslInvalidHostNameAllowed=true" else "")
@@ -301,10 +384,36 @@ class Helper(appConfig: AppConfig) {
     }
   }
 
-  def buildTeradataURI(server: String, database: String, port: Option[Int],isWindowsAuthenticated:Boolean = false): String = {
-    "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=FASTLOAD,DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
+  class CustomListOfExceptions(message: String) extends Exception(message) {
 
+    def this(message: String, cause: Throwable) {
+      this(message)
+      initCause(cause)
+    }
+
+    def this(cause: Throwable) {
+      this(Option(cause).map(_.toString).orNull, cause)
+    }
+
+    def this() {
+      this(null: String)
+    }
   }
+
+  // Bypasses both client and server validation.
+  object TrustAll extends X509TrustManager {
+    val getAcceptedIssuers = null
+
+    def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String) = {}
+
+    def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String) = {}
+  }
+
+  // Verifies all host names by simply returning true.
+  object VerifiesAllHostNames extends HostnameVerifier {
+    def verify(s: String, sslSession: SSLSession) = true
+  }
+
 }
 
 case class HttpResponse(ResponseCode: Int, ResponseBody: String)
