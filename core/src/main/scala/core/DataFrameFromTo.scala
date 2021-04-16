@@ -22,7 +22,7 @@ import java.sql.{Connection, DriverManager, Statement, Timestamp}
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.util
-import java.util.{Calendar, Properties, UUID}
+import java.util.{Calendar, UUID}
 import com.amazonaws.services.logs.model.{DescribeLogStreamsRequest, InputLogEvent, PutLogEventsRequest}
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
@@ -54,13 +54,9 @@ import org.influxdb.InfluxDBFactory
 import org.influxdb.dto.Query
 import security._
 import za.co.absa.abris.avro.functions.{from_avro, to_avro}
-
 import scala.collection.JavaConversions._
-import scala.collection.JavaConverters._
 import scala.collection.immutable.List
-import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
-import scala.util.control.Breaks._
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
   val helper = new Helper(appConfig)
@@ -287,6 +283,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       val s3Prefix = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
       filePrefix = s3Prefix + "://"
       sparkSession.conf.set("fs." + s3Prefix + ".connection.maximum", 100)
+      val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
+      hadoopConf.set("fs." + s3Prefix + ".fast.upload", "true")
+      hadoopConf.set("fs." + s3Prefix + ".canned.acl", "BucketOwnerFullControl")
+      hadoopConf.set("fs." + s3Prefix + ".acl.default", "BucketOwnerFullControl")
     }
 
     if (isSFTP) {
@@ -657,6 +657,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       "es.write.operation" -> saveMode,
       "es.nodes.wan.only" -> "true",
       "es.resource" -> s"$index/$nodetype",
+      "org.elasticsearch.hadoop.rest.commonshttp" -> "TRACE",
       "es.internal.es.version" -> version)
 
 
@@ -1053,7 +1054,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       isKey = false,
       subjectNamingStrategy = valueSubjectNamingStrategy,
       subjectRecordName = valueSubjectRecordName,
-      subjectRecordNamespace = valueSubjectRecordNamespace
+      subjectRecordNamespace = valueSubjectRecordNamespace,
+      sslSettings = sparkOptions
     )
     val fromKeyAvroConfig = helper.GetFromAvroConfig(
       topic = topic,
@@ -1062,7 +1064,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       isKey = true,
       subjectNamingStrategy = keySubjectNamingStrategy,
       subjectRecordName = keySubjectRecordName,
-      subjectRecordNamespace = keySubjectRecordNamespace
+      subjectRecordNamespace = keySubjectRecordNamespace,
+      sslSettings = sparkOptions
     )
 
     var dft = df
@@ -1126,23 +1129,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                       ): Unit = {
 
     var dfavro = spark.emptyDataFrame
-    val valueFieldCol = df.col(valueField)
-    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = valueFieldCol, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace)
-    var columnsToSelect = Seq((valueFormat match {
-      case "avro" => to_avro(valueFieldCol, valueAvroConfig)
-      case _ => valueFieldCol
-    }) as 'value)
-    if (!keyField.isEmpty) {
-      val keyFieldCol = df.col(keyField.get)
-      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace)
-      columnsToSelect = columnsToSelect ++ Seq((keyFormat match {
-        case "avro" => to_avro(keyFieldCol, keyAvroConfig)
-        case _ => keyFieldCol
-      }) as 'key)
-    }
-    if (!headerField.isEmpty) {
-      columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
-    }
 
     var sparkOptions: Map[String, String] = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
 
@@ -1150,6 +1136,24 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     if (!addlSparkOptions.isEmpty) {
       sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions.get)
+    }
+
+    val valueFieldCol = df.col(valueField)
+    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = valueFieldCol, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace, sslSettings = sparkOptions)
+    var columnsToSelect = Seq((valueFormat match {
+      case "avro" => to_avro(valueFieldCol, valueAvroConfig)
+      case _ => valueFieldCol
+    }) as 'value)
+    if (!keyField.isEmpty) {
+      val keyFieldCol = df.col(keyField.get)
+      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace, sslSettings = sparkOptions)
+      columnsToSelect = columnsToSelect ++ Seq((keyFormat match {
+        case "avro" => to_avro(keyFieldCol, keyAvroConfig)
+        case _ => keyFieldCol
+      }) as 'key)
+    }
+    if (!headerField.isEmpty) {
+      columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
     }
 
     dfavro = df.select(columnsToSelect: _*)
@@ -1301,7 +1305,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .insertInto(table)
   }
 
-  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: String, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String): Unit = {
+  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String]): Unit = {
     if (sql_command != "") {
 
       val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled)

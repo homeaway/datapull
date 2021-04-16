@@ -174,81 +174,6 @@ class Helper(appConfig: AppConfig) {
     HttpResponse(responseCode, content)
   }
 
-  /**
-    * Returns the text (content) from a REST URL as a String.
-    *
-    * @param url            The full URL to connect to.
-    * @param connectTimeout Sets a specified timeout value, in milliseconds,
-    *                       to be used when opening a communications link to the resource referenced
-    *                       by this URLConnection. If the timeout expires before the connection can
-    *                       be established, a java.net.SocketTimeoutException
-    *                       is raised. A timeout of zero is interpreted as an infinite timeout.
-    *                       Defaults to 10000 ms.
-    * @param readTimeout    If the timeout expires before there is data available
-    *                       for read, a java.net.SocketTimeoutException is raised. A timeout of zero
-    *                       is interpreted as an infinite timeout. Defaults to 10000 ms.
-    * @param requestMethod  Defaults to "GET". (Other methods have not been tested.)
-    *
-    */
-  @throws(classOf[java.io.IOException])
-  @throws(classOf[java.net.SocketTimeoutException])
-  def get(url: String,
-          connectTimeout: Int = appConfig.http_timeout,
-          readTimeout: Int = appConfig.http_timeout,
-          requestMethod: String = "GET") = {
-    import java.net.{HttpURLConnection, URL}
-    val connection = (new URL(url)).openConnection.asInstanceOf[HttpURLConnection]
-    connection.setConnectTimeout(connectTimeout)
-    connection.setReadTimeout(readTimeout)
-    connection.setRequestMethod(requestMethod)
-    val inputStream = connection.getInputStream
-    val content = scala.io.Source.fromInputStream(inputStream).mkString
-    if (inputStream != null) inputStream.close
-    content
-  }
-
-  def GetEC2pkcs7(): String = {
-    var pkcs7 = getHttpResponse("http://169.254.169.254/latest/dynamic/instance-identity/pkcs7", 100000, 10000, "GET").ResponseBody
-    pkcs7 = pkcs7.split('\n').mkString
-    pkcs7
-  }
-
-  def GetEC2Role(): String = {
-    var role = getHttpResponse("http://169.254.169.254/latest/meta-data/iam/security-credentials/", 100000, 10000, "GET").ResponseBody
-    role
-  }
-
-
-  // Bypasses both client and server validation.
-  object TrustAll extends X509TrustManager {
-    val getAcceptedIssuers = null
-
-    def checkClientTrusted(x509Certificates: Array[X509Certificate], s: String) = {}
-
-    def checkServerTrusted(x509Certificates: Array[X509Certificate], s: String) = {}
-  }
-
-  // Verifies all host names by simply returning true.
-  object VerifiesAllHostNames extends HostnameVerifier {
-    def verify(s: String, sslSession: SSLSession) = true
-  }
-
-  class CustomListOfExceptions(message: String) extends Exception(message) {
-
-    def this(message: String, cause: Throwable) {
-      this(message)
-      initCause(cause)
-    }
-
-    def this(cause: Throwable) {
-      this(Option(cause).map(_.toString).orNull, cause)
-    }
-
-    def this() {
-      this(null: String)
-    }
-  }
-
   def buildSecureKafkaProperties(keyStorePath: Option[String],
                                  trustStorePath: Option[String],
                                  keyStorePassword: Option[String],
@@ -274,14 +199,13 @@ class Helper(appConfig: AppConfig) {
     props
   }
 
-
-  def GetToAvroConfig(topic: String, schemaRegistryUrl: String, dfColumn: Column, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None): ToAvroConfig = {
+  def GetToAvroConfig(topic: String, schemaRegistryUrl: String, dfColumn: Column, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None, sslSettings: Map[String, String]): ToAvroConfig = {
     //get the specified schema version
     //if not specified, then get the latest schema from Schema Registry
     //if the topic does not have a schema then create and register the schema
     //applies to both key and value
     val subject = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) SchemaSubject.usingTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) SchemaSubject.usingRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else SchemaSubject.usingTopicNameStrategy(topicName = topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
-    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl)
+    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl) ++ sslSettings
     val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
     val expression = dfColumn.expr
     val dataSchema = SchemaConverters.toAvroType(expression.dataType, expression.nullable)
@@ -308,13 +232,13 @@ class Helper(appConfig: AppConfig) {
     toAvroConfig
   }
 
-  def GetFromAvroConfig(topic: String, schemaRegistryUrl: String, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None): FromAvroConfig = {
+  def GetFromAvroConfig(topic: String, schemaRegistryUrl: String, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None, sslSettings: Map[String, String]): FromAvroConfig = {
     //get the specified schema version
     //if not specified, then get the latest schema from Schema Registry
     //if the topic does not have a schema then create and register the schema
     //applies to both key and value
     val subject = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) SchemaSubject.usingTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) SchemaSubject.usingRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else SchemaSubject.usingTopicNameStrategy(topicName = topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
-    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl)
+    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl) ++ sslSettings
     val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
     println((if (isKey) "key" else "value") + " subject = " + subject.asString)
     var fromAvroConfig: FromAvroConfig = null

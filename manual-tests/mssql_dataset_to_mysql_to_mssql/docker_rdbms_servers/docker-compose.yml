@@ -1,0 +1,18 @@
+version: "3.9"  # optional since v1.27.0
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    hostname: mssql
+    ports:
+      - "14333:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=<YourStrong@Passw0rd>
+  mysql:
+    image: mysql:5.7
+    hostname: mysql
+    ports:
+      - "33066:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=<YourStrong@Passw0rd>
+      - MYSQL_DATABASE=mysqldb

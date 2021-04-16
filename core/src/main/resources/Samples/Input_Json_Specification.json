@@ -195,7 +195,9 @@
         "comment_iswindowsauthenticated": "Optional, this option is to be used when the users wants to use windows authentication instead of sql authentication",
         "iswindowsauthenticated": "false",
         "comment_domain": "Optional, the domain group of the org you wants to connect when using windows authentication",
-        "domain": "null"
+        "domain": "null",
+        "comment_typeforteradata": "Optional, defaults to DEFAULT. Applies only to Teradata data stores. The value of this attribute is sent to the TYPE parameter in the JDBC connection string. For more information, please refer to https://teradata-docs.s3.amazonaws.com/doc/connectivity/jdbc/reference/current/jdbcug_chapter_2.html#BABJIHBJ",
+        "typeforteradata": "DEFAULT"
       },
       "destination_elastic": {
         "platform": "elastic",

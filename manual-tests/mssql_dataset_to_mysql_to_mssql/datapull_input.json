@@ -1,0 +1,98 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "migrations": [
+    {
+      "sources": [
+        {
+          "platform": "mssql",
+          "server": "mssql",
+          "database": "master",
+          "login": "sa",
+          "password": "<YourStrong@Passw0rd>",
+          "table": "(SELECT * FROM mssqldb.dbo.tbl1) A",
+          "alias": "mssql",
+          "primarykey": "id",
+          "lowerBound": "1",
+          "upperBound": "1000000",
+          "numPartitions": "10",
+          "pre_migrate_commands": [
+            {
+              "query": "use master; IF NOT EXISTS (SELECT TOP 1 1 FROM sys.databases S WHERE S.[name] = 'mssqldb') CREATE DATABASE mssqldb"
+            },
+            {
+              "query": "USE mssqldb; IF OBJECT_ID('dbo.tbl1') IS NOT NULL DROP TABLE dbo.tbl1"
+            },
+            {
+              "query": "USE mssqldb;\nIF OBJECT_ID('dbo.tbl1') IS NULL\n    BEGIN\n        CREATE TABLE tbl1\n        (id INT NOT NULL PRIMARY KEY, \n         a  VARCHAR(10) NULL, \n         b  VARCHAR(10) NULL\n        );\nEND;\nWITH L0\n     AS (SELECT c\n         FROM\n         (\n             SELECT 1\n             UNION ALL\n             SELECT 1\n         ) AS D(c)), -- 2^1\n     L1\n     AS (SELECT 1 AS c\n         FROM L0 AS A\n              CROSS JOIN L0 AS B), -- 2^2\n     L2\n     AS (SELECT 1 AS c\n         FROM L1 AS A\n              CROSS JOIN L1 AS B), -- 2^4\n     L3\n     AS (SELECT 1 AS c\n         FROM L2 AS A\n              CROSS JOIN L2 AS B), -- 2^8\n     L4\n     AS (SELECT 1 AS c\n         FROM L3 AS A\n              CROSS JOIN L3 AS B), -- 2^16\n     L5\n     AS (SELECT 1 AS c\n         FROM L4 AS A\n              CROSS JOIN L4 AS B), -- 2^32\n     Nums\n     AS (SELECT ROW_NUMBER() OVER(\n                ORDER BY\n         (\n             SELECT NULL\n         )) AS k\n         FROM L5)\n     INSERT INTO tbl1\n            SELECT k AS id, \n                   'a_' + CAST(k AS VARCHAR) AS a, \n                   'b_' + CAST(k / 2 AS VARCHAR) AS b\n            FROM nums\n            WHERE k <= 1000000;"
+            }
+          ]
+        }
+      ],
+      "destination": {
+        "platform": "mysql",
+        "server": "mysql",
+        "database": "mysqldb",
+        "login": "root",
+        "password": "<YourStrong@Passw0rd>",
+        "table": "tbl1",
+        "pre_migrate_commands": [
+          {
+            "query": "drop table if exists tbl1;"
+          },
+          {
+            "query": "CREATE TABLE if not exists tbl1\n        (id INT NOT NULL PRIMARY KEY, \n         a  VARCHAR(10) NULL, \n         b  VARCHAR(10) NULL\n        );"
+          }
+        ]
+      },
+      "sql": {
+        "query": "SELECT * FROM mssql"
+      }
+    },
+    {
+      "sources": [
+        {
+          "platform": "mysql",
+          "server": "mysql",
+          "database": "mysqldb",
+          "login": "root",
+          "password": "<YourStrong@Passw0rd>",
+          "table": "(SELECT * FROM tbl1) A",
+          "alias": "mysql",
+          "primarykey": "id",
+          "lowerBound": "1",
+          "upperBound": "1000000",
+          "numPartitions": "10",
+          "post_migrate_commands": [
+            {
+              "query": "drop table if exists tbl1;"
+            }
+          ]
+        }
+      ],
+      "destination": {
+        "platform": "mssql",
+        "server": "mssql",
+        "database": "mssqldb",
+        "login": "sa",
+        "password": "<YourStrong@Passw0rd>",
+        "table": "tbl1",
+        "pre_migrate_commands": [
+          {
+            "query": "TRUNCATE TABLE dbo.tbl1"
+          }
+        ]
+      },
+      "sql": {
+        "query": "SELECT * FROM mysql"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "ComponentInfo": "YOUR_Component-UUID_dominion"
+  }
+}

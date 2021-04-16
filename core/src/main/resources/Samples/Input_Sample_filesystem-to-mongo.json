@@ -8,7 +8,7 @@
         "fileformat": "csv"
       },
       "destination": {
-         "platform": "mongodb",
+        "platform": "mongodb",
         "cluster": "IP_ADDR_OR_DNS_NAME",
         "replicaset": "REPLICASET_NAME",
         "authenticationdatabase": "ADMIN_DATABASE_NAME",
@@ -16,7 +16,7 @@
         "collection": "COLLECTION_NAME",
         "login": "LOGIN_NAME",
         "password": "PASSWORD",
-        "maxBatchSize":"1"
+        "maxBatchSize": "1"
       }
     }
   ],
@@ -26,6 +26,6 @@
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
     "ec2instanceprofile": "Iam role",
-    "ComponentInfo":"YOUR_Component-UUID_dominion"
+    "ComponentInfo": "YOUR_Component-UUID_dominion"
   }
 }

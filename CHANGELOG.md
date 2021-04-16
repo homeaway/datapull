@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.29] - 2021-04-16
+Added manual tests for mysql and mssql data stores, added support for secure Kafka schema registries, give ownership of files to bucket owners when writing to S3, reduced code redundancy
+
+### Added
+- manual-tests/mssql_dataset_to_mysql_to_mssql/* - Manual test for batch and pre/post-migrate commands on mysql and mssql data stores
+
+### Changed
+- DataFrameFromTo.scala - Added support for secure Kafka schema registries, give ownership of files to bucket owners when writing to S3, reduced code redundancy
+- Helper.scala - Added support for secure Kafka schema registries
+- Input_Json_Specification.json - Added documentation for Teradarta type (fastexport, fastload, etc)
+- Migration.scala - Removed debug print that can cause credentials to leak to logs
+
+
 ## [0.1.28] - 2021-04-13
 Converted Kafka source to use ABRiS and support spark streaming, support streaming filesystem source, add Console as a destination for batch and stream
 
