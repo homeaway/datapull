@@ -11,6 +11,7 @@ locals{
     asset_protection_level = "99"
     component_info        = "33daf877-db67-43ca-b61b-ec6596a4af81"
     application           = "datapull"
+    costcenter            = "66003"
   }
 }
 #----------------------------
