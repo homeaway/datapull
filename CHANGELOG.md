@@ -5,23 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.28] - 2021-04-13
+Converted Kafka source to use ABRiS and support spark streaming, support streaming filesystem source, add Console as a destination for batch and stream
 
 ## [0.1.27] - 2021-04-12
 ### Added
 - Added new Tagging elements.
-=======
+
 ## [0.1.26] - 2021-04-12
 
-### changed
+### Added
+- manual-tests/filesystem_stream_to_kafka/* - Manual test for streaming filesystems and Kafka sources
+
+### Changed
+- core/src/main/resources/Samples/Input_Json_Specification.json - Added documentation to support SSL Kafka sources and destinations,  plus update missing documentation for some filesystem actions
+- Sample input json files - Updated to reflect change in sample CSV data file location
+- core/src/main/scala/core/DataFrameFromTo.scala - Converted Kafka source to use ABRiS and support spark streaming, , support streaming filesystem source
+- core/src/main/scala/core/Migration.scala - add Console as a destination for batch and stream, support streaming etc for file source and Kafka; refactored some function calls to use explicit parameter names
+- core/src/main/scala/helper/Helper.scala - Added support for Kafka as a source, using ABRiS
+- core/src/test/scala/DataFrameFromToFileSystem.scala - updated default value of mergeSchema option for parquet files, to false from null
+- core/src/main/scala/core/DataPull.scala Removed unused code
+
+## [0.1.27] - 2021-04-12
+### Changed
 - Controller.scala - Throw an exception to end the execution with exit code 1 when at least one migration has an error. 
 
+## [0.1.26] - 2021-04-12
 ### Changed
 - api/src/main/java/com/homeaway/datapullclient/config/DataPullClientConfig.java
 - api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
 - api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
 - api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
-
-
 
 ## [0.1.25] - 2021-03-24
 ### changed

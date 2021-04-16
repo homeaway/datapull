@@ -7,7 +7,8 @@
           "platform": "s3",
           "s3path": "BUCKET_NAME/FOLDER_PATH",
           "fileformat": "json",
-          "alias": "stage"
+          "alias": "stage",
+          "isstream": true
         }
       ],
       "destination": {
@@ -29,7 +30,7 @@
     "portfolio": "Data Engineering Services",
     "product": "Data Engineering - COE",
     "ec2instanceprofile": "Iam role",
-    "cronexpression": "21 * * * *",
+    "cronexpression_ignore": "Do not use a cronexpression, since this is a streaming spark cluster that will run continuously",
     "ComponentInfo": "YOUR_Component-UUID_dominion"
   }
 }

@@ -84,11 +84,9 @@ object DataPull {
     var failureThreshold = 10000
     var verifymigration = false
     var applicationId = ""
-    val reportbodyHtml = StringBuilder.newBuilder //ideally this would be constructed out of json data but we're taking shortcuts here
     var reportCounts = true
     var no_of_retries = config.no_of_retries
     var custom_retries = false
-    var migrationErrors = ListBuffer[String]()
     var stepSubmissionTime: String = null
     var jobId: String = null
     var masterNode: String = null
@@ -252,12 +250,8 @@ object DataPull {
     if (json.has("parallelmigrations")) {
       parallelmigrations = json.getBoolean("parallelmigrations")
     }
-    var migrationStartTime = Instant.now()
     var controllerinstance = new Controller(config, pipelineName)
     controllerinstance.performmigration(migrations, parallelmigrations, reportEmailAddress, verifymigration, reportCounts, config.no_of_retries.toInt, custom_retries, jobId, sparkSession, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, minexecutiontime, maxexecutiontime, start_time_in_milli, applicationId, pipelineName, awsenv, precisecounts, failureThreshold, failureEmailAddress, authenticatedUser)
-    if (migrationErrors.nonEmpty) {
-      throw new helper.CustomListOfExceptions(migrationErrors.mkString("\n"))
-    }
   }
 
   def getFile(fileName: String, relativeToClass:Boolean = true): String = {
