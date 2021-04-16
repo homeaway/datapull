@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.28] - 2021-04-13
 Converted Kafka source to use ABRiS and support spark streaming, support streaming filesystem source, add Console as a destination for batch and stream
 
+## [0.1.27] - 2021-04-12
+### Added
+- Added new Tagging elements.
+
+## [0.1.26] - 2021-04-12
+
 ### Added
 - manual-tests/filesystem_stream_to_kafka/* - Manual test for streaming filesystems and Kafka sources
 
