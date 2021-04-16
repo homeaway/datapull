@@ -1,0 +1,86 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "migrations": [
+    {
+      "sources": [
+        {
+          "platform": "filesystem",
+          "path": "target/classes/SampleData/HelloWorld",
+          "fileformat": "csv",
+          "isstream": false,
+          "alias": "fs"
+        }
+      ],
+      "destination": {
+        "platform": "kafka",
+        "bootstrapservers": "broker:29092",
+        "schemaregistries": "http://schema-registry:8081",
+        "topic": "hello_world",
+        "keyfield": "HelloField",
+        "valuesubjectnamingstrategy": "RecordNameStrategy",
+        "valuesubjectrecordnamespace": "somevaluerecordnamespace",
+        "valuesubjectrecordname": "somevaluerecordname"
+      },
+      "sql": {
+        "query": "select HelloField, struct(WorldField, cast(IntField as int) as IntField) as value from fs"
+      }
+    },
+    {
+      "sources": [
+        {
+          "platform": "kafka",
+          "bootstrapservers": "broker:29092",
+          "schemaregistries": "http://schema-registry:8081",
+          "topic": "hello_world",
+          "valuesubjectnamingstrategy": "RecordNameStrategy",
+          "valuesubjectrecordnamespace": "somevaluerecordnamespace",
+          "valuesubjectrecordname": "somevaluerecordname",
+          "alias": "kf"
+        }
+      ],
+      "destination": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleData_Json/HelloWorld",
+        "fileformat": "json"
+      },
+      "sql": {
+        "query": "select key as HelloField, value.WorldField as WorldField, value.IntField as IntField from kf"
+      }
+    },
+    {
+      "sources": [
+        {
+          "platform": "filesystem",
+          "path": "target/classes/SampleData_Json/HelloWorld",
+          "fileformat": "json",
+          "isstream": true,
+          "alias": "fs"
+        }
+      ],
+      "destination": {
+        "platform": "kafka",
+        "bootstrapservers": "broker:29092",
+        "schemaregistries": "http://schema-registry:8081",
+        "topic": "hello_world2",
+        "keyfield": "HelloField",
+        "valuesubjectnamingstrategy": "RecordNameStrategy",
+        "valuesubjectrecordnamespace": "somevaluerecordnamespace",
+        "valuesubjectrecordname": "somevaluerecordname",
+        "sparkoptions": {
+          "checkpointLocation": "target/classes/streamcheckpoints/checkpoint1"
+        }
+      },
+      "sql": {
+        "query": "select HelloField, struct(WorldField, cast(IntField as int) as IntField) as value from fs"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "ComponentInfo": "YOUR_Component-UUID_dominion"
+  }
+}

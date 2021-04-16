@@ -71,7 +71,11 @@
       "required": [
         "pipelinename",
         "awsenv",
-        "ComponentInfo"
+        "ComponentInfo",
+        "Application",
+        "Brand",
+        "Team",
+        "CostCenter"
       ],
       "properties": {
         "pipelinename": {

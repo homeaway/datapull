@@ -21,7 +21,7 @@ class DataFrameFromToFileSystem extends FunSuite with BeforeAndAfter {
       val fileFormat = null
       val delimiter = null
       val charset = null
-      val mergeSchema = null
+      val mergeSchema = false
       val sparkSession: org.apache.spark.sql.SparkSession = null
       val login = null
       val host = null

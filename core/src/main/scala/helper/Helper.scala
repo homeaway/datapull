@@ -19,8 +19,8 @@ package helper
 import java.io.{PrintWriter, StringWriter}
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
-
 import config.AppConfig
+
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.common.config.SslConfigs
@@ -28,7 +28,7 @@ import org.apache.spark.sql.Column
 import org.apache.spark.sql.avro.SchemaConverters
 import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
 import za.co.absa.abris.avro.registry.SchemaSubject
-import za.co.absa.abris.config.{AbrisConfig, ToAvroConfig, ToSchemaDownloadingConfigFragment, ToStrategyConfigFragment}
+import za.co.absa.abris.config.{AbrisConfig, FromAvroConfig, FromStrategyConfigFragment, ToAvroConfig, ToSchemaDownloadingConfigFragment, ToStrategyConfigFragment}
 
 class Helper(appConfig: AppConfig) {
 
@@ -262,6 +262,35 @@ class Helper(appConfig: AppConfig) {
     }
     println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " + toAvroConfig.schemaString)
     toAvroConfig
+  }
+
+  def GetFromAvroConfig(topic: String, schemaRegistryUrl: String, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None): FromAvroConfig = {
+    //get the specified schema version
+    //if not specified, then get the latest schema from Schema Registry
+    //if the topic does not have a schema then create and register the schema
+    //applies to both key and value
+    val subject = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) SchemaSubject.usingTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) SchemaSubject.usingRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else SchemaSubject.usingTopicNameStrategy(topicName = topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
+    val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl)
+    val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
+    println((if (isKey) "key" else "value") + " subject = " + subject.asString)
+    var fromAvroConfig: FromAvroConfig = null
+    val avroConfigFragment = AbrisConfig
+      .fromConfluentAvro
+    var fromStrategyConfigFragment: FromStrategyConfigFragment = null
+    if (schemaVersion.isEmpty) {
+      fromStrategyConfigFragment = avroConfigFragment.downloadReaderSchemaByLatestVersion
+    }
+    else {
+      fromStrategyConfigFragment = avroConfigFragment.downloadReaderSchemaByVersion(schemaVersion.get)
+    }
+
+    val fromSchemaDownloadingConfigFragment = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) fromStrategyConfigFragment.andTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) fromStrategyConfigFragment.andRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else fromStrategyConfigFragment.andTopicNameStrategy(topicName = topic, isKey = isKey)
+
+    fromAvroConfig = fromSchemaDownloadingConfigFragment
+      .usingSchemaRegistry(schemaRegistryUrl)
+
+    println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " + fromAvroConfig.schemaString)
+    fromAvroConfig
   }
 
   def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean, sslEnabled: String): String = {
