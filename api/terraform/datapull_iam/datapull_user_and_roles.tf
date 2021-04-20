@@ -205,13 +205,36 @@ resource "aws_iam_policy" "datapull_emr_policy" {
 EOF
 }
 
+resource "aws_iam_policy" "datapull_passrole_policy" {
+  name = "datapull_passrole_policy"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [ {
+        "Effect": "Allow",
+        "Action": "iam:PassRole",
+        "Resource": [
+            "${aws_iam_role.emr_datapull_role.arn}",
+            "${aws_iam_role.emr_ec2_datapull_role.arn}"
+        ]
+    } ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy_attachment" "datapull_passrole_policy" {
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_passrole_policy.arn
+}
+
 resource "aws_iam_policy" "datapull_cloudwatch_logs_policy" {
   name = "datapull_cloudwatch_logs_policy"
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -419,8 +442,7 @@ resource "aws_iam_policy" "datapull_cloudwatch_logs_api_emr_ec2_policy" {
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
-    
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -449,14 +471,14 @@ EOF
 
 }
 
-# policy that replaces AmazonElasticMapReduceFullAccess, needed to spin up EMR 
+# policy that replaces AmazonElasticMapReduceFullAccess, needed to spin up EMR
 resource "aws_iam_policy" "datapull_emr_api_policy" {
   name = "datapull_emr_api_policy"
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -517,7 +539,7 @@ resource "aws_iam_policy" "datapull_iam_api_policy" {
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -544,7 +566,7 @@ resource "aws_iam_policy" "datapull_iam_api_policy" {
       "Resource": [
           "arn:aws:iam:::policy/datapull_*"
       ]
-    }  
+    }
   ]
 }
 EOF
@@ -663,7 +685,7 @@ resource "aws_iam_policy" "datapull_emr_service_policy" {
                 "ec2:TerminateInstances",
                 "ec2:DeleteTags",
                 "ec2:DetachVolume",
-                "ec2:DeleteVolume"                
+                "ec2:DeleteVolume"
             ]
         },
         {

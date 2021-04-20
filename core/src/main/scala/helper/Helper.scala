@@ -183,18 +183,18 @@ class Helper(appConfig: AppConfig) {
     var props = Map[String, String]()
 
     if ((!keyStorePath.isEmpty) || (!trustStorePath.isEmpty)) {
-      props += (CommonClientConfigs.SECURITY_PROTOCOL_CONFIG -> "SSL")
-      props += (SslConfigs.SSL_ENDPOINT_IDENTIFICATION_ALGORITHM_CONFIG -> "")
+      props += ("kafka.security.protocol" -> "SSL")
+      props += ("kafka.ssl.endpoint.identification.algorithm" -> "")
       if (!keyStorePath.isEmpty)
-        props += (SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG -> keyStorePath.get)
+        props += ("kafka.ssl.keystore.location" -> keyStorePath.get)
       if (!trustStorePath.isEmpty)
-        props += (SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG -> trustStorePath.get)
+        props += ("kafka.ssl.truststore.location" -> trustStorePath.get)
       if (!keyStorePassword.isEmpty)
-        props += (SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG -> keyStorePassword.get)
+        props += ("kafka.ssl.keystore.password" -> keyStorePassword.get)
       if (!trustStorePassword.isEmpty)
-        props += (SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG -> trustStorePassword.get)
+        props += ("kafka.ssl.truststore.password" -> trustStorePassword.get)
       if (!keyPassword.isEmpty)
-        props += (SslConfigs.SSL_KEY_PASSWORD_CONFIG -> keyPassword.get)
+        props += ("kafka.ssl.key.password" -> keyPassword.get)
     }
     props
   }

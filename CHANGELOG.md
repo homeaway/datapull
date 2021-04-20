@@ -35,7 +35,7 @@ Converted Kafka source to use ABRiS and support spark streaming, support streami
 
 ## [0.1.27] - 2021-04-12
 ### Changed
-- Controller.scala - Throw an exception to end the execution with exit code 1 when at least one migration has an error. 
+- Controller.scala - Throw an exception to end the execution with exit code 1 when at least one migration has an error.
 
 ## [0.1.26] - 2021-04-12
 ### Changed
@@ -51,7 +51,7 @@ Converted Kafka source to use ABRiS and support spark streaming, support streami
 ## [0.1.24] - 2021-03-20
 Added support for string event format for Kafka destinations
 ### Added
- - .gitattributes - Force *.sh files to be handled with LF line endings regardless of OS, by git
+- .gitattributes - Force *.sh files to be handled with LF line endings regardless of OS, by git
 ### Changed
 - core/src/main/scala/core/{DataFrameFromTo.scala, Migration.scala} - Added support for string event format for Kafka destinations
 - core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json - Updated example to use string format for kafka event key

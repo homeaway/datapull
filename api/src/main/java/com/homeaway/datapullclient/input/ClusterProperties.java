@@ -73,7 +73,7 @@ public class ClusterProperties {
     @JsonProperty("subnet_id")
     private String subnetId;
 
-    @JsonAlias({"emr_instance_count", "NodeCount"})
+    @JsonAlias({"emr_instance_count", "nodecount", "NodeCount"})
     private String emrInstanceCount;
 
     @JsonProperty("emr_release_version")
