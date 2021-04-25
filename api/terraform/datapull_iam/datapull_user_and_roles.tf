@@ -135,7 +135,9 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split2" {
                 "ecs:Poll",
                 "ecs:UpdateService",
                 "ecs:StartTelemetrySession",
-                "ecs:DescribeServices"
+                "ecs:DescribeServices",
+                "ecs:TagResource",
+                "ecs:UntagResource"
             ],
             "Resource": [
               "arn:aws:ecr:*:*:repository/${var.docker_image_name}*",
