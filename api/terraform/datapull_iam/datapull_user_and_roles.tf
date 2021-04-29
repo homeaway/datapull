@@ -430,7 +430,8 @@ resource "aws_iam_policy" "datapull_s3_api_policy" {
       ],
       "Effect": "Allow",
       "Resource": [
-           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/history/*"
+           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/history/*",
+            "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/bootstrapfiles/*"
       ]
     }
   ]
