@@ -803,6 +803,30 @@ EOF
 
 # policies for emr_ec2_datapull_role ...
 
+/*the email address in this policy will be overwritten by create_user_and_role.sh*/
+resource "aws_iam_policy" "datapull_ses_emr_ec2_policy" {
+  name = "datapull_ses_emr_ec2_policy"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+        "Sid": "VisualEditor0",
+        "Effect": "Allow",
+        "Action": "ses:SendEmail",
+        "Resource": "*",
+        "Condition": {
+            "StringEqualsIgnoreCaseIfExists": {
+                "ses:FromDisplayName": "DataPull"
+            }
+        }
+    }
+  ]
+}
+EOF
+}
+
+
 /*the S3 buckets in this policy will be overwritten by create_user_and_role.sh*/
 resource "aws_iam_policy" "datapull_s3_emr_ec2_policy" {
   name = "datapull_s3_emr_ec2_policy"
@@ -849,6 +873,11 @@ resource "aws_iam_policy" "datapull_s3_emr_ec2_policy" {
   ]
 }
 EOF
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_ses_emr_ec2_attachment" {
+  role = aws_iam_role.emr_ec2_datapull_role.name
+  policy_arn = aws_iam_policy.datapull_ses_emr_ec2_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_s3_emr_ec2_attachment" {
