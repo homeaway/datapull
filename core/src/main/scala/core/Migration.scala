@@ -195,7 +195,25 @@ class Migration extends SparkListener {
         dataframeFromTo.dataFrameToEmail(destinationMap.getOrElse("to", reportEmailAddress), destinationMap.getOrElse("subject", "Datapull Result"), dft, destinationMap.getOrElse("limit", "100"), destinationMap.getOrElse("truncate", "100"))
       }
       else if (destinationMap("platform") == "mssql" || destinationMap("platform") == "mysql" || destinationMap("platform") == "postgres" || destinationMap("platform") == "oracle" || destinationMap("platform") == "teradata") {
-        dataframeFromTo.dataFrameToRdbms(destinationMap("platform"), destinationMap("awsenv"), destinationMap("server"), destinationMap("database"), destinationMap("table"), destinationMap("login"), destinationMap("password"), dft, destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", "vault"), destinationMap.getOrElse("sslenabled", "false"), destinationMap.getOrElse("port", null), destination.optJSONObject("jdbcoptions"), destinationMap.getOrElse("savemode", "Append"), destinationMap.getOrElse("isWindowsAuthenticated", "false").toBoolean, destinationMap.getOrElse("domain", null))
+        dataframeFromTo.dataFrameToRdbms(
+          platform = destinationMap("platform"),
+          awsEnv = destinationMap("awsenv"),
+          server = destinationMap("server"),
+          database = destinationMap("database"),
+          table = destinationMap("table"),
+          login = destinationMap("login"),
+          password = destinationMap("password"),
+          df = dft,
+          vaultEnv = destinationMap("vaultenv"),
+          secretStore = destinationMap.getOrElse("secretstore", "vault"),
+          sslEnabled = destinationMap.getOrElse("sslenabled", "false").toBoolean,
+          port = destinationMap.getOrElse("port", null),
+          addlJdbcOptions = destination.optJSONObject("jdbcoptions"),
+          savemode = destinationMap.getOrElse("savemode", "Append"),
+          isWindowsAuthenticated = destinationMap.getOrElse("iswindowsauthenticated", "false").toBoolean,
+          domainName = destinationMap.getOrElse("domain", null),
+          typeForTeradata = destinationMap.get("typeforteradata")
+        )
       } else if (destinationMap("platform") == "s3") {
         setAWSCredentials(sparkSession, destinationMap)
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
@@ -417,10 +435,10 @@ class Migration extends SparkListener {
       val migrationEndTime = Instant.now().toString
 
       if (hasExceptions)
-      //      //in case of exceptions, the job will be logged in as failed.
+      //in case of exceptions, the job will be logged in as failed.
         dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Failed", jobId, sparkSession)
       else
-      //      //in case of no exceptions here the job will be logged as completed.
+      //in case of no exceptions here the job will be logged as completed.
         dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Completed", jobId, sparkSession)
 
       reportRowHtml.append("<tr><td>")
@@ -487,11 +505,12 @@ class Migration extends SparkListener {
         numofpartitions = propertiesMap("numPartitions"),
         vaultEnv = propertiesMap("vaultenv"),
         secretStore = propertiesMap.getOrElse("secretstore", "vault"),
-        sslEnabled = propertiesMap.getOrElse("sslenabled", "false"),
+        sslEnabled = propertiesMap.getOrElse("sslenabled", "false").toBoolean,
         port = propertiesMap.getOrElse("port", null),
         addlJdbcOptions = platformObject.optJSONObject("jdbcoptions"),
         isWindowsAuthenticated = propertiesMap.getOrElse("isWindowsAuthenticated", "false").toBoolean,
-        domainName = propertiesMap.getOrElse("domain", null)
+        domainName = propertiesMap.getOrElse("domain", null),
+        typeForTeradata = propertiesMap.get("typeforteradata")
       )
     } else if (platform == "cassandra") {
       //DO NOT bring in the pre-migrate command in here, else it might run when getting the final counts
@@ -634,13 +653,11 @@ class Migration extends SparkListener {
 
   def jsonSourceDestinationRunPrePostMigrationCommand(platformObject: JSONObject, runPreMigrationCommand: Boolean, reportbodyHtml: StringBuilder, sparkSession: SparkSession, pipeline: String): Unit = {
     var propertiesMap = jsonObjectPropertiesToMap(platformObject)
-    //add optional keysp explicitely else the map will complain they don't exist later down
+    //add optional keys explicitly else the map will complain they don't exist later down
     propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList(), platformObject)
     if (propertiesMap.getOrElse("secretstore", "").equals("aws_secrets_manager")) {
       propertiesMap = extractCredentialsFromSecretManager(propertiesMap)
     }
-    println("Debug...")
-    println(propertiesMap)
     var platform = propertiesMap("platform")
     var pre_migrate_commands = new JSONArray()
     if (platformObject.has("pre_migrate_commands")) {
@@ -695,9 +712,24 @@ class Migration extends SparkListener {
 
       for (i <- 0 to lengthOfArray - 1) {
 
-        var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
+        val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
         if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
-          dataframeFromTo.rdbmsRunCommand(platform, propertiesMap("awsenv"), propertiesMap("server"), propertiesMap.getOrElse("port", null), propertiesMap.getOrElse("sslenabled", null), propertiesMap("database"), command.getJSONObject(i).getString("query"), propertiesMap("login"), propertiesMap("password"), propertiesMap("vaultenv"), propertiesMap.getOrElse("secretstore", "vault"), propertiesMap.getOrElse("isWindowsAuthenticated", "false").toBoolean, propertiesMap.getOrElse("domain", null))
+          dataframeFromTo.rdbmsRunCommand(
+            platform = platform,
+            awsEnv = propertiesMap("awsenv"),
+            server = propertiesMap("server"),
+            port = propertiesMap.getOrElse("port", null),
+            sslEnabled = propertiesMap.getOrElse("sslenabled", "false").toBoolean,
+            database = propertiesMap("database"),
+            sql_command = command.getJSONObject(i).getString("query"),
+            login = propertiesMap("login"),
+            password = propertiesMap("password"),
+            vaultEnv = propertiesMap("vaultenv"),
+            secretStore = propertiesMap.getOrElse("secretstore", "vault"),
+            isWindowsAuthenticated = propertiesMap.getOrElse("iswindowsauthenticated", "false").toBoolean,
+            domainName = propertiesMap.getOrElse("domain", null),
+            typeForTeradata = propertiesMap.get("typeforteradata")
+          )
         }
         else if (platform == "cassandra") {
           propertiesMap = propertiesMap ++ deriveClusterIPFromConsul(jsonObjectPropertiesToMap(List("cluster", "cluster_key", "consul_dc"), platformObject))

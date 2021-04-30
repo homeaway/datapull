@@ -1,4 +1,4 @@
-# Test writing dataset in filesystem to Kafka
+# Test streaming dataset in filesystem to Kafka
 
 ## What is tested?
 1. Data can be read as a batch from a folder in the filesystem, with CSV files

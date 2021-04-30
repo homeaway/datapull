@@ -58,7 +58,7 @@ object DataPull {
 
     /*-------------------JSON INPUT-------------------------------------------------------------------------------------------------*/
     var jsonString = ""
-    var isLocal:Boolean = true
+    var isLocal: Boolean = true
 
     if (args.length == 0) {
 
@@ -206,6 +206,7 @@ object DataPull {
         verifymigration = (json.getString("verifymigration") == "true")
       }
     }
+
     if (json.has("cluster")) {
 
       val cluster = json.getJSONObject("cluster")
@@ -254,10 +255,10 @@ object DataPull {
     controllerinstance.performmigration(migrations, parallelmigrations, reportEmailAddress, verifymigration, reportCounts, config.no_of_retries.toInt, custom_retries, jobId, sparkSession, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, minexecutiontime, maxexecutiontime, start_time_in_milli, applicationId, pipelineName, awsenv, precisecounts, failureThreshold, failureEmailAddress, authenticatedUser)
   }
 
-  def getFile(fileName: String, relativeToClass:Boolean = true): String = {
+  def getFile(fileName: String, relativeToClass: Boolean = true): String = {
 
     val result = new StringBuilder("")
-    var file:File = null
+    var file: File = null
     if (relativeToClass) {
       //Get file from resources folder
       val classLoader = getClass().getClassLoader();
@@ -280,11 +281,17 @@ object DataPull {
   }
 
   def setAWSCredentials(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String]): Unit = {
-    //sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.impl", "com.amazon.ws.emr.hadoop.fs.EmrFileSystem")
     val s3Prefix: String = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
     if (sourceDestinationMap("awssecretaccesskey") != "") {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".access.key", sourceDestinationMap("awsaccesskeyid"))
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".secret.key", sourceDestinationMap("awssecretaccesskey"))
+    }
+    if (sourceDestinationMap.contains("s3_service_endpoint")) {
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".endpoint", sourceDestinationMap("s3_service_endpoint"))
+    }
+    if (!(sourceDestinationMap.contains("enable_s3_bucket_owner_full_control") && sourceDestinationMap("enable_s3_bucket_owner_full_control") == "false")) {
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".canned.acl", "BucketOwnerFullControl")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".acl.default", "BucketOwnerFullControl")
     }
     if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption") == "true")) {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".enableServerSideEncryption", "true")
@@ -301,7 +308,7 @@ object DataPull {
     var returnList = List.empty[String]
     val jsonArray = new JSONArray(jsonStringArr)
     val length = jsonArray.length()
-    for( i <- 0 to length-1){
+    for (i <- 0 to length - 1) {
       returnList = returnList :+ jsonArray.get(i).toString()
     }
     returnList
@@ -365,15 +372,16 @@ object DataPull {
     }
     returnMap
   }
+
   /**
-    * Binary data to JUUID String representation
-    * Based on: https://github.com/mongodb/mongo-csharp-driver/blob/master/uuidhelpers.js
-    * I used a StringBuilder instead of their liberal use of substrings. ~3-4x faster
-    */
+   * Binary data to JUUID String representation
+   * Based on: https://github.com/mongodb/mongo-csharp-driver/blob/master/uuidhelpers.js
+   * I used a StringBuilder instead of their liberal use of substrings. ~3-4x faster
+   */
   def binaryToJUUID(bytes: Array[Byte]): String = {
-    if (bytes == null ) null
-    else{
-      val sb: StringBuilder  = new StringBuilder;
+    if (bytes == null) null
+    else {
+      val sb: StringBuilder = new StringBuilder;
       val base64Bytes: Array[Byte] = Base64.decodeBase64(bytes)
       val hexChars: Array[Char] = Hex.encodeHex(base64Bytes)
       sb.appendAll(hexChars, 14, 2)
