@@ -112,7 +112,7 @@ The following attributes need to be set if you need DataPull to send an email re
 - datapull.logger.smtp.emailaddress: Put `<emailaddress>` here
 - datapull.logger.smtp.smtpserveraddress: Put `<smtpserveraddress>` here
 
-The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address `<email>`  using an existing SES instance that is accessible to the DataPull's EC2 EMR Role. 
+The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address `<email>`  using an existing SES instance that is accessible to the DataPull's EC2 EMR Role.
 
 - datapull.logger.ses.email: Put `<email>` here
 

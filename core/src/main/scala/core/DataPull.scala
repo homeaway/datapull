@@ -281,12 +281,17 @@ object DataPull {
   }
 
   def setAWSCredentials(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String]): Unit = {
-    sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.canned.acl", "BucketOwnerFullControl")
-    //sparkSession.sparkContext.hadoopConfiguration.set("fs.s3.impl", "com.amazon.ws.emr.hadoop.fs.EmrFileSystem")
     val s3Prefix: String = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
     if (sourceDestinationMap("awssecretaccesskey") != "") {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".access.key", sourceDestinationMap("awsaccesskeyid"))
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".secret.key", sourceDestinationMap("awssecretaccesskey"))
+    }
+    if (sourceDestinationMap.contains("s3_service_endpoint")) {
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".endpoint", sourceDestinationMap("s3_service_endpoint"))
+    }
+    if (!(sourceDestinationMap.contains("enable_s3_bucket_owner_full_control") && sourceDestinationMap("enable_s3_bucket_owner_full_control") == "false")) {
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".canned.acl", "BucketOwnerFullControl")
+      sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".acl.default", "BucketOwnerFullControl")
     }
     if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption") == "true")) {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".enableServerSideEncryption", "true")

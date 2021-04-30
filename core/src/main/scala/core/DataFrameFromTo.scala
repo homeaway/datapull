@@ -285,8 +285,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       sparkSession.conf.set("fs." + s3Prefix + ".connection.maximum", 100)
       val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
       hadoopConf.set("fs." + s3Prefix + ".fast.upload", "true")
-      hadoopConf.set("fs." + s3Prefix + ".canned.acl", "BucketOwnerFullControl")
-      hadoopConf.set("fs." + s3Prefix + ".acl.default", "BucketOwnerFullControl")
     }
 
     if (isSFTP) {
