@@ -21,7 +21,7 @@ import org.codehaus.jettison.json.JSONArray
 
 import scala.collection.mutable.ListBuffer
 
-class Consul (dnsName: String, config : AppConfig) {
+class Consul(dnsName: String, config: AppConfig) {
   //primary constructor
   private var dataCenter = ""
   var serviceName = ""
@@ -38,7 +38,7 @@ class Consul (dnsName: String, config : AppConfig) {
     GetIpAddresses
   }
 
-  private def ApiUrl (): String = {
+  private def ApiUrl(): String = {
     "http://" + dataCenter + ".consul." + dataCenters(dataCenter) + ".away.black:8500"
   }
 
@@ -52,7 +52,7 @@ class Consul (dnsName: String, config : AppConfig) {
     if (httpResponse.ResponseCode == 200) {
       val ipAddressBuffer = ListBuffer.empty[String]
       val jsonResponse = new JSONArray(httpResponse.ResponseBody)
-      for (i <- 0 to jsonResponse.length()-1) {
+      for (i <- 0 to jsonResponse.length() - 1) {
         ipAddressBuffer.append(jsonResponse.getJSONObject(i).getString("Address"))
       }
       ipAddresses = ipAddressBuffer.toList

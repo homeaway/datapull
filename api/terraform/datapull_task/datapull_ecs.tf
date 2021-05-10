@@ -7,10 +7,11 @@ locals{
     product              = "datapull"
     portfolio            = "data infra"
     service              = "datapull"
-    brand                = "VRBO"
+    brand                = "EG"
     asset_protection_level = "99"
-    component_info        = "33daf877-db67-43ca-b61b-ec6596a4af81"
+    component_info        = "00000000-0000-0000-0000-000000000000"
     application           = "datapull"
+    costcenter            = "66003"
   }
 }
 #----------------------------

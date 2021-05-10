@@ -135,7 +135,9 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split2" {
                 "ecs:Poll",
                 "ecs:UpdateService",
                 "ecs:StartTelemetrySession",
-                "ecs:DescribeServices"
+                "ecs:DescribeServices",
+                "ecs:TagResource",
+                "ecs:UntagResource"
             ],
             "Resource": [
               "arn:aws:ecr:*:*:repository/${var.docker_image_name}*",
@@ -205,13 +207,36 @@ resource "aws_iam_policy" "datapull_emr_policy" {
 EOF
 }
 
+resource "aws_iam_policy" "datapull_passrole_policy" {
+  name = "datapull_passrole_policy"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [ {
+        "Effect": "Allow",
+        "Action": "iam:PassRole",
+        "Resource": [
+            "${aws_iam_role.emr_datapull_role.arn}",
+            "${aws_iam_role.emr_ec2_datapull_role.arn}"
+        ]
+    } ]
+}
+EOF
+}
+
+resource "aws_iam_user_policy_attachment" "datapull_passrole_policy" {
+  user = aws_iam_user.datapull_user.name
+  policy_arn = aws_iam_policy.datapull_passrole_policy.arn
+}
+
 resource "aws_iam_policy" "datapull_cloudwatch_logs_policy" {
   name = "datapull_cloudwatch_logs_policy"
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -405,7 +430,8 @@ resource "aws_iam_policy" "datapull_s3_api_policy" {
       ],
       "Effect": "Allow",
       "Resource": [
-           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/history/*"
+           "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/history/*",
+            "arn:aws:s3:::${var.datapull_s3_bucket}/datapull-opensource/bootstrapfiles/*"
       ]
     }
   ]
@@ -419,8 +445,7 @@ resource "aws_iam_policy" "datapull_cloudwatch_logs_api_emr_ec2_policy" {
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
-    
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -449,14 +474,14 @@ EOF
 
 }
 
-# policy that replaces AmazonElasticMapReduceFullAccess, needed to spin up EMR 
+# policy that replaces AmazonElasticMapReduceFullAccess, needed to spin up EMR
 resource "aws_iam_policy" "datapull_emr_api_policy" {
   name = "datapull_emr_api_policy"
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -517,7 +542,7 @@ resource "aws_iam_policy" "datapull_iam_api_policy" {
   policy = <<EOF
 {
   "Version": "2012-10-17",
-  "Statement": [ 
+  "Statement": [
     {
       "Effect": "Allow",
       "Action": [
@@ -544,7 +569,7 @@ resource "aws_iam_policy" "datapull_iam_api_policy" {
       "Resource": [
           "arn:aws:iam:::policy/datapull_*"
       ]
-    }  
+    }
   ]
 }
 EOF
@@ -663,7 +688,7 @@ resource "aws_iam_policy" "datapull_emr_service_policy" {
                 "ec2:TerminateInstances",
                 "ec2:DeleteTags",
                 "ec2:DetachVolume",
-                "ec2:DeleteVolume"                
+                "ec2:DeleteVolume"
             ]
         },
         {
@@ -778,6 +803,30 @@ EOF
 
 # policies for emr_ec2_datapull_role ...
 
+/*the email address in this policy will be overwritten by create_user_and_role.sh*/
+resource "aws_iam_policy" "datapull_ses_emr_ec2_policy" {
+  name = "datapull_ses_emr_ec2_policy"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+        "Sid": "VisualEditor0",
+        "Effect": "Allow",
+        "Action": "ses:SendEmail",
+        "Resource": "*",
+        "Condition": {
+            "StringEqualsIgnoreCaseIfExists": {
+                "ses:FromDisplayName": "DataPull"
+            }
+        }
+    }
+  ]
+}
+EOF
+}
+
+
 /*the S3 buckets in this policy will be overwritten by create_user_and_role.sh*/
 resource "aws_iam_policy" "datapull_s3_emr_ec2_policy" {
   name = "datapull_s3_emr_ec2_policy"
@@ -824,6 +873,11 @@ resource "aws_iam_policy" "datapull_s3_emr_ec2_policy" {
   ]
 }
 EOF
+}
+
+resource "aws_iam_role_policy_attachment" "datapull_ses_emr_ec2_attachment" {
+  role = aws_iam_role.emr_ec2_datapull_role.name
+  policy_arn = aws_iam_policy.datapull_ses_emr_ec2_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "datapull_s3_emr_ec2_attachment" {

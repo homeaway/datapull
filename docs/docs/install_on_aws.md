@@ -112,9 +112,12 @@ The following attributes need to be set if you need DataPull to send an email re
 - datapull.logger.smtp.emailaddress: Put `<emailaddress>` here
 - datapull.logger.smtp.smtpserveraddress: Put `<smtpserveraddress>` here
 
-The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address `<email>`  using an existing SES instance that is accessiable using the AWS credentials `<access_key>`/`<secret_key>`
+The following attributes need to be set if you need DataPull to send an email report once each DataPull job completes, from the email address `<email>`  using an existing SES instance that is accessible to the DataPull's EC2 EMR Role.
 
 - datapull.logger.ses.email: Put `<email>` here
+
+Optionally, you can provide AWS Credentials `<access_key>`/`<secret_key>` for use by SES  alone
+
 - datapull.logger.ses.access_key: Put `<access_key>` here
 - datapull.logger.ses.secret_key: Put `<secret_key>` here
 

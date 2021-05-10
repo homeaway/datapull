@@ -248,7 +248,7 @@ class Controller(appConfig: AppConfig, pipeline: String) {
         else if (!isNullOrEmpty(appConfig.sesFromEmail)) {
           import com.amazonaws.services.simpleemail.model.SendEmailRequest
           val emailFrom = appConfig.sesFromEmail
-          val request = new SendEmailRequest().withSource(emailFrom)
+          val request = new SendEmailRequest().withSource(s"DataPull<$emailFrom>")
             .withDestination(new Destination().withToAddresses(toAddresses.split(",|;"): _*))
             .withMessage(new com.amazonaws.services.simpleemail.model.Message().withBody(new Body().withHtml(new Content().withData(htmlContent).withCharset("UTF-8"))).withSubject(new Content().withData(subject_local)))
 

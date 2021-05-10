@@ -5,14 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.29] - 2021-04-29
+Added manual tests for mysql and mssql data stores, added support for secure Kafka schema registries, give ownership of files to bucket owners when writing to S3, reduced code redundancy, added permissions for bootstrap files and ECS tags, permission for default and custom EC2 EMR roles to send SES emails, support for custom AWS Service Endpoints like IBM Object Storage, made BucketOwnerFullControl default but removable
+
+### Added
+- manual-tests/mssql_dataset_to_mysql_to_mssql/* - Manual test for batch and pre/post-migrate commands on mysql and mssql data stores
+
+### Changed
+- DataFrameFromTo.scala - Added support for secure Kafka schema registries, give ownership of files to bucket owners when writing to S3, reduced code redundancy, made BucketOwnerFullControl default but removable
+- Helper.scala - Added support for secure Kafka schema registries
+- Input_Json_Specification.json - Added documentation for Teradata type (fastexport, fastload, etc), documentation for custom AWS Service Endpoints like IBM Object Storage, made BucketOwnerFullControl default but removable
+- Migration.scala - Removed debug print that can cause credentials to leak to logs
+- datapull_user_and_roles.tf - Added permissions for bootstrap files and ECS tags, and for sending SES emails
+- Controller.scala - Set SES From email name to DataPull
+- sample_custom_emr_ec2_role.tf - Added permissions for sending SES emails
+- DataPull.scala - support for custom AWS Service Endpoints like IBM Object Storage, made BucketOwnerFullControl default but removable
+
 ## [0.1.28] - 2021-04-13
 Converted Kafka source to use ABRiS and support spark streaming, support streaming filesystem source, add Console as a destination for batch and stream
-
-## [0.1.27] - 2021-04-12
-### Added
-- Added new Tagging elements.
-
-## [0.1.26] - 2021-04-12
 
 ### Added
 - manual-tests/filesystem_stream_to_kafka/* - Manual test for streaming filesystems and Kafka sources
@@ -28,7 +38,7 @@ Converted Kafka source to use ABRiS and support spark streaming, support streami
 
 ## [0.1.27] - 2021-04-12
 ### Changed
-- Controller.scala - Throw an exception to end the execution with exit code 1 when at least one migration has an error. 
+- Controller.scala - Throw an exception to end the execution with exit code 1 when at least one migration has an error.
 
 ## [0.1.26] - 2021-04-12
 ### Changed
@@ -44,7 +54,7 @@ Converted Kafka source to use ABRiS and support spark streaming, support streami
 ## [0.1.24] - 2021-03-20
 Added support for string event format for Kafka destinations
 ### Added
- - .gitattributes - Force *.sh files to be handled with LF line endings regardless of OS, by git
+- .gitattributes - Force *.sh files to be handled with LF line endings regardless of OS, by git
 ### Changed
 - core/src/main/scala/core/{DataFrameFromTo.scala, Migration.scala} - Added support for string event format for Kafka destinations
 - core/src/main/resources/Samples/Input_Sample_s3_to_kafka.json - Updated example to use string format for kafka event key
