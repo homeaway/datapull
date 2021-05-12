@@ -4,7 +4,7 @@
     {
       "source": {
         "platform": "filesystem",
-        "path": "/FOLDER/SUB_FOLDER/SampleNeoData.csv",
+        "path": "/FOLDER/SUB_FOLDER/SampleData.csv",
         "fileformat": "csv"
       },
       "destination": {

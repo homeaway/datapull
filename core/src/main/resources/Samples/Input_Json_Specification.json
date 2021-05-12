@@ -466,38 +466,6 @@
         "comment_awssecretaccesskey": "Optional. If not provided the application will use service link role for accessing cloudwatch",
         "awssecretaccesskey": "AWS_SECRET_ACCESS_KEY"
       },
-      "destination_neo4j": {
-        "platform": "neo4j",
-        "cluster": "IP_ADDR_OR_DNS_NAME",
-        "comment_node1": "Required. Information about the first (of possible two) classes of nodes to be upserted",
-        "node1": {
-          "label": "foodtype",
-          "property_key": "foodtypeid",
-          "properties_nonkey": [
-            "foodtype"
-          ],
-          "comment_createormerge": "Optional, defaults to MERGE. Can either be CREATE or MERGE, and denotes whether Neo4j does a CREATE (insert, possibly leading to duplicates, but very fast) or a MERGE (upsert, no duplicates but slower) operation",
-          "createormerge": "MERGE",
-          "comment_createnodekeyconstraint": "Optional, defaults to true. If true, Data Pull creates a node key constraint for all the key properties of the node",
-          "createnodekeyconstraint": true
-        },
-        "comment_node2": "Optional. Information about the second (of possible two) classes of nodes to be upserted.",
-        "node2": {
-          "label": "food",
-          "property_key": "foodid",
-          "properties_nonkey": [
-            "food"
-          ]
-        },
-        "comment_relation": "Optional. Attributes of the directed relation from node1 to node2. If this is ommitted, node1 and node2 will still be upserted",
-        "relation": {
-          "label": "relatedto",
-          "comment_createormerge": "Optional, defaults to MERGE. Can either be CREATE or MERGE, and denotes whether Neo4j does a CREATE (insert, possibly leading to duplicates, but very fast) or a MERGE (upsert, no duplicates but slower) operation",
-          "createormerge": "MERGE"
-        },
-        "login": "appuser",
-        "password": "appuser"
-      },
       "destination_snowflake": {
         "platform": "snowflake",
         "comment_url": "Specifies the hostname for your account in the following format: account_name.snowflakecomputing.com . However, note that your full account name might include additional segments that identify the region and cloud platform where your account is hosted.",

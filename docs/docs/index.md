@@ -21,7 +21,7 @@ DataPull supports the following datastores as sources and destinations.
 | Kafka | ✔ | ✔ |
 | Mongodb | ✔ | ✔ |
 | MySql | ✔ | ✔ |
-| Neo4j |**X** | ✔ |
+| Neo4j |**X**|**X**|
 | Oracle[<sup>(*)</sup>](oracle_teradata_support.md) | ✔ | ✔ |
 | Postgresql | ✔ | ✔ |  
 | S3 | ✔ | ✔ |

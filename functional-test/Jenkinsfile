@@ -11,7 +11,7 @@ properties([
 com.cwctravel.hudson.plugins.extended_choice_parameter.ExtendedChoiceParameterDefinition extensibleChoiceDbs = new com.cwctravel.hudson.plugins.extended_choice_parameter.ExtendedChoiceParameterDefinition(
         "Databases",
         "PT_CHECKBOX",
-        "all, cassandra, mongodb, elastic, mssql, kafka, postgres, oracle, mysql, s3, neo4j",
+        "all, cassandra, mongodb, elastic, mssql, kafka, postgres, oracle, mysql, s3",
         null,//project name
         null,
         null,

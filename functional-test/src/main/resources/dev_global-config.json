@@ -72,26 +72,6 @@
     "table": "SCHEMA_NAME.TABLE_NAME"
   },
 
-  "neo4j": {
-    "platform": "neo4j",
-    "cluster": "IP_ADDR_OR_DNS_NAME",
-    "node1": {
-      "label" : "foodtype",
-      "property_key" : "foodtypeid",
-      "properties_nonkey": ["foodtype"]
-    },
-    "relation":{
-      "label": "relatedto"
-    },
-    "node2": {
-      "label" : "food",
-      "property_key" : "foodid",
-      "properties_nonkey": ["food"]
-    },
-    "login": "LOGIN_NAME",
-    "password": "PASSWORD"
-  },
-
   "s3_destination": {
     "platform":"s3",
     "s3path": "BUCKET_NAME/FOLDER_PATH"

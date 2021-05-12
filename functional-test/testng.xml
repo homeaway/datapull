@@ -6,7 +6,6 @@
             <class name="com.homeaway.DataPull.DataPullElasticSearchToSQLServerTest"/>
             <class name="com.homeaway.DataPull.DataPullKafkaToPostgresTest"/>
             <class name="com.homeaway.DataPull.DataPullMongoDBToOracleTest"/>
-            <class name="com.homeaway.DataPull.DataPullMySQLToNeo4JTest"/>
             <class name="com.homeaway.DataPull.DataPullOracleToMySQLTest"/>
             <class name="com.homeaway.DataPull.DataPullPostgresToElasticSearchTest"/>
             <class name="com.homeaway.DataPull.DataPullS3ToCassandraTest"/>
