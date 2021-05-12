@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.30] - 2021-05-11
+
+Fixing small bugs and making the brand, costcenter, application tags as optional; definition of dockerised spark server; installation instructions for Oracle and Teradata drivers
+
+### Changed
+
+- api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+- api/src/main/resources/input_json_schema.json
+- core/docker_spark_server/Dockerfile
+- docs/docs/oracle_teradata_support.md
+
 ## [0.1.29] - 2021-04-29
 Added manual tests for mysql and mssql data stores, added support for secure Kafka schema registries, give ownership of files to bucket owners when writing to S3, reduced code redundancy, added permissions for bootstrap files and ECS tags, permission for default and custom EC2 EMR roles to send SES emails, support for custom AWS Service Endpoints like IBM Object Storage, made BucketOwnerFullControl default but removable
 
