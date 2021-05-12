@@ -132,7 +132,9 @@ public class ClusterProperties {
                 ", team='" + team + '\'' +
                 ", bootstrapactionstring='" + bootstrapactionstring + '\'' +
                 ", env='" + env + '\'' +
+                ", brand='" + brand + '\'' +
                 ", costCenter='" + costCenter + '\'' +
+                ", application='" + application + '\'' +
                 '}';
     }
 }
