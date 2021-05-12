@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.31] - 2021-05-12
+
+Remove bintray-bound Neo4j lib implementation until https://neo4j.com/product/connectors/apache-spark-connector/?ref=blog can be implemented
+
+### Changed
+
+- core/src/main/resources/Samples/Input_Json_Specification.json
+- core/src/main/resources/Samples/Input_Sample_Oracle_PostPreMigration.json
+- core/src/main/scala/core/DataFrameFromTo.scala
+- core/src/main/scala/core/Migration.scala
+- core/pom.xml
+- docs/docs/index.md
+- functional-test/src/main/resources/dev_global-config.json
+- functional-test/src/main/resources/test_global-config.json
+- functional-test/Jenkinsfile
+- functional-test/pom.xml
+- functional-test/testng.xml
+
+### Deleted
+
+- core/src/main/resources/Samples/Input_Sample_filesystem_to_Neo4j.json
+- core/src/main/resources/Samples/Input_Sample_Neo4j.json
+- core/src/main/scala/helper/Neo4j.scala
+- functional-test/src/main/java/com/homeaway/utils/db/Neo4j.java
+- functional-test/src/main/resources/input_files/MySQL-to-Neo4j.json
+- functional-test/src/main/resources/input_files/Neo4jRelations.json
+- functional-test/src/test/java/com/homeaway/DataPull/DataPullMySQLToNeo4JTest.java
+
 ## [0.1.30] - 2021-05-11
 
 Fixing small bugs and making the brand, costcenter, application tags as optional; definition of dockerised spark server; installation instructions for Oracle and Teradata drivers
