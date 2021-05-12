@@ -2,7 +2,7 @@
 To use Oracle and Teradata as sources/destinations for DataPull, you need to manually download their driver JARs from their companys' websites and add them as dependencies in the `/core/pom.xml` file of this repo. 
 
 ## Steps to download Oracle ojdbc jar
-- Go to Oraacle JDBC downloads page (https://www.oracle.com/database/technologies/appdev/jdbc-ucp-21-1-c-downloads.html as of 5/11/2021) 
+- Go to Oracle JDBC downloads page (https://www.oracle.com/database/technologies/appdev/jdbc-ucp-21-1-c-downloads.html as of 5/11/2021) 
 - Accept the license agreement
     - Oracle will ask you to create an account if you don't have one already
 - Download the latest version of the ojdbc JAR (`ojdbc11.jar` as of 5/11/2021) 
