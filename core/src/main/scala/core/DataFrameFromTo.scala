@@ -591,42 +591,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .save()
   }
 
-  def dataFrameToNeo4j(df: org.apache.spark.sql.DataFrame, cluster: String, login: String, password: String, awsEnv: String, vaultEnv: String, node1_label: String, node1_keys: List[String], node1_nonKeys: List[String], node2_label: String, node2_keys: List[String], node2_nonKeys: List[String], relation_label: String, batchSize: Int,
-                       node1_createOrMerge: String,
-                       node1_createNodeKeyConstraint: Boolean,
-                       node2_createOrMerge: String,
-                       node2_createNodeKeyConstraint: Boolean,
-                       relation_createOrMerge: String, secretStore: String, sparkSession: org.apache.spark.sql.SparkSession): Unit = {
-    val consul = new Consul(cluster, appConfig)
-    var clusterName = cluster
-    if (consul.IsConsulDNSName()) {
-      clusterName = consul.serviceName
-    }
-    //if password isn't set, attempt to get from security.Vault
-    var vaultPassword = password
-    var vaultLogin = login
-    if (vaultPassword == "") {
-      val secretService = new SecretService(secretStore, appConfig)
-      val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
-      vaultLogin = vaultCreds("username")
-      vaultPassword = vaultCreds("password")
-    }
-
-    if (node1_label != "" && (!node1_keys.isEmpty)) {
-      val neo4j = new Neo4j()
-      neo4j.writeNode(df, cluster, vaultLogin, vaultPassword, node1_label, node1_keys, node1_nonKeys, sparkSession, batchSize, node1_createNodeKeyConstraint, node1_createOrMerge)
-
-      if (node2_label != null && node2_label != "" && (!node2_keys.isEmpty)) {
-        val neo4j = new Neo4j()
-        neo4j.writeNode(df, cluster, vaultLogin, vaultPassword, node2_label, node2_keys, node2_nonKeys, sparkSession, batchSize, node2_createNodeKeyConstraint, node2_createOrMerge)
-
-        if (relation_label != null) {
-          neo4j.writeRelation(df, cluster, vaultLogin, vaultPassword, node1_label, node1_keys, node2_label, node2_keys, relation_label, sparkSession, batchSize, relation_createOrMerge)
-        }
-      }
-    }
-  }
-
   def dataFrameToElastic(awsEnv: String, cluster: String, port: String, index: String, nodetype: String, version: String, login: String, password: String, local_dc: String, addlSparkOptions: JSONObject, df: org.apache.spark.sql.DataFrame, reportbodyHtml: StringBuilder, vaultEnv: String, saveMode: String, mappingId: String, flag: String, secretStore: String, sparkSession: org.apache.spark.sql.SparkSession): Unit = {
 
 

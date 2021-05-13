@@ -278,66 +278,6 @@ class Migration extends SparkListener {
       }
       else if (destinationMap("platform") == "cloudwatch") {
         dataframeFromTo.dataFrameToCloudWatch(destinationMap("groupname"), destinationMap("streamname"), destinationMap.getOrElse("region", ""), destinationMap.getOrElse("awsaccesskeyid", ""), destinationMap.getOrElse("awssecretaccesskey", ""), destinationMap.getOrElse("timestamp_column", ""), destinationMap.getOrElse("timestamp_format", ""), dft, sparkSession)
-      }
-
-      else if (destinationMap("platform") == "neo4j") {
-        var node1 = destination.optJSONObject("node1")
-        var node2 = destination.optJSONObject("node2")
-        var relation = destination.optJSONObject("relation")
-        var node1_label: String = null
-        var node1_keys: List[String] = null
-        var node1_nonKeys: List[String] = null
-        var node1_createOrMerge: String = "MERGE"
-        var node1_createNodeKeyConstraint: Boolean = true
-        var node2_label: String = null
-        var node2_keys: List[String] = null
-        var node2_nonKeys: List[String] = null
-        var node2_createOrMerge: String = "MERGE"
-        var node2_createNodeKeyConstraint: Boolean = true
-        var relation_label: String = null
-        var relation_createOrMerge: String = "MERGE"
-        if (node1 != null) {
-          node1_label = node1.optString("label")
-          node1_keys = jsonArrayToList(node1.optJSONArray("properties_key"))
-          node1_nonKeys = jsonArrayToList(node1.optJSONArray("properties_nonkey"))
-          if (node1.has("createormerge")) {
-            node1_createOrMerge = node1.getString("createormerge")
-          }
-          if (node1.has("createnodekeyconstraint")) {
-            node1_createNodeKeyConstraint = node1.getBoolean("createnodekeyconstraint")
-          }
-          if (node1.has("property_key")) {
-            node1_keys = node1.getString("property_key") :: node1_keys
-          }
-          if (node1.has("property_nonkey")) {
-            node1_nonKeys = node1.getString("property_nonkey") :: node1_nonKeys
-          }
-        }
-        if (node2 != null) {
-          node2_label = node2.optString("label")
-          node2_keys = jsonArrayToList(node2.optJSONArray("properties_key"))
-          node2_nonKeys = jsonArrayToList(node2.optJSONArray("properties_nonkey"))
-          if (node2.has("createormerge")) {
-            node2_createOrMerge = node2.getString("createormerge")
-          }
-          if (node2.has("createnodekeyconstraint")) {
-            node2_createNodeKeyConstraint = node2.getBoolean("createnodekeyconstraint")
-          }
-          if (node2.has("property_key")) {
-            node2_keys = node2.getString("property_key") :: node2_keys
-          }
-          if (node2.has("property_nonkey")) {
-            node2_nonKeys = node2.getString("property_nonkey") :: node2_nonKeys
-          }
-        }
-        if (relation != null) {
-          relation_label = relation.optString("label")
-          if (relation.has("createormerge")) {
-            relation_createOrMerge = relation.getString("createormerge")
-          }
-        }
-
-        dataframeFromTo.dataFrameToNeo4j(dft, destinationMap("cluster"), destinationMap("login"), destinationMap.getOrElse("password", ""), destinationMap("awsenv"), destinationMap("vaultenv"), node1_label, node1_keys, node1_nonKeys, node2_label, node2_keys, node2_nonKeys, relation_label, destinationMap.getOrElse("batchsize", "10000").toInt, node1_createOrMerge, node1_createNodeKeyConstraint, node2_createOrMerge, node2_createNodeKeyConstraint, relation_createOrMerge, destinationMap.getOrElse("secretstore", "vault"), sparkSession)
       } else if (destinationMap("platform") == "snowflake") {
         dataframeFromTo.dataFrameToSnowflake(
           destinationMap("url"),
