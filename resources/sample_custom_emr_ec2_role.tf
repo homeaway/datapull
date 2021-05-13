@@ -33,6 +33,12 @@ resource "aws_iam_instance_profile" "datapull_custom_emr_ec2_instance_profile" {
 }
 
 # Required policy attachments for custom role
+
+resource "aws_iam_role_policy_attachment" "emr_ec2_datapull_custom_role_ses_policy_attachment" {
+  role = aws_iam_role.emr_ec2_datapull_custom_role.name
+  policy_arn = "arn:aws:iam:::policy/datapull_ses_emr_ec2_policy"
+}
+
 resource "aws_iam_role_policy_attachment" "emr_ec2_datapull_custom_role_s3_policy_attachment" {
   role = aws_iam_role.emr_ec2_datapull_custom_role.name
   policy_arn = "arn:aws:iam:::policy/datapull_s3_emr_ec2_policy"
