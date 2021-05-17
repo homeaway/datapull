@@ -44,8 +44,7 @@
     "version": "6.3.0",
     "login": "LOGIN_NAME",
     "password": "PASSWORD",
-    "index": "INDEX_NAME",
-    "type": "docs"
+    "index": "INDEX_NAME"
   },
   "kafka": {
     "groupid": "com.homeaway.anyteam",

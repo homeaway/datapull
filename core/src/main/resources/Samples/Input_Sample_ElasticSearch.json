@@ -15,7 +15,6 @@
         "clustername": "IP_ADDR_OR_DNS_NAME",
         "port":"9201",
         "index": "movie",
-        "type":"docs",
         "version": "5.6.4",
         "login":"dataengineering_adminuser",
         "password": ""
