@@ -21,6 +21,33 @@ Removed env var that clashes with fargate, fixed support for s3 service endpoint
     - manual-tests/filesystem_stream_to_kafka/datapull_input.json
     - manual-tests/filesystem_stream_to_kafka/README.md
 
+## [0.1.32] - 2021-05-15
+
+- Upgraded Elasticsearch maven dependency to support ES 7.12.1, removed, unused dependencies
+- Fixed https://github.com/homeaway/datapull/issues/81
+- Added manual test for Elasticsearch sources and destinations
+- Fixed Elasticsearch bugs, added support for additional optional ES Options and associated documentation
+- Made Elasticsearch port, mapping, etc. optional with defaults
+
+### Changed
+
+- Upgraded Elasticsearch maven dependency to support ES 7.12.1, removed, unused dependencies
+    - core/pom.xml
+- Fixed https://github.com/homeaway/datapull/issues/81
+    - core/src/main/resources/Samples/Input_Sample_*.json
+    - functional-test/src/main/resources/dev_global-config.json
+    - functional-test/src/main/resources/test_global-config.json
+    - docs/docs/transformation.md
+- Fixed Elasticsearch bugs, added support for additional optional ES Options and associated documentation
+    - core/src/main/scala/core/DataFrameFromTo.scala
+    - core/src/main/resources/Samples/Input_Json_Specification.json
+- Made Elasticsearch port, mapping, etc. optional with defaults
+    - core/src/main/scala/core/Migration.scala
+
+### Added
+- Added manual test for Elasticsearch sources and destinations
+    - manual-tests/filesystem_dataset_to_elasticsearch_to_filesystem/*
+
 ## [0.1.31] - 2021-05-12
 
 Remove bintray-bound Neo4j lib implementation until https://neo4j.com/product/connectors/apache-spark-connector/?ref=blog can be implemented

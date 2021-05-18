@@ -17,7 +17,6 @@
         "login": "LOGIN_NAME",
         "password": "PASSWORD",
         "index": "INDEX_NAME",
-        "type": "docs",
         "version": "6.3.0",
         "node": "IP_ADDR_OR_DNS_NAME",
         "overwriteflag":"false",
