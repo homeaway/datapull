@@ -16,7 +16,6 @@ package core
 import java.io.{FileNotFoundException, PrintWriter, StringWriter}
 import java.time.Instant
 import java.util.UUID
-
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 import com.amazonaws.regions.{DefaultAwsRegionProviderChain, Regions}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
@@ -26,6 +25,7 @@ import helper._
 import logging._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerStageCompleted}
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.SizeEstimator
 import org.codehaus.jettison.json.{JSONArray, JSONObject}
 import security.SecretsManager
@@ -221,14 +221,33 @@ class Migration extends SparkListener {
       } else if (destinationMap("platform") == "s3") {
         setAWSCredentials(sparkSession, destinationMap)
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
-        dataframeFromTo.dataFrameToFile(destinationMap("s3path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, true, destinationMap.getOrElse("secretstore", secretStoreDefaultValue), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("pemfilepath", ""), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
+        dataframeFromTo.dataFrameToFile(
+          filePath = destinationMap("s3path"),
+          fileFormat = destinationMap("fileformat"),
+          groupByFields = destinationMap("groupbyfields"),
+          s3SaveMode = destinationMap.getOrElse("savemode", "Append"),
+          df = dft,
+          isS3 = true,
+          secretstore = destinationMap.getOrElse("secretstore", secretStoreDefaultValue),
+          sparkSession = sparkSession,
+          coalescefilecount = destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer],
+          isSFTP = false,
+          login = destinationMap.getOrElse("login", "false"),
+          host = destinationMap.getOrElse("host", "false"),
+          password = destinationMap.getOrElse("password", "false"),
+          pemFilePath = destinationMap.getOrElse("pemfilepath", ""),
+          awsEnv = destinationMap.getOrElse("awsEnv", "false"),
+          vaultEnv = destinationMap.getOrElse("vaultEnv", "false"),
+          rowFromJsonString = destinationMap.getOrElse("rowfromjsonstring", "false").toBoolean,
+          filePrefix = (if (destinationMap.contains("fileprefix")) destinationMap.get("fileprefix") else (if (destinationMap.contains("s3_service_endpoint")) Some("s3a://") else None))
+        )
       } else if (destinationMap("platform") == "filesystem") {
         sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
-        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", secretStoreDefaultValue), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("pemfilepath", ""), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
+        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", secretStoreDefaultValue), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], false, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("pemfilepath", ""), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false").toBoolean, destinationMap.get("fileprefix"))
       }
       else if (destinationMap("platform") == "sftp") {
 
-        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", secretStoreDefaultValue), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], true, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("pemfilepath", ""), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false"), destinationMap.getOrElse("jsonStringFieldName", "jsonfield"))
+        dataframeFromTo.dataFrameToFile(destinationMap("path"), destinationMap("fileformat"), destinationMap("groupbyfields"), destinationMap.getOrElse("savemode", "Append"), dft, false, destinationMap.getOrElse("secretstore", secretStoreDefaultValue), sparkSession, destinationMap.getOrElse("coalescefilecount", null).asInstanceOf[Integer], true, destinationMap.getOrElse("login", "false"), destinationMap.getOrElse("host", "false"), destinationMap.getOrElse("password", "false"), destinationMap.getOrElse("pemfilepath", ""), destinationMap.getOrElse("awsEnv", "false"), destinationMap.getOrElse("vaultEnv", "false"), destinationMap.getOrElse("rowfromjsonstring", "false").toBoolean, destinationMap.get("fileprefix"))
       }
       else if (destinationMap("platform") == "console") {
         val numRows: Int = destinationMap.getOrElse("numrows", "20").toInt
@@ -495,7 +514,9 @@ class Migration extends SparkListener {
         password = propertiesMap.getOrElse("password", "false"),
         pemFilePath = propertiesMap.getOrElse("pemfilepath", ""),
         awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
-        vaultEnv = propertiesMap.getOrElse("vaultEnv", "false")
+        vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
+        filePrefix = (if (propertiesMap.contains("fileprefix")) propertiesMap.get("fileprefix") else (if (propertiesMap.contains("s3_service_endpoint")) Some("s3a://") else None)),
+        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL( propertiesMap.getOrElse("schema", ""))) else  None)
       )
     } else if (platform == "filesystem") {
       sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
@@ -514,7 +535,9 @@ class Migration extends SparkListener {
         awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
         vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
         isStream = propertiesMap.getOrElse("isstream", "false").toBoolean,
-        addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions")))
+        addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
+        filePrefix = propertiesMap.get("fileprefix"),
+        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL( propertiesMap.getOrElse("schema", ""))) else  None)
       )
     }
 
@@ -533,7 +556,9 @@ class Migration extends SparkListener {
         password = propertiesMap.getOrElse("password", "false"),
         pemFilePath = propertiesMap.getOrElse("pemfilepath", ""),
         awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
-        vaultEnv = propertiesMap.getOrElse("vaultEnv", "false")
+        vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
+        filePrefix = propertiesMap.get("fileprefix"),
+        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL( propertiesMap.getOrElse("schema", ""))) else  None)
       )
     }
     else if (platform == "hive") {

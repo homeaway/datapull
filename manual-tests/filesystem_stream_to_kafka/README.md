@@ -1,7 +1,7 @@
 # Test streaming dataset in filesystem to Kafka
 
 ## What is tested?
-1. Data can be read as a batch from a folder in the filesystem, with CSV files
+1. Data can be read as a batch from a folder in the filesystem, with CSV files and a defined schema
 2. Data can be written to a Confluent Kafka topic, as a batch
 3. Data can be read from a Confluent Kafka topic, as a batch
 1. Data can be written as a batch to a folder in the filesystem, as JSON files

@@ -47,10 +47,6 @@ resource "aws_ecs_task_definition" "datapull-web-api_backend_container" {
           "value": "${var.env}"
         },
         {
-          "name": "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI",
-          "value": "true"
-        },
-        {
           "name": "PORT",
           "value": "${var.container_port}"
         }

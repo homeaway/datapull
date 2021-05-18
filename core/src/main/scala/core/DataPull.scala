@@ -281,22 +281,42 @@ object DataPull {
   }
 
   def setAWSCredentials(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String]): Unit = {
-    val s3Prefix: String = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
+    setAWSCredentialsByPrefix(sparkSession, sourceDestinationMap, "s3")
+    setAWSCredentialsByPrefix(sparkSession, sourceDestinationMap, "s3a")
+  }
+
+  def setAWSCredentialsByPrefix(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String], s3Prefix: String): Unit = {
     if (sourceDestinationMap("awssecretaccesskey") != "") {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".access.key", sourceDestinationMap("awsaccesskeyid"))
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".secret.key", sourceDestinationMap("awssecretaccesskey"))
     }
+    else {
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".access.key")
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".secret.key")
+    }
     if (sourceDestinationMap.contains("s3_service_endpoint")) {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".endpoint", sourceDestinationMap("s3_service_endpoint"))
+    }
+    else {
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".endpoint")
     }
     if (!(sourceDestinationMap.contains("enable_s3_bucket_owner_full_control") && sourceDestinationMap("enable_s3_bucket_owner_full_control") == "false")) {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".canned.acl", "BucketOwnerFullControl")
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".acl.default", "BucketOwnerFullControl")
     }
+    else {
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".canned.acl")
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".acl.default")
+    }
     if ((sourceDestinationMap.contains("enableServerSideEncryption") && sourceDestinationMap("enableServerSideEncryption") == "true") || (sourceDestinationMap.contains("enable_server_side_encryption") && sourceDestinationMap("enable_server_side_encryption") == "true")) {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".enableServerSideEncryption", "true")
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".serverSideEncryptionAlgorithm", "AES256")
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".connection.ssl.enabled", "true")
+    }
+    else {
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".enableServerSideEncryption")
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".serverSideEncryptionAlgorithm")
+      sparkSession.sparkContext.hadoopConfiguration.unset("fs." + s3Prefix + ".connection.ssl.enabled")
     }
   }
 

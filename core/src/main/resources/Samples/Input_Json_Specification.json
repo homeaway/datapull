@@ -44,7 +44,11 @@
           "checkpointLocation": "s3a://S3BUCKET_AND_PATH or /LOCALHDFSPATH",
           "comment_delimiter": "Optional, defaulted to comma(,). Use \\t for tab-delimited files. Applies only for csv fileformat",
           "delimiter": "\t"
-        }
+        },
+        "comment_fileprefix": "Optional. If set, this explicitely sets the file prefix.",
+        "fileprefix": "hdfs://",
+        "comment_schema": "Optional, applies only to sources. If set, this explicitely sets the schema of the read files. If not set, the schema is inferred if possible",
+        "schema": "`id` BIGINT,`name` STRING"
       },
       "source_s3": {
         "platform": "s3",
@@ -111,7 +115,11 @@
             "comment_s3region": "optional, the default region is us-east-1 and can use this if the bucket is in different region",
             "s3region": "us-east-1"
           }
-        ]
+        ],
+        "comment_fileprefix": "Optional. If set, this explicitely sets the file prefix. If not, the file prefix is set to s3/s3a",
+        "fileprefix": "s3a://",
+        "comment_schema": "Optional, applies only to sources. If set, this explicitely sets the schema of the read files. If not set, the schema is inferred if possible",
+        "schema": "`id` BIGINT,`name` STRING"
       },
       "comment_sql": "Optional, if Any complex sql queries to be executed on multiple sources then this can be used.",
       "sql": {

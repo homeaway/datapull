@@ -46,6 +46,7 @@ import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
 import org.apache.spark.SparkConf
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.jdbc.JdbcDialects
+import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{DataFrame, Row, SaveMode, SparkSession}
 import org.bson.Document
 import org.codehaus.jettison.json.JSONObject
@@ -61,7 +62,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
   val helper = new Helper(appConfig)
 
-  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: Boolean = false, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean = false, secretstore: String, isSFTP: Boolean = false, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, isStream: Boolean = false, addlSparkOptions: Option[JSONObject] = None): org.apache.spark.sql.DataFrame = {
+  def fileToDataFrame(filePath: String, fileFormat: String, delimiter: String, charset: String, mergeSchema: Boolean = false, sparkSession: org.apache.spark.sql.SparkSession, isS3: Boolean = false, secretstore: String, isSFTP: Boolean = false, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, isStream: Boolean = false, addlSparkOptions: Option[JSONObject] = None, filePrefix: Option[String] = None, schema: Option[StructType] = None): org.apache.spark.sql.DataFrame = {
 
     if (filePath == null && fileFormat == null && delimiter == null && charset == null && sparkSession == null && login == null && host == null && password == null) {
       throw new Exception("Platform cannot have null values")
@@ -76,11 +77,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       vaultPassword = vaultCreds("password")
     }
 
-    var filePrefix = ""
+    var filePrefixString = filePrefix.getOrElse("")
 
     if (isS3) {
       val s3Prefix = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
-      filePrefix = s3Prefix + "://"
+      filePrefixString = filePrefix.getOrElse(s3Prefix + "://")
       sparkSession.conf.set("fs." + s3Prefix + ".connection.maximum", 100)
     }
 
@@ -126,7 +127,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       if (isStream) {
         createOrReplaceTempViewOnDF(
           sparkSession.readStream
-            .schema(fileToDataFrame(
+            .schema(schema.getOrElse(fileToDataFrame(
               filePath = filePath,
               fileFormat = fileFormat,
               delimiter = delimiter,
@@ -141,20 +142,27 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
               pemFilePath = pemFilePath,
               awsEnv = awsEnv,
               vaultEnv = vaultEnv,
-              isStream = false
-            ).schema)
+              isStream = false,
+              filePrefix = filePrefix
+            ).schema))
             .format(fileFormat)
             .options(sparkOptions)
-            .load(s"$filePrefix$filePath")
+            .load(s"$filePrefixString$filePath")
         )
       }
       else {
+        var dfReader = sparkSession
+          .read
+          .format(fileFormat)
+
+        if (!schema.isEmpty) {
+          dfReader = dfReader.schema(schema.get)
+        }
+
         createOrReplaceTempViewOnDF(
-          sparkSession
-            .read
-            .format(fileFormat)
+          dfReader
             .options(sparkOptions)
-            .load(s"$filePrefix$filePath")
+            .load(s"$filePrefixString$filePath")
         )
       }
     }
@@ -239,7 +247,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: String, jsonFieldName: String): Unit = {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: Boolean, filePrefix: Option[String] = None): Unit = {
 
     if (filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && SparkSession == null) {
       throw new Exception("Platform cannot have null values")
@@ -260,7 +268,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
     sparkSession.sparkContext.hadoopConfiguration.set("spark.shuffle.service.enabled", "true")
     var groupByFieldsArray = groupByFields.split(",")
-    var filePrefix = ""
 
     var dft = sparkSession.emptyDataFrame
 
@@ -278,10 +285,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       else if (coalescefilecount > df.rdd.partitions.size)
         dft = df.repartition(coalescefilecount)
     }
-
+    var filePrefixString = filePrefix.getOrElse("")
     if (isS3) {
       val s3Prefix = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
-      filePrefix = s3Prefix + "://"
+      filePrefixString = filePrefix.getOrElse(s3Prefix + "://")
       sparkSession.conf.set("fs." + s3Prefix + ".connection.maximum", 100)
       val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
       hadoopConf.set("fs." + s3Prefix + ".fast.upload", "true")
@@ -297,7 +304,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         option("fileType", fileFormat).
         save(filePath)
 
-    } else if (rowFromJsonString.toBoolean) {
+    } else if (rowFromJsonString) {
+
       df.foreachPartition((partition: Iterator[Row]) => {
 
         val partitionList = new util.ArrayList[String]()
@@ -306,7 +314,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         )
         if (!partitionList.isEmpty) {
           val conf: Configuration = new Configuration
-          val path_string = filePrefix + filePath + "/" + UUID.randomUUID().toString + ".json"
+          val path_string = filePrefixString + filePath + "/" + UUID.randomUUID().toString + ".json"
           val dest: Path = new Path(path_string)
           val fs: FileSystem = dest.getFileSystem(conf)
           val out: FSDataOutputStream = fs.create(dest, true)
@@ -323,13 +331,13 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           dft
             .write
             .format("json")
-            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
+            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefixString$filePath")
         } else {
           dft
             .write
             .format("json")
             .partitionBy(groupByFieldsArray: _*)
-            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefix$filePath")
+            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefixString$filePath")
         }
       } else if (fileFormat == "csv") {
         if (groupByFields == "") {
@@ -337,14 +345,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
             .write
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
-            .csv(s"$filePrefix$filePath")
+            .csv(s"$filePrefixString$filePath")
         } else {
           dft
             .write
             .partitionBy(groupByFieldsArray: _*)
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
-            .csv(s"$filePrefix$filePath")
+            .csv(s"$filePrefixString$filePath")
         }
       } else if (fileFormat == "avro") {
         if (groupByFields == "") {
@@ -353,7 +361,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
             .format("avro")
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
-            .save(s"$filePrefix$filePath")
+            .save(s"$filePrefixString$filePath")
         } else {
           dft
             .write
@@ -361,7 +369,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
             .partitionBy(groupByFieldsArray: _*)
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
-            .save(s"$filePrefix$filePath")
+            .save(s"$filePrefixString$filePath")
         }
       } else if (fileFormat == "orc") {
         if (groupByFields == "") {
@@ -369,14 +377,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
             .write
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
-            .orc(s"$filePrefix$filePath")
+            .orc(s"$filePrefixString$filePath")
         } else {
           dft
             .write
             .partitionBy(groupByFieldsArray: _*)
             .option("header", "true")
             .mode(SaveMode.valueOf(s3SaveMode))
-            .orc(s"$filePrefix$filePath")
+            .orc(s"$filePrefixString$filePath")
         }
       }
       else {
@@ -384,12 +392,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         if (groupByFields == "") {
           Option(dft
             .write
-            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
+            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefixString$filePath"))
         } else {
           Option(dft
             .write
             .partitionBy(groupByFieldsArray: _*)
-            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefix$filePath"))
+            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefixString$filePath"))
         }
       }
 
