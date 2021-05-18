@@ -590,7 +590,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .save()
   }
 
+
   def dataFrameToElastic(awsEnv: String, cluster: String, port: Int, index: String, nodetype: Option[String] = None, version: String, login: String, password: String, local_dc: String, addlESOptions: Option[JSONObject] = None, df: org.apache.spark.sql.DataFrame, vaultEnv: String, saveMode: String, mappingId: String, flag: String, secretStore: String, sparkSession: org.apache.spark.sql.SparkSession): Unit = {
+
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
