@@ -206,12 +206,14 @@
       "destination_elastic": {
         "platform": "elastic",
         "clustername": "IP_ADDR_OR_DNS_NAME",
-        "port": "9201",
+        "comment_port": "Optional, defaults to 9200. Port of the ES cluster to connect to.",
+        "port": 9200,
         "index": "Name of Index, equivalent of database",
-        "comment_savemode": "Optional, the default value is upsert and please check here more information on this 'https://www.elastic.co/guide/en/elasticsearch/hadoop/current/configuration.html#_operation': ",
-        "savemode": "upsert",
-        "mappingid": "Optional:Any unique field of your data",
-        "type": "type of index,equivalent of table.",
+        "comment_savemode": "Optional, the default value is index and please check here more information on this 'https://www.elastic.co/guide/en/elasticsearch/hadoop/current/configuration.html#_operation': ",
+        "savemode": "index",
+        "mappingid": "Optional. Any unique field of your data. Required if writing and savemode = upsert",
+        "comment_type": "Optional, deprecated. type of index,equivalent of table. Ref https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html",
+        "type": "_doc",
         "version": "Version of your ES",
         "login": "LOGIN_NAME",
         "password": "PASSWORD",
@@ -226,7 +228,12 @@
           {
             "shell": "curl -XDELETE http://IP_ADDR_OR_DNS_NAME:PORT/INDEX_NAME"
           }
-        ]
+        ],
+        "comment_esoptions": "Optional. This enables users to specify configuration options in https://www.elastic.co/guide/en/elasticsearch/hadoop/current/configuration.html. Values specified in this section will override equivalent values in other attributes",
+        "esoptions": {
+          "es.read.field.include": "segment_id,tags",
+          "es.read.field.as.array.include": "tags"
+        }
       },
       "source_kafka": {
         "platform": "kafka",
