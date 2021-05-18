@@ -10,7 +10,6 @@
         "login": "user_id",
         "password": "password",
         "index": "test",
-        "type": "docs",
         "version": "6.3.0",
         "alias":"U"
       },

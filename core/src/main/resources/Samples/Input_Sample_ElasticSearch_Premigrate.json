@@ -18,7 +18,6 @@
         "login": "LOGIN_NAME",
         "password": "PASSWORD",
         "index": "INDEX_NAME",
-        "type": "docs",
         "version": "6.3.0",
         "pre_migrate_commands": [
           {

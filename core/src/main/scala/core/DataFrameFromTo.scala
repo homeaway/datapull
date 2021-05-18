@@ -298,7 +298,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         save(filePath)
 
     } else if (rowFromJsonString.toBoolean) {
-
       df.foreachPartition((partition: Iterator[Row]) => {
 
         val partitionList = new util.ArrayList[String]()
@@ -591,8 +590,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .save()
   }
 
-  def dataFrameToElastic(awsEnv: String, cluster: String, port: String, index: String, nodetype: String, version: String, login: String, password: String, local_dc: String, addlSparkOptions: JSONObject, df: org.apache.spark.sql.DataFrame, reportbodyHtml: StringBuilder, vaultEnv: String, saveMode: String, mappingId: String, flag: String, secretStore: String, sparkSession: org.apache.spark.sql.SparkSession): Unit = {
 
+  def dataFrameToElastic(awsEnv: String, cluster: String, port: Int, index: String, nodetype: Option[String] = None, version: String, login: String, password: String, local_dc: String, addlESOptions: Option[JSONObject] = None, df: org.apache.spark.sql.DataFrame, vaultEnv: String, saveMode: String, mappingId: String, flag: String, secretStore: String, sparkSession: org.apache.spark.sql.SparkSession): Unit = {
 
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
@@ -611,28 +610,30 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       vaultPassword = vaultCreds("password")
     }
 
-    var config = Map("es.nodes" -> clusterNodes,
-      "es.port" -> port,
+    var esOptions = Map("es.nodes" -> clusterNodes,
+      "es.port" -> port.toString,
       "es.clustername" -> clusterName,
       "es.net.http.auth.user" -> vaultLogin,
       "es.net.http.auth.pass" -> vaultPassword,
       "es.write.operation" -> saveMode,
       "es.nodes.wan.only" -> "true",
-      "es.resource" -> s"$index/$nodetype",
-      "org.elasticsearch.hadoop.rest.commonshttp" -> "TRACE",
+      "es.resource" -> s"$index/${nodetype.getOrElse("")}",
       "es.internal.es.version" -> version)
 
-
     if (mappingId != null)
-      config = config ++ Map("es.mapping.id" -> mappingId)
+      esOptions = esOptions ++ Map("es.mapping.id" -> mappingId)
+
+    if (!addlESOptions.isEmpty) {
+      esOptions = esOptions ++ jsonObjectPropertiesToMap(addlESOptions.get)
+    }
 
     if (flag == "false") {
-      df.saveToEs(config)
+      df.saveToEs(esOptions)
     }
 
   }
 
-  def ElasticToDataframe(awsEnv: String, cluster: String, port: String, index: String, nodetype: String, version: String, login: String, password: String, vaultEnv: String, secretStore: String, sparkSession: org.apache.spark.sql.SparkSession): org.apache.spark.sql.DataFrame = {
+  def ElasticToDataframe(awsEnv: String, cluster: String, port: Int, index: String, nodetype: Option[String] = None, version: String, login: String, password: String, vaultEnv: String, secretStore: String, sparkSession: org.apache.spark.sql.SparkSession, addlESOptions: Option[JSONObject] = None): org.apache.spark.sql.DataFrame = {
 
 
     val consul = new Consul(cluster, appConfig)
@@ -652,17 +653,25 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       vaultPassword = vaultCreds("password")
     }
 
+    var esOptions = Map("es.nodes" -> clusterNodes,
+      "es.port" -> port.toString,
+      "es.index.auto.create" -> "true",
+      "es.nodes.wan.only" -> "true",
+      "es.clustername" -> clusterName,
+      "es.net.http.auth.user" -> vaultLogin,
+      "es.net.http.auth.pass" -> vaultPassword,
+      "es.internal.es.version" -> version,
+      "es.resource" -> s"$index/${nodetype.getOrElse("")}"
+    )
+
+    if (!addlESOptions.isEmpty) {
+      esOptions = esOptions ++ jsonObjectPropertiesToMap(addlESOptions.get)
+    }
+
     val df = sparkSession
       .read.format("org.elasticsearch.spark.sql")
-      .option("es.nodes", clusterNodes)
-      .option("es.port", port)
-      .option("es.index.auto.create", "true")
-      .option("es.nodes.wan.only", "true")
-      .option("es.clustername", clusterName)
-      .option("es.net.http.auth.user", vaultLogin)
-      .option("es.net.http.auth.pass", vaultPassword)
-      .option("es.internal.es.version", version)
-      .load("" + index + "/" + nodetype)
+      .options(esOptions)
+      .load(index + "/" + nodetype.getOrElse(""))
 
     df
   }
@@ -773,7 +782,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def elasticRunCommand(awsEnv: String, cluster: String, port: String, index: String, login: String, password: String, local_dc: String, addlSparkOptions: JSONObject, curlcommand: String, reportbodyHtml: StringBuilder, vaultEnv: String, secretStore: String, ignoreTruncateException: Boolean = true): Unit = {
+  def elasticRunCommand(awsEnv: String, cluster: String, port: Int, login: String, password: String, curlcommand: String, vaultEnv: String, secretStore: String): Unit = {
 
     //if password isn't set, attempt to get from Vault
     var vaultPassword = password
@@ -789,9 +798,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     var statement: Statement = null
 
     try {
-
-      val service = vaultPassword + ":" + vaultLogin + "@" + cluster + ":" + port + "/"
-      var cmd_withcreds = curlcommand.replace("://", "://" + login + ":" + password + "@") //.replace("\"", "\\\"");
+      val cmd_withcreds = curlcommand.replace("://", "://" + vaultLogin + ":" + vaultPassword + "@")
 
       val fileName = pipeline + ".sh"
       import java.io.PrintWriter
@@ -807,10 +814,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       val result = "./" + fileName !!
 
       println("command result = " + result + " pipeline name = " + fileName + " pipeline = " + pipeline);
-
       new File(fileName).delete()
-
-      val tokens: Array[String] = cmd_withcreds.split(" ");
+      var jsonResult = new JSONObject(result)
+      if (jsonResult.has("error")){
+        throw new Exception(result)
+      }
     } catch {
       case e: Throwable => e.printStackTrace
         throw (e)

@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.32] - 2021-05-15
+
+- Upgraded Elasticsearch maven dependency to support ES 7.12.1, removed, unused dependencies
+- Fixed https://github.com/homeaway/datapull/issues/81
+- Added manual test for Elasticsearch sources and destinations
+- Fixed Elasticsearch bugs, added support for additional optional ES Options and associated documentation
+- Made Elasticsearch port, mapping, etc. optional with defaults
+
+### Changed
+
+- Upgraded Elasticsearch maven dependency to support ES 7.12.1, removed, unused dependencies
+    - core/pom.xml
+- Fixed https://github.com/homeaway/datapull/issues/81
+    - core/src/main/resources/Samples/Input_Sample_*.json
+    - functional-test/src/main/resources/dev_global-config.json
+    - functional-test/src/main/resources/test_global-config.json
+    - docs/docs/transformation.md
+- Fixed Elasticsearch bugs, added support for additional optional ES Options and associated documentation
+    - core/src/main/scala/core/DataFrameFromTo.scala
+    - core/src/main/resources/Samples/Input_Json_Specification.json
+- Made Elasticsearch port, mapping, etc. optional with defaults
+    - core/src/main/scala/core/Migration.scala
+    
+### Added
+- Added manual test for Elasticsearch sources and destinations
+    - manual-tests/filesystem_dataset_to_elasticsearch_to_filesystem/*
+
 ## [0.1.31] - 2021-05-12
 
 Remove bintray-bound Neo4j lib implementation until https://neo4j.com/product/connectors/apache-spark-connector/?ref=blog can be implemented

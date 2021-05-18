@@ -1,0 +1,70 @@
+{
+  "useremailaddress": "yourid@DOMAIN.com",
+  "migrations": [
+    {
+      "sources": [
+        {
+          "platform": "filesystem",
+          "path": "target/classes/SampleData/HelloWorld/HelloWorld.csv",
+          "fileformat": "csv",
+          "alias": "fs"
+        }
+      ],
+      "destination": {
+        "platform": "elastic",
+        "clustername": "elasticsearch",
+        "index": "testindex1",
+        "mappingid": "HelloField",
+        "savemode": "upsert",
+        "version": "7.12.1",
+        "login": "elastic",
+        "password": "changeme",
+        "post_migrate_commands": [
+          {
+            "shell": "curl -X PUT \"http://elasticsearch:9200/testindex1/_alias/testindex1alias1\""
+          },
+          {
+            "shell": "curl -X PUT \"http://elasticsearch:9200/testindex1/_alias/testindex1alias2\""
+          }
+        ]
+      },
+      "sql": {
+        "query": "select HelloField, struct(WorldField, IntField) as value from fs"
+      }
+    },
+    {
+      "sources": [
+        {
+          "platform": "elastic",
+          "clustername": "elasticsearch",
+          "index": "testindex1alias2",
+          "version": "7.12.1",
+          "login": "elastic",
+          "password": "changeme",
+          "alias": "es",
+          "pre_migrate_commands": [
+            {
+              "shell": "curl -X DELETE \"http://elasticsearch:9200/testindex1/_alias/testindex1alias1\""
+            }
+          ]
+        }
+      ],
+      "destination": {
+        "platform": "filesystem",
+        "path": "target/classes/SampleData_Csv/HelloWorld",
+        "fileformat": "csv"
+      },
+      "sql": {
+        "query": "select HelloField, value.WorldField as WorldField, value.IntField as IntField from es"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "dev",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "ComponentInfo": "YOUR_Component-UUID_dominion"
+  }
+}
