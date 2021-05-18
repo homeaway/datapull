@@ -206,7 +206,7 @@
       "destination_elastic": {
         "platform": "elastic",
         "clustername": "IP_ADDR_OR_DNS_NAME",
-        "comment_port": "Optional, defaults to 9300. Port of the ES cluster to connect to.",
+        "comment_port": "Optional, defaults to 9200. Port of the ES cluster to connect to.",
         "port": 9200,
         "index": "Name of Index, equivalent of database",
         "comment_savemode": "Optional, the default value is index and please check here more information on this 'https://www.elastic.co/guide/en/elasticsearch/hadoop/current/configuration.html#_operation': ",
