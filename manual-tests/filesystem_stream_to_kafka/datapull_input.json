@@ -8,7 +8,8 @@
           "path": "target/classes/SampleData/HelloWorld",
           "fileformat": "csv",
           "isstream": false,
-          "alias": "fs"
+          "alias": "fs",
+          "schema": "`HelloField` STRING, `WorldField` STRING, `IntField` INT"
         }
       ],
       "destination": {
@@ -22,7 +23,7 @@
         "valuesubjectrecordname": "somevaluerecordname"
       },
       "sql": {
-        "query": "select HelloField, struct(WorldField, cast(IntField as int) as IntField) as value from fs"
+        "query": "select HelloField, struct(WorldField, IntField) as value from fs"
       }
     },
     {

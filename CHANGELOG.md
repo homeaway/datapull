@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.33] - 2021-05-18
+
+Removed env var that clashes with fargate, fixed support for s3 service endpoints by adding support for fileprefix and schema for filesystem-like stores, updated manual test to cover explicitly specified schema
+
+### Changed
+
+- Remove env var that clashes with fargate
+    - api/terraform/datapull_task/datapull_ecs.tf
+- fixed support for s3 service endpoints by adding support for fileprefix and schema for filesystem-like stores
+    - core/src/main/scala/core/DataFrameFromTo.scala
+    - core/src/main/scala/logging/DataPullLog.scala
+    - core/src/main/scala/core/Migration.scala
+- updated manual test to cover explicitly specified schema
+    - manual-tests/filesystem_stream_to_kafka/datapull_input.json
+    - manual-tests/filesystem_stream_to_kafka/README.md
+
 ## [0.1.32] - 2021-05-15
 
 - Upgraded Elasticsearch maven dependency to support ES 7.12.1, removed, unused dependencies
@@ -27,7 +43,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - core/src/main/resources/Samples/Input_Json_Specification.json
 - Made Elasticsearch port, mapping, etc. optional with defaults
     - core/src/main/scala/core/Migration.scala
-    
+
 ### Added
 - Added manual test for Elasticsearch sources and destinations
     - manual-tests/filesystem_dataset_to_elasticsearch_to_filesystem/*
