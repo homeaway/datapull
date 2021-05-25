@@ -41,7 +41,7 @@ class Consul(dnsName: String, config: AppConfig) {
     if (config.consul_url != null && (!config.consul_url.isEmpty) && (config.consul_url != "")) {
       config.consul_url
     } else {
-      config.consul_datacenters(this.dataCenter)
+      config.consul_datacenters.getOrElse(this.dataCenter, "")
     }
   }
 
