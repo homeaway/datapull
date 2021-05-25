@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Made Consul datacenter Urls, AWS tags config-driven
 - Added tags to ECR repo
 - Upgraded API docker base image from non-supported version
+- Removed extra leading slash for vault url prefix
 
 ### Changed
 
@@ -28,6 +29,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - api/terraform/datapull_iam/datapull_user_and_roles.tf
 - Upgraded API docker base image from non-supported version
     - api/Dockerfile
+- Removed extra leading slash for vault url prefix
+    - core/src/main/scala/security/Vault.scala
     
 ## [0.1.34] - 2021-05-18
 
