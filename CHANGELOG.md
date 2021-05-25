@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.35] - 2021-05-25
+
+- Made Consul datacenter Urls, AWS tags config-driven
+- Added tags to ECR repo
+- Upgraded API docker base image from non-supported version
+- Removed extra leading slash for vault url prefix
+
+### Changed
+
+- Made Consul datacenter Urls, cost center tag config-driven
+    - core/src/main/scala/config/AppConfig.scala
+    - api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+    - core/src/main/scala/helper/Consul.scala
+    - api/terraform/datapull_task/datapull_ecs.tf
+    - api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+    - api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+    - api/terraform/datapull_task/ecs_deploy.sh
+    - api/terraform/datapull_task/ecs_deploy_uninstall.sh
+    - core/src/main/scala/core/Migration.scala
+    - api/terraform/datapull_task/variables.tf
+- Added tags to ECR repo
+    - api/terraform/datapull_iam/datapull_user_and_roles.tf
+- Upgraded API docker base image from non-supported version
+    - api/Dockerfile
+- Removed extra leading slash for vault url prefix
+    - core/src/main/scala/security/Vault.scala
+ 
 ## [0.1.34] - 2021-05-18
 
 Upgraded jackson and aws dependencies; standardised iswindowsauthenticated attribute 
