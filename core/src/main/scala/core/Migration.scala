@@ -214,7 +214,7 @@ class Migration extends SparkListener {
           port = destinationMap.getOrElse("port", null),
           addlJdbcOptions = destination.optJSONObject("jdbcoptions"),
           savemode = destinationMap.getOrElse("savemode", "Append"),
-          isWindowsAuthenticated = destinationMap.getOrElse("iswindowsauthenticated", "false").toBoolean,
+          isWindowsAuthenticated = destinationMap.getOrElse("iswindowsauthenticated", destinationMap.getOrElse("isWindowsAuthenticated", "false")).toBoolean,
           domainName = destinationMap.getOrElse("domain", null),
           typeForTeradata = destinationMap.get("typeforteradata")
         )
@@ -489,7 +489,7 @@ class Migration extends SparkListener {
         sslEnabled = propertiesMap.getOrElse("sslenabled", "false").toBoolean,
         port = propertiesMap.getOrElse("port", null),
         addlJdbcOptions = platformObject.optJSONObject("jdbcoptions"),
-        isWindowsAuthenticated = propertiesMap.getOrElse("isWindowsAuthenticated", "false").toBoolean,
+        isWindowsAuthenticated = propertiesMap.getOrElse("iswindowsauthenticated", propertiesMap.getOrElse("isWindowsAuthenticated", "false")).toBoolean,
         domainName = propertiesMap.getOrElse("domain", null),
         typeForTeradata = propertiesMap.get("typeforteradata")
       )
@@ -516,7 +516,7 @@ class Migration extends SparkListener {
         awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
         vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
         filePrefix = (if (propertiesMap.contains("fileprefix")) propertiesMap.get("fileprefix") else (if (propertiesMap.contains("s3_service_endpoint")) Some("s3a://") else None)),
-        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL( propertiesMap.getOrElse("schema", ""))) else  None)
+        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL(propertiesMap.getOrElse("schema", ""))) else None)
       )
     } else if (platform == "filesystem") {
       sparkSession.sparkContext.hadoopConfiguration.set("mapreduce.input.fileinputformat.‌​input.dir.recursive", "true")
@@ -537,7 +537,7 @@ class Migration extends SparkListener {
         isStream = propertiesMap.getOrElse("isstream", "false").toBoolean,
         addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
         filePrefix = propertiesMap.get("fileprefix"),
-        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL( propertiesMap.getOrElse("schema", ""))) else  None)
+        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL(propertiesMap.getOrElse("schema", ""))) else None)
       )
     }
 
@@ -558,7 +558,7 @@ class Migration extends SparkListener {
         awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
         vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
         filePrefix = propertiesMap.get("fileprefix"),
-        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL( propertiesMap.getOrElse("schema", ""))) else  None)
+        schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL(propertiesMap.getOrElse("schema", ""))) else None)
       )
     }
     else if (platform == "hive") {
@@ -726,7 +726,7 @@ class Migration extends SparkListener {
             password = propertiesMap("password"),
             vaultEnv = propertiesMap("vaultenv"),
             secretStore = propertiesMap.getOrElse("secretstore", secretStoreDefaultValue),
-            isWindowsAuthenticated = propertiesMap.getOrElse("iswindowsauthenticated", "false").toBoolean,
+            isWindowsAuthenticated = propertiesMap.getOrElse("iswindowsauthenticated", propertiesMap.getOrElse("isWindowsAuthenticated", "false")).toBoolean,
             domainName = propertiesMap.getOrElse("domain", null),
             typeForTeradata = propertiesMap.get("typeforteradata")
           )

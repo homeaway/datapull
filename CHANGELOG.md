@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.34] - 2021-05-18
+
+Upgraded jackson and aws dependencies; standardised iswindowsauthenticated attribute 
+
+### Changed
+
+- Upgraded jackson and aws dependencies
+    - **/pom.xml
+- standardised iswindowsauthenticated attribute
+    - core/src/main/scala/core/DataPull.scala 
+    - core/src/main/scala/core/Migration.scala
+    - core/src/main/resources/Samples/Input_Sample_teradata-to-filesystem.json
+
 ## [0.1.33] - 2021-05-18
 
 Removed env var that clashes with fargate, fixed support for s3 service endpoints by adding support for fileprefix and schema for filesystem-like stores, updated manual test to cover explicitly specified schema

@@ -20,7 +20,6 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.time._
 import java.util.{Scanner, UUID}
-
 import com.datastax.driver.core.utils.UUIDs
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -35,7 +34,6 @@ import org.bson.codecs.{EncoderContext, UuidCodec}
 import org.bson.{BsonDocument, BsonDocumentWriter, UuidRepresentation}
 import org.codehaus.jettison.json.{JSONArray, JSONObject}
 import security._
-
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.breakable
 

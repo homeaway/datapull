@@ -10,7 +10,7 @@
         "table": "DBC.TABLES",
         "login": "yourlogin",
         "password": "yourpassword",
-        "isWindowsAuthenticated": "true",
+        "iswindowsauthenticated": "true",
         "domain": "SEA"
       },
       "destination": {
