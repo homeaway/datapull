@@ -797,27 +797,14 @@ class Migration extends SparkListener {
     var hostMap: Map[String, String] = Map()
     if (!clusterMap.contains("cluster") || "".equals(clusterMap("cluster"))) {
       //derive cluster using "cluster_key", "consul_dc"
-      val ipAddress: Option[String] = readIpAddressFromConsul(clusterMap("cluster_key"), clusterMap("consul_dc"))
-      if (ipAddress.isDefined) {
-        hostMap += "cluster" -> ipAddress.get
+      val dnsName = s"${clusterMap("cluster_key")}.service.${clusterMap("consul_dc")}.consul"
+      val consul = new Consul(dnsName, appConfig)
+      if (!consul.ipAddresses.isEmpty) {
+        hostMap += "cluster" -> consul.ipAddresses.head
       }
     }
     return hostMap
   }
-
-  def readIpAddressFromConsul(clusterKey: String, consulDc: String): Option[String] = {
-    if (!"".equals(clusterKey) && !"".equals(consulDc)) {
-      val consulUrl = "" + appConfig.consul_url + s"$clusterKey?passing&dc=$consulDc"
-      val helper = new Helper(appConfig)
-      val responseString = helper.get(consulUrl)
-      val jSONArray = new JSONArray(responseString)
-      if (jSONArray.length() > 0 && jSONArray.getJSONObject(0).has("Node") && jSONArray.getJSONObject(0).getJSONObject("Node").has("Address")) {
-        return Option(jSONArray.getJSONObject(0).getJSONObject("Node").getString("Address"))
-      }
-    }
-    return Option.empty
-  }
-
 
   def printableSourceTargetInfo(platformObject: JSONObject): String = {
     var htmlString = StringBuilder.newBuilder

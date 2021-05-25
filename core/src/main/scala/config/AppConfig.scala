@@ -22,13 +22,14 @@ import com.amazonaws.services.logs.{AWSLogs, AWSLogsClientBuilder}
 import com.amazonaws.services.secretsmanager.{AWSSecretsManager, AWSSecretsManagerClientBuilder}
 import com.amazonaws.services.simpleemail.{AmazonSimpleEmailService, AmazonSimpleEmailServiceClientBuilder}
 import com.fasterxml.jackson.databind.JsonNode
+import scala.collection.JavaConverters._
 
-case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, smtpUsername: String, smtpPassword: String, smtpPasswordSecretStore: String, smtpPasswordVaultPath: String, smtpPasswordVaultKey: String, smtpAuthEnable: String, smtpPort: String, smtpTlsEnable: String, vault_url: String,static_secret_path_prefix:String, vault_nonce: String, pagerDutyEmail: String,
-                     s3bucket:String, server:String, database:String, login:String, password:String, table:String, driver:String,
-                     stageAccountId : String, testAccountId : String, prodAccountId : String, inputjson:String, network:String, timeout:String, executor:String, interval:String, broadcasttimeout:String, btimeout:String
-                     , scheduler:String, mode:String, failures:String, no_of_retries:Int, http_timeout:Int, consul_url:String, sleeptimeout:Int,  vault_path_login:String,
-                     cloudWatchLogGroup:String, cloudWatchLogStream:String, cloudWatchLogRegion:String, accessKeyForCloudWatchLog : String, secretKeyForCloudWatchLog : String, secretsManagerRegion : String,
-                     secretsManagerAccessKey : String, secretsManagerSecretKey : String, sesRegion : String, sesFromEmail : String, sesAccessKey : String, sesSecretKey : String) {
+case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, smtpUsername: String, smtpPassword: String, smtpPasswordSecretStore: String, smtpPasswordVaultPath: String, smtpPasswordVaultKey: String, smtpAuthEnable: String, smtpPort: String, smtpTlsEnable: String, vault_url: String, static_secret_path_prefix: String, vault_nonce: String, pagerDutyEmail: String,
+                     s3bucket: String, server: String, database: String, login: String, password: String, table: String, driver: String,
+                     stageAccountId: String, testAccountId: String, prodAccountId: String, inputjson: String, network: String, timeout: String, executor: String, interval: String, broadcasttimeout: String, btimeout: String
+                     , scheduler: String, mode: String, failures: String, no_of_retries: Int, http_timeout: Int, consul_url: String, consul_datacenters: Map[String, String], sleeptimeout: Int, vault_path_login: String,
+                     cloudWatchLogGroup: String, cloudWatchLogStream: String, cloudWatchLogRegion: String, accessKeyForCloudWatchLog: String, secretKeyForCloudWatchLog: String, secretsManagerRegion: String,
+                     secretsManagerAccessKey: String, secretsManagerSecretKey: String, sesRegion: String, sesFromEmail: String, sesAccessKey: String, sesSecretKey: String) {
 
 
   def this(config: JsonNode) {
@@ -59,10 +60,10 @@ case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, s
       testAccountId = config.at("/datapull/aws/test_acc_id").asText(""),
       prodAccountId = config.at("/datapull/aws/prod_acc_id").asText(""),
       inputjson = config.at("/datapull/json/inputjson").asText(""),
-      network  =config.at("/datapull/spark/network").asText(""),
-      timeout  =config.at("/datapull/spark/timeout").asText(""),
-      executor =config.at("/datapull/spark/executor").asText(""),
-      interval =config.at("/datapull/spark/interval").asText(""),
+      network = config.at("/datapull/spark/network").asText(""),
+      timeout = config.at("/datapull/spark/timeout").asText(""),
+      executor = config.at("/datapull/spark/executor").asText(""),
+      interval = config.at("/datapull/spark/interval").asText(""),
       broadcasttimeout = config.at("/datapull/spark/broadcasttimeout").asText(""),
       btimeout = config.at("/datapull/spark/btimeout").asText(""),
       scheduler = config.at("/datapull/spark/scheduler").asText(""),
@@ -71,6 +72,7 @@ case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, s
       no_of_retries = config.at("/datapull/miscellaneous/no_of_retries").asInt(),
       http_timeout = config.at("/datapull/miscellaneous/timeout").asInt(),
       consul_url = config.at("/datapull/miscellaneous/consul_url").asText(""),
+      consul_datacenters = (if (config.at("/datapull/miscellaneous/consul_datacenters").isObject) config.at("/datapull/miscellaneous/consul_datacenters").fields().asScala.map(entry => entry.getKey -> entry.getValue.asText("")).toMap else Map.empty[String, String]),
       sleeptimeout = config.at("/datapull/miscellaneous/sleeptimeout").asInt(),
       cloudWatchLogGroup = config.at("/datapull/logger/cloudwatch/groupName").asText(""),
       cloudWatchLogStream = config.at("/datapull/logger/cloudwatch/streamName").asText(""),
@@ -95,8 +97,8 @@ case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, s
       .build());
   }
 
-  def getSecretsManagerClient(): AWSSecretsManager ={
-    val credentialsProvider = if(secretsManagerAccessKey != null && !secretsManagerAccessKey.trim.isEmpty()) new AWSStaticCredentialsProvider(new BasicAWSCredentials(secretsManagerAccessKey, secretsManagerSecretKey))
+  def getSecretsManagerClient(): AWSSecretsManager = {
+    val credentialsProvider = if (secretsManagerAccessKey != null && !secretsManagerAccessKey.trim.isEmpty()) new AWSStaticCredentialsProvider(new BasicAWSCredentials(secretsManagerAccessKey, secretsManagerSecretKey))
     else new DefaultAWSCredentialsProviderChain();
 
     val client = AWSSecretsManagerClientBuilder.standard()
@@ -105,18 +107,18 @@ case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, s
     return client;
   }
 
-  def getSESClient(): AmazonSimpleEmailService ={
-    val credentialsProvider = if(sesAccessKey != null && !sesAccessKey.trim.isEmpty()) new AWSStaticCredentialsProvider(new BasicAWSCredentials(sesAccessKey, sesSecretKey))
+  def getSESClient(): AmazonSimpleEmailService = {
+    val credentialsProvider = if (sesAccessKey != null && !sesAccessKey.trim.isEmpty()) new AWSStaticCredentialsProvider(new BasicAWSCredentials(sesAccessKey, sesSecretKey))
     else new DefaultAWSCredentialsProviderChain();
 
     val client =
       AmazonSimpleEmailServiceClientBuilder.standard()
-        .withRegion(sesRegion).withCredentials(credentialsProvider)build();
+        .withRegion(sesRegion).withCredentials(credentialsProvider) build();
 
     return client;
   }
 
   override def toString(): String = {
-    return "smtpServerAddress = "+smtpServerAddress+"  smtpServerAddress = "+smtpServerAddress +"database = "+database;
+    return "smtpServerAddress = " + smtpServerAddress + "  smtpServerAddress = " + smtpServerAddress + "database = " + database;
   }
 }

@@ -28,7 +28,7 @@ class Vault(appConfig: AppConfig) extends SecretStore {
     var usernameAndPassword: Map[String, String] = Map()
     var vaultEnv_effective = if (vaultEnv == "") awsEnv else vaultEnv
     val token = GetVaultToken(awsEnv, vaultEnv_effective)
-    val url = appConfig.vault_url + "/" + appConfig.static_secret_path_prefix + "/" + clusterName + "/" + userName
+    val url = appConfig.vault_url + appConfig.static_secret_path_prefix + "/" + clusterName + "/" + userName
     val credsString = getCredsString(url, token)
     val credJSON = new JSONObject(credsString)
     val username = credJSON.getJSONObject("data").getString("username")
