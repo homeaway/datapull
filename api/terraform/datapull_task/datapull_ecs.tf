@@ -1,17 +1,17 @@
 locals{
   datapull_ecs_tags  = {
-    owner                = "email@domain.com"
-    creator              = "email@domain.com"
-    team                 = "DataTools"
+    owner                = var.tag_team
+    creator              = var.tag_team
+    Team                 = var.tag_team
     purpose   		     = "Datapull installation"
     product              = "datapull"
-    portfolio            = "data infra"
-    service              = "datapull"
-    brand                = "EG"
-    asset_protection_level = "99"
-    component_info        = "00000000-0000-0000-0000-000000000000"
-    application           = "datapull"
-    costcenter            = "00000"
+    service              = var.tag_application
+    Brand                = var.tag_brand
+    AssetProtectionLevel = var.tag_asset_protection_level
+    ComponentInfo        = var.tag_component_info
+    component_info        = var.tag_component_info
+    CostCenter            = var.tag_cost_center
+    Application           = var.tag_application
   }
 }
 #----------------------------

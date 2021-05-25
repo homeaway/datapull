@@ -11,6 +11,12 @@ variable "container_memory" {default = 512}
 variable "container_cpu" {default = 256}
 variable "aws_account_number" {}
 variable "application_region" {}
+variable "tag_application" {}
+variable "tag_brand" {}
+variable "tag_team" {}
+variable "tag_asset_protection_level" {}
+variable "tag_component_info" {}
+variable "tag_cost_center" {}
 
 provider "aws" {}
 variable env  { default="dev"}

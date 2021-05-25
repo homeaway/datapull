@@ -282,7 +282,7 @@ public class DataPullTask implements Runnable {
         if (tagName != null && value != null && !this.emrTags.containsKey(tagName)) {
             final Tag tag = new Tag();
             tag.setKey(tagName);
-            tag.setValue(value);
+            tag.setValue(value.replaceAll("[^a-z@ A-Z0-9_.:/=+\\\\-]", ""));
             this.emrTags.put(tagName, tag);
         }
 

@@ -94,7 +94,9 @@ resource "aws_iam_policy" "datapull_user_infra_policy_split1" {
                 "s3:PutObjectAcl",
                 "s3:PutObjectVersionAcl",
                 "s3:PutObjectVersionTagging",
-                "s3:RestoreObject"
+                "s3:RestoreObject",
+                "ecr:DescribeRepositories",
+                "ecr:ListTagsForResource"
             ],
             "Resource": [
                 "arn:aws:ecs:*:*:cluster/${var.docker_image_name}",
