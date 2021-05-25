@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
     - api/Dockerfile
 - Removed extra leading slash for vault url prefix
     - core/src/main/scala/security/Vault.scala
- 
+
 ## [0.1.34] - 2021-05-18
 
 Upgraded jackson and aws dependencies; standardised iswindowsauthenticated attribute 
