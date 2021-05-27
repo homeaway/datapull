@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.36] - 2021-05-26
+
+- Re-added AWS bom for dependency management
+- Fixed bug with SES config
+
+### Changed
+- core/src/main/scala/config/AppConfig.scala
+- core/pom.xml
+
 ## [0.1.35] - 2021-05-25
 
 - Made Consul datacenter Urls, AWS tags config-driven

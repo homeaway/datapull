@@ -113,7 +113,7 @@ case class AppConfig(smtpServerAddress: String, dataToolsEmailAddress: String, s
 
     val client =
       AmazonSimpleEmailServiceClientBuilder.standard()
-        .withRegion(sesRegion).withCredentials(credentialsProvider) build();
+        .withRegion(sesRegion).withCredentials(credentialsProvider).build()
 
     return client;
   }
