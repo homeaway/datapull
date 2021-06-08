@@ -61,6 +61,10 @@ For example - "localizedNames":[{"lcid":1025,"value":"أنتاركتيكا","ext
  For moving data to MongoDB with custom _id or any UUID's as UUID than as a String, we wrote a custom function.
  we can use `uuidToBinary(uuid_colum) as _id` in the sql column of the json. and can use `binaryToUUID(_id) as column_name` to do the vice versa.
 
+#### How do I convert String to Parallax Hash?  
+ For converting email address or any other PII data to parallax Hash, we wrote a custom function.
+ we can use `stringToParallaxHash(string) as _hash` in the sql column of the json.
+
 For any Spark SQL functions please refer to [https://spark.apache.org/docs/2.2.0/api/java/org/apache/spark/sql/functions.html](https://spark.apache.org/docs/2.2.0/api/java/org/apache/spark/sql/functions.html) and If you don't find any, feel free to let us know we are happy to write the custom function or you can contribute back to the tool.
 
 #### How to I create a complex document structure with nested arrays and subdocuments, using Spark SQL?
