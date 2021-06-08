@@ -360,5 +360,10 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>2.12.3</version>
         </dependency>
+        <dependency>
+            <groupId>com.expedia.hdw</groupId>
+            <artifactId>common-parallax</artifactId>
+            <version>1.0.2</version>
+        </dependency>
     </dependencies>
 </project>

@@ -36,6 +36,7 @@ import org.codehaus.jettison.json.{JSONArray, JSONObject}
 import security._
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.breakable
+import com.expedia.hdw.common.parallax.ParallaxHash
 
 // Main class
 object DataPull {
@@ -138,6 +139,7 @@ object DataPull {
     sparkSession.udf.register("binaryToUUID", binaryToUUID _)
     sparkSession.udf.register("uuid", uuid _)
     sparkSession.udf.register("binaryToJUUID", binaryToJUUID _)
+    sparkSession.udf.register("stringToParallaxHash", stringToParallaxHash _)
 
     stepSubmissionTime = Instant.now().toString
 
@@ -377,6 +379,14 @@ object DataPull {
     else {
       val bb = ByteBuffer.wrap(byte)
       new UUID(bb.getLong, bb.getLong()).toString
+    }
+  }
+
+  def stringToParallaxHash(stringData: String) : String = {
+    if (stringData == null) null
+
+    else {
+      ParallaxHash.parallaxHash().hash(stringData.toLowerCase)
     }
   }
 
