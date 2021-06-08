@@ -34,6 +34,10 @@
             <id>confluent</id>
             <url>http://packages.confluent.io/maven/</url>
         </repository>
+        <repository>
+            <id>SparkPackagesRepo</id>
+            <url>https://repos.spark-packages.org</url>
+        </repository>
     </repositories>
     <!--<MAVEN SCALA Plugins with JAR PLUGIN TO BUILD PROJECT WITH DEPENDENCIES>-->
     <build>
