@@ -9,10 +9,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Re-added AWS bom for dependency management
 - Fixed bug with SES config
+- Added common options to Snowflake example
+- Better error message when sql attribute in input json provided without query attribute
+- Added required additional dependencies for jackson v 2.12.2
 
 ### Changed
 - core/src/main/scala/config/AppConfig.scala
 - core/pom.xml
+- core/src/main/resources/Samples/Input_Sample_snowflake-to-filesystem-to-snowflake.json
+- core/src/main/scala/core/Migration.scala
+- api/pom.xml
 
 ## [0.1.35] - 2021-05-25
 

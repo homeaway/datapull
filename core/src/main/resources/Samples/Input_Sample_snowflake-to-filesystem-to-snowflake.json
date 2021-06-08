@@ -10,6 +10,8 @@
                 "schema": "TPCDS_SF100TCL",
                 "table": "(Select C_CUSTOMER_SK, C_FIRST_NAME FROM CUSTOMER LIMIT 10) A",
                 "options": {
+                    "sfWarehouse": "MY_WAREHOUSE",
+                    "role": "MY_ROLE",
                     "postactions": "CREATE SCHEMA \"DEMO_DB\".\"TESTSCHEMA1\";"
                 }
             },
@@ -34,7 +36,11 @@
                 "database": "DEMO_DB",
                 "schema": "TESTSCHEMA1",
                 "table": "testtable1",
-                "savemode": "Overwrite"
+                "savemode": "Overwrite",
+                "options": {
+                    "sfWarehouse": "MY_WAREHOUSE",
+                    "role": "MY_ROLE"
+                }
             }
         }
     ],
