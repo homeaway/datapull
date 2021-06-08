@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added required additional dependencies for jackson v 2.12.2
 - Update Spark 2.4.7 local spark clusters to 2.4.8
 - Updated documentation to fix embedded html issues
+- Support for Kafka topics that aren't registered with Schema Registry
 
 ### Changed
+
 - core/src/main/scala/config/AppConfig.scala
 - core/pom.xml
 - core/src/main/resources/Samples/Input_Sample_snowflake-to-filesystem-to-snowflake.json
@@ -26,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - core/src/main/resources/Samples/Input_Json_Specification.json
   - core/Docker_Spark_Server/Dockerfile
 - docs/docs/install_on_aws.md
+- core/src/main/scala/core/DataFrameFromTo.scala
 
 ## [0.1.35] - 2021-05-25
 
