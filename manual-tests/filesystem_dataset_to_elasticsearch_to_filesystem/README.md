@@ -24,7 +24,7 @@
    
 1. Run DataPull to copy data from a sample dataset in the filesystem, to a topic `hello_world` in the dockerised kafka cluster
     ```shell
-    docker run --network docker_elasticsearch_server_default -v $(pwd)/../../core/:/core -v $(pwd):/core/manualtestfolder -w /core -it --rm expedia/spark2.4.7-scala2.11-hadoop2.10.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.7,org.apache.spark:spark-avro_2.11:2.4.7,org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.7 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar manualtestfolder/datapull_input.json local
+    docker run --network docker_elasticsearch_server_default -v $(pwd)/../../core/:/core -v $(pwd):/core/manualtestfolder -w /core -it --rm expedia/spark2.4.8-scala2.11-hadoop2.10.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.8,org.apache.spark:spark-avro_2.11:2.4.8,org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.8 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar manualtestfolder/datapull_input.json local
     ```
 
 1. Open the url http://localhost:5601/app/kibana#/dev_tools/console?_g=() on your host machine, to open Kibana Console Center for the dockerised Elasticsearch environment. In the Console, run the command `GET testindex1/_search?pretty=true` and conform that there are 3 documents in the index `testindex1`
