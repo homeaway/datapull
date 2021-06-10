@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.36] - 2021-06-08
+
+- Re-added AWS bom for dependency management
+- Fixed bug with SES config
+- Added common options to Snowflake example
+- Better error message when sql attribute in input json provided without query attribute
+- Added required additional dependencies for jackson v 2.12.2
+- Update Spark 2.4.7 local spark clusters to 2.4.8
+- Updated documentation to fix embedded html issues
+- Support for Kafka topics that aren't registered with Schema Registry
+
+### Changed
+
+- core/src/main/scala/config/AppConfig.scala
+- core/pom.xml
+- core/src/main/resources/Samples/Input_Sample_snowflake-to-filesystem-to-snowflake.json
+- core/src/main/scala/core/Migration.scala
+- api/pom.xml
+- Update Spark 2.4.7 local spark clusters to 2.4.8
+  - **/README.md
+  - core/src/main/resources/Samples/Input_Json_Specification.json
+  - core/Docker_Spark_Server/Dockerfile
+- docs/docs/install_on_aws.md
+- core/src/main/scala/core/DataFrameFromTo.scala
+
 ## [0.1.35] - 2021-05-25
 
 - Made Consul datacenter Urls, AWS tags config-driven

@@ -26,7 +26,7 @@
 
 1. Run DataPull 
     ```shell
-    docker run --network docker_kafka_server_default -v $(pwd)/../../core/:/core -v $(pwd):/core/manualtestfolder -w /core -it --rm expedia/spark2.4.7-scala2.11-hadoop2.10.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.7,org.apache.spark:spark-avro_2.11:2.4.7,org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.7 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar manualtestfolder/datapull_input.json local
+    docker run --network docker_kafka_server_default -v $(pwd)/../../core/:/core -v $(pwd):/core/manualtestfolder -w /core -it --rm expedia/spark2.4.8-scala2.11-hadoop2.10.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.8,org.apache.spark:spark-avro_2.11:2.4.8,org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.8 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar manualtestfolder/datapull_input.json local
     ```
 1. Open the url http://localhost:9021/clusters on your host machine, to open Confluent Control Center for the dockerised Kafka environment. Using the left nav of Confluent Control Center, navigate to `CO Cluster 1 > Topics` and conform that
    1. there are 2 topics named `hello_world` and `hello_world2`

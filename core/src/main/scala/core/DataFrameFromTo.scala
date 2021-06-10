@@ -38,6 +38,7 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
+
 import javax.mail.internet.{InternetAddress, MimeMessage}
 import javax.mail.{Message, Session, Transport}
 import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
@@ -55,6 +56,8 @@ import org.influxdb.InfluxDBFactory
 import org.influxdb.dto.Query
 import security._
 import za.co.absa.abris.avro.functions.{from_avro, to_avro}
+import za.co.absa.abris.config.FromAvroConfig
+
 import scala.collection.JavaConversions._
 import scala.collection.immutable.List
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
@@ -824,7 +827,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       println("command result = " + result + " pipeline name = " + fileName + " pipeline = " + pipeline);
       new File(fileName).delete()
       var jsonResult = new JSONObject(result)
-      if (jsonResult.has("error")){
+      if (jsonResult.has("error")) {
         throw new Exception(result)
       }
     } catch {
@@ -1025,26 +1028,32 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         .load()
     }
     df.createOrReplaceTempView("df")
-    val fromValueAvroConfig = helper.GetFromAvroConfig(
-      topic = topic,
-      schemaRegistryUrl = schemaRegistryUrl,
-      schemaVersion = valueSchemaVersion,
-      isKey = false,
-      subjectNamingStrategy = valueSubjectNamingStrategy,
-      subjectRecordName = valueSubjectRecordName,
-      subjectRecordNamespace = valueSubjectRecordNamespace,
-      sslSettings = sparkOptions
-    )
-    val fromKeyAvroConfig = helper.GetFromAvroConfig(
-      topic = topic,
-      schemaRegistryUrl = schemaRegistryUrl,
-      schemaVersion = keySchemaVersion,
-      isKey = true,
-      subjectNamingStrategy = keySubjectNamingStrategy,
-      subjectRecordName = keySubjectRecordName,
-      subjectRecordNamespace = keySubjectRecordNamespace,
-      sslSettings = sparkOptions
-    )
+    var fromValueAvroConfig: FromAvroConfig = null
+    if (valueFormat == "avro") {
+      fromValueAvroConfig = helper.GetFromAvroConfig(
+        topic = topic,
+        schemaRegistryUrl = schemaRegistryUrl,
+        schemaVersion = valueSchemaVersion,
+        isKey = false,
+        subjectNamingStrategy = valueSubjectNamingStrategy,
+        subjectRecordName = valueSubjectRecordName,
+        subjectRecordNamespace = valueSubjectRecordNamespace,
+        sslSettings = sparkOptions
+      )
+    }
+    var fromKeyAvroConfig: FromAvroConfig = null
+    if (keyFormat == "avro") {
+      fromKeyAvroConfig = helper.GetFromAvroConfig(
+        topic = topic,
+        schemaRegistryUrl = schemaRegistryUrl,
+        schemaVersion = keySchemaVersion,
+        isKey = true,
+        subjectNamingStrategy = keySubjectNamingStrategy,
+        subjectRecordName = keySubjectRecordName,
+        subjectRecordNamespace = keySubjectRecordNamespace,
+        sslSettings = sparkOptions
+      )
+    }
 
     var dft = df
       .withColumnRenamed("key", "keyBinary")
