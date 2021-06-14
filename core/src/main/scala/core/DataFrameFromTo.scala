@@ -1025,7 +1025,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         sslSettings = sparkOptions
       )
     }
-
     var dft = df
       .withColumnRenamed("key", "keyBinary")
       .withColumnRenamed("value", "valueBinary")
@@ -1097,14 +1096,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     val valueFieldCol = df.col(valueField)
-    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = valueFieldCol, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace, sslSettings = sparkOptions)
+    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, df = df, columnName = valueField, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace, sslSettings = sparkOptions)
     var columnsToSelect = Seq((valueFormat match {
       case "avro" => to_avro(valueFieldCol, valueAvroConfig)
       case _ => valueFieldCol
     }) as 'value)
     if (!keyField.isEmpty) {
       val keyFieldCol = df.col(keyField.get)
-      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace, sslSettings = sparkOptions)
+      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, df = df, columnName = keyField.get, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace, sslSettings = sparkOptions)
       columnsToSelect = columnsToSelect ++ Seq((keyFormat match {
         case "avro" => to_avro(keyFieldCol, keyAvroConfig)
         case _ => keyFieldCol
