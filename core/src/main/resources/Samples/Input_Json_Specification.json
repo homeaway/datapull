@@ -40,7 +40,7 @@
         "isstream": false,
         "comment_sparkoptions": "optional set of spark.cassandra options. these options will override equivalent parameters if both are provided. For example, delimiter specificed in sparkoptions will override delimiter specified (and deprecated) above",
         "sparkoptions": {
-          "comment_checkpointLocation": "For some output sinks where the end-to-end fault-tolerance can be guaranteed, specify the location where the system will write all the checkpoint information. This should be a directory in an HDFS-compatible fault-tolerant file system. ref https://spark.apache.org/docs/2.4.7/structured-streaming-programming-guide.html#recovering-from-failures-with-checkpointing",
+          "comment_checkpointLocation": "For some output sinks where the end-to-end fault-tolerance can be guaranteed, specify the location where the system will write all the checkpoint information. This should be a directory in an HDFS-compatible fault-tolerant file system. ref https://spark.apache.org/docs/2.4.8/structured-streaming-programming-guide.html#recovering-from-failures-with-checkpointing",
           "checkpointLocation": "s3a://S3BUCKET_AND_PATH or /LOCALHDFSPATH",
           "comment_delimiter": "Optional, defaulted to comma(,). Use \\t for tab-delimited files. Applies only for csv fileformat",
           "delimiter": "\t"

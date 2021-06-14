@@ -808,27 +808,35 @@ class Migration extends SparkListener {
 
   def printableSourceTargetInfo(platformObject: JSONObject): String = {
     var htmlString = StringBuilder.newBuilder
-    val platform = platformObject.getString("platform")
-    var propertiesMap = Map("platform" -> platform)
-    if (platform == "mssql") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("server", "database", "table"), platformObject)
-    } else if (platform == "cassandra") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "keyspace", "table", "local_dc"), platformObject)
-      propertiesMap = propertiesMap ++ deriveClusterIPFromConsul(jsonObjectPropertiesToMap(List("cluster", "cluster_key", "consul_dc"), platformObject))
-    } else if (platform == "s3") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("s3path", "fileformat", "awsaccesskeyid", "awssecretaccesskey"), platformObject)
-    } else if (platform == "filesystem") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("path", "fileformat"), platformObject)
-    } else if (platform == "hive") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "clustertype", "database", "table"), platformObject)
-    } else if (platform == "mongodb") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "database", "authenticationdatabase", "collection", "login", "password"), platformObject)
-    } else if (platform == "kafka") {
-      propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("bootstrapServers", "schemaRegistries", "topic", "keyField", "keyFormat"), platformObject)
+    if (platformObject == null) {
+      htmlString.append("null platform object")
     }
-    htmlString.append("<dl>")
-    propertiesMap.filter((t) => t._2 != "" && t._1 != "login" && t._1 != "password" && t._1 != "awsaccesskeyid" && t._1 != "awssecretaccesskey").foreach(i => htmlString.append("<dt>" + i._1 + "</dt><dd>" + i._2 + "</dd>"))
-    htmlString.append("</dl>")
+    else if (!platformObject.has("platform")) {
+      htmlString.append(platformObject.toString())
+    }
+    else {
+      val platform = platformObject.getString("platform")
+      var propertiesMap = Map("platform" -> platform)
+      if (platform == "mssql") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("server", "database", "table"), platformObject)
+      } else if (platform == "cassandra") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "keyspace", "table", "local_dc"), platformObject)
+        propertiesMap = propertiesMap ++ deriveClusterIPFromConsul(jsonObjectPropertiesToMap(List("cluster", "cluster_key", "consul_dc"), platformObject))
+      } else if (platform == "s3") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("s3path", "fileformat", "awsaccesskeyid", "awssecretaccesskey"), platformObject)
+      } else if (platform == "filesystem") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("path", "fileformat"), platformObject)
+      } else if (platform == "hive") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "clustertype", "database", "table"), platformObject)
+      } else if (platform == "mongodb") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "database", "authenticationdatabase", "collection", "login", "password"), platformObject)
+      } else if (platform == "kafka") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("bootstrapServers", "schemaRegistries", "topic", "keyField", "keyFormat"), platformObject)
+      }
+      htmlString.append("<dl>")
+      propertiesMap.filter((t) => t._2 != "" && t._1 != "login" && t._1 != "password" && t._1 != "awsaccesskeyid" && t._1 != "awssecretaccesskey").foreach(i => htmlString.append("<dt>" + i._1 + "</dt><dd>" + i._2 + "</dd>"))
+      htmlString.append("</dl>")
+    }
     htmlString.toString()
   }
 
