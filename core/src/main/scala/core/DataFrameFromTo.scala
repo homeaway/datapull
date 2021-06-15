@@ -250,7 +250,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: Boolean, filePrefix: Option[String] = None): Unit = {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: Boolean, filePrefix: Option[String] = None, addlSparkOptions: Option[JSONObject] = None): Unit = {
 
     if (filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && SparkSession == null) {
       throw new Exception("Platform cannot have null values")
@@ -297,14 +297,21 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       hadoopConf.set("fs." + s3Prefix + ".fast.upload", "true")
     }
 
-    if (isSFTP) {
+    var sparkOptions: Map[String, String] = Map.empty[String, String]
 
+    if (isSFTP) {
+      sparkOptions = sparkOptions ++ Map(
+        "host" -> host,
+        "username" -> login,
+        (if (pemFilePath == "") "password" else "pem") -> (if (pemFilePath == "") password else pemFilePath),
+        "fileType" -> fileFormat
+      )
+      if (!addlSparkOptions.isEmpty) {
+        sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions.get)
+      }
       df.write.
         format("com.springml.spark.sftp").
-        option("host", host).
-        option("username", login).
-        option(if (pemFilePath == "") "password" else "pem", if (pemFilePath == "") password else pemFilePath).
-        option("fileType", fileFormat).
+        options(sparkOptions).
         save(filePath)
 
     } else if (rowFromJsonString) {
@@ -328,82 +335,46 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       })
     }
     else {
-      if (fileFormat == "json") {
-        if (groupByFields == "") {
+      if (!filePath.startsWith("/datapull-opensource/logs/"))
+        dft.printSchema()
+      sparkOptions = sparkOptions ++ Map(
+        "header" -> "true",
+        "path" -> s"$filePrefixString$filePath"
+      )
+      if (!addlSparkOptions.isEmpty) {
+        sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions.get)
+      }
+      if (dft.isStreaming) {
+        var dfWriter = dft.writeStream
+          .format(fileFormat)
+          .options(sparkOptions)
+        if (groupByFields != "") {
+          dfWriter = dfWriter.partitionBy(groupByFieldsArray: _*)
+        }
 
-          dft
-            .write
-            .format("json")
-            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefixString$filePath")
-        } else {
-          dft
-            .write
-            .format("json")
-            .partitionBy(groupByFieldsArray: _*)
-            .mode(SaveMode.valueOf(s3SaveMode)).json(s"$filePrefixString$filePath")
+        dfWriter
+          .start()
+      } else {
+        var dfWriter = dft.write
+          .mode(SaveMode.valueOf(s3SaveMode))
+          .format(fileFormat)
+          .options(sparkOptions)
+        if (groupByFields != "") {
+          dfWriter = dfWriter.partitionBy(groupByFieldsArray: _*)
         }
-      } else if (fileFormat == "csv") {
-        if (groupByFields == "") {
-          dft
-            .write
-            .option("header", "true")
-            .mode(SaveMode.valueOf(s3SaveMode))
-            .csv(s"$filePrefixString$filePath")
+        if (fileFormat == "json") {
+          dfWriter.json(s"$filePrefixString$filePath")
+        } else if (fileFormat == "csv") {
+          dfWriter.csv(s"$filePrefixString$filePath")
+        } else if (fileFormat == "avro") {
+          dfWriter.save(s"$filePrefixString$filePath")
+        } else if (fileFormat == "orc") {
+          dfWriter.orc(s"$filePrefixString$filePath")
         } else {
-          dft
-            .write
-            .partitionBy(groupByFieldsArray: _*)
-            .option("header", "true")
-            .mode(SaveMode.valueOf(s3SaveMode))
-            .csv(s"$filePrefixString$filePath")
-        }
-      } else if (fileFormat == "avro") {
-        if (groupByFields == "") {
-          dft
-            .write
-            .format("avro")
-            .option("header", "true")
-            .mode(SaveMode.valueOf(s3SaveMode))
-            .save(s"$filePrefixString$filePath")
-        } else {
-          dft
-            .write
-            .format("avro")
-            .partitionBy(groupByFieldsArray: _*)
-            .option("header", "true")
-            .mode(SaveMode.valueOf(s3SaveMode))
-            .save(s"$filePrefixString$filePath")
-        }
-      } else if (fileFormat == "orc") {
-        if (groupByFields == "") {
-          dft
-            .write
-            .option("header", "true")
-            .mode(SaveMode.valueOf(s3SaveMode))
-            .orc(s"$filePrefixString$filePath")
-        } else {
-          dft
-            .write
-            .partitionBy(groupByFieldsArray: _*)
-            .option("header", "true")
-            .mode(SaveMode.valueOf(s3SaveMode))
-            .orc(s"$filePrefixString$filePath")
+          //parquet
+          dfWriter.parquet(s"$filePrefixString$filePath")
         }
       }
-      else {
-        //parquet
-        if (groupByFields == "") {
-          Option(dft
-            .write
-            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefixString$filePath"))
-        } else {
-          Option(dft
-            .write
-            .partitionBy(groupByFieldsArray: _*)
-            .mode(SaveMode.valueOf(s3SaveMode)).parquet(s"$filePrefixString$filePath"))
-        }
-      }
-
     }
   }
 
@@ -1054,7 +1025,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         sslSettings = sparkOptions
       )
     }
-
     var dft = df
       .withColumnRenamed("key", "keyBinary")
       .withColumnRenamed("value", "valueBinary")
@@ -1126,14 +1096,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     val valueFieldCol = df.col(valueField)
-    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = valueFieldCol, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace, sslSettings = sparkOptions)
+    val valueAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, df = df, columnName = valueField, schemaVersion = valueSchemaVersion, isKey = false, subjectNamingStrategy = valueSubjectNamingStrategy, subjectRecordName = valueSubjectRecordName, subjectRecordNamespace = valueSubjectRecordNamespace, sslSettings = sparkOptions)
     var columnsToSelect = Seq((valueFormat match {
       case "avro" => to_avro(valueFieldCol, valueAvroConfig)
       case _ => valueFieldCol
     }) as 'value)
     if (!keyField.isEmpty) {
       val keyFieldCol = df.col(keyField.get)
-      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, dfColumn = keyFieldCol, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace, sslSettings = sparkOptions)
+      val keyAvroConfig = helper.GetToAvroConfig(topic = topic, schemaRegistryUrl = schemaRegistryUrl, df = df, columnName = keyField.get, schemaVersion = keySchemaVersion, isKey = true, subjectNamingStrategy = keySubjectNamingStrategy, subjectRecordName = keySubjectRecordName, subjectRecordNamespace = keySubjectRecordNamespace, sslSettings = sparkOptions)
       columnsToSelect = columnsToSelect ++ Seq((keyFormat match {
         case "avro" => to_avro(keyFieldCol, keyAvroConfig)
         case _ => keyFieldCol

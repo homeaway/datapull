@@ -20,12 +20,9 @@ import java.io.{PrintWriter, StringWriter}
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import config.AppConfig
-
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
-import org.apache.kafka.clients.CommonClientConfigs
-import org.apache.kafka.common.config.SslConfigs
-import org.apache.spark.sql.Column
-import org.apache.spark.sql.avro.SchemaConverters
+import org.apache.spark.sql.DataFrame
+import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
 import za.co.absa.abris.avro.registry.SchemaSubject
 import za.co.absa.abris.config.{AbrisConfig, FromAvroConfig, FromStrategyConfigFragment, ToAvroConfig, ToSchemaDownloadingConfigFragment, ToStrategyConfigFragment}
@@ -199,7 +196,7 @@ class Helper(appConfig: AppConfig) {
     props
   }
 
-  def GetToAvroConfig(topic: String, schemaRegistryUrl: String, dfColumn: Column, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None, sslSettings: Map[String, String]): ToAvroConfig = {
+  def GetToAvroConfig(topic: String, schemaRegistryUrl: String, df: DataFrame, columnName: String, schemaVersion: Option[Int] = None, isKey: Boolean = false, subjectNamingStrategy: String = "TopicNameStrategy" /*other options are RecordNameStrategy, TopicRecordNameStrategy*/ , subjectRecordName: Option[String] = None, subjectRecordNamespace: Option[String] = None, sslSettings: Map[String, String]): ToAvroConfig = {
     //get the specified schema version
     //if not specified, then get the latest schema from Schema Registry
     //if the topic does not have a schema then create and register the schema
@@ -207,8 +204,7 @@ class Helper(appConfig: AppConfig) {
     val subject = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) SchemaSubject.usingTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) SchemaSubject.usingRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else SchemaSubject.usingTopicNameStrategy(topicName = topic, isKey = isKey) // Use isKey=true for the key schema and isKey=false for the value schema
     val schemaRegistryClientConfig = Map(AbrisConfig.SCHEMA_REGISTRY_URL -> schemaRegistryUrl) ++ sslSettings
     val schemaManager = SchemaManagerFactory.create(schemaRegistryClientConfig)
-    val expression = dfColumn.expr
-    val dataSchema = SchemaConverters.toAvroType(expression.dataType, expression.nullable)
+    val dataSchema = AvroSchemaUtils.toAvroSchema(df, columnName)
     println((if (isKey) "key" else "value") + " subject = " + subject.asString)
     println((if (isKey) "key" else "value") + " avro schema inferred from data  = " + dataSchema.toString())
     var toAvroConfig: ToAvroConfig = null
@@ -220,6 +216,9 @@ class Helper(appConfig: AppConfig) {
       val schemaDownloadingConfigFragment: ToSchemaDownloadingConfigFragment = if (subjectNamingStrategy.equalsIgnoreCase("TopicRecordNameStrategy")) toStrategyConfigFragment.andTopicRecordNameStrategy(topicName = topic, recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else if (subjectNamingStrategy.equalsIgnoreCase("RecordNameStrategy")) toStrategyConfigFragment.andRecordNameStrategy(recordName = subjectRecordName.getOrElse(""), recordNamespace = subjectRecordNamespace.getOrElse("")) else toStrategyConfigFragment.andTopicNameStrategy(topic, isKey = isKey)
       toAvroConfig = schemaDownloadingConfigFragment
         .usingSchemaRegistry(schemaRegistryUrl)
+      val schemasWithMetadata = schemaManager.getAllSchemasWithMetadata(subject)
+      val schemaRegistrySchema = schemasWithMetadata.find(p => p.getVersion == schemaVersion.getOrElse(schemasWithMetadata.map(_.getVersion).max))
+      println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " + (if (schemaRegistrySchema.isEmpty) "No schema matching version" else schemaRegistrySchema.get.getSchema))
     }
     else {
       val schemaId = schemaManager.register(subject, dataSchema)
@@ -228,7 +227,6 @@ class Helper(appConfig: AppConfig) {
         .downloadSchemaById(schemaId)
         .usingSchemaRegistry(schemaRegistryUrl)
     }
-    println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " + toAvroConfig.schemaString)
     toAvroConfig
   }
 
@@ -256,8 +254,11 @@ class Helper(appConfig: AppConfig) {
 
     fromAvroConfig = fromSchemaDownloadingConfigFragment
       .usingSchemaRegistry(schemaRegistryUrl)
-
-    println((if (isKey) "key" else "value") + " avro schema expected by schema registry  = " + fromAvroConfig.schemaString)
+    if (schemaManager.exists(subject)) {
+      val schemasWithMetadata = schemaManager.getAllSchemasWithMetadata(subject)
+      val schemaRegistrySchema = schemasWithMetadata.find(p => p.getVersion == schemaVersion.getOrElse(schemasWithMetadata.map(_.getVersion).max))
+      println((if (isKey) "key" else "value") + " avro schema in schema registry  = " + (if (schemaRegistrySchema.isEmpty) "No schema matching version" else schemaRegistrySchema.get.getSchema))
+    }
     fromAvroConfig
   }
 
