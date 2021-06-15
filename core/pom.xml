@@ -103,7 +103,7 @@
         <dependency>
             <groupId>za.co.absa</groupId>
             <artifactId>abris_${scala.binary.version}</artifactId>
-            <version>4.0.1</version>
+            <version>4.2.0</version>
         </dependency>
         <!--<FOR SPARK CASSANDRA CONNECTION 2.4.6 does not exist>-->
         <dependency>
