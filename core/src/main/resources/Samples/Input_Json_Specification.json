@@ -27,10 +27,11 @@
       "comment_source_destination": "source and destination are required elements in this JSON. The format varies, based on the platform. The elements source_* and destination_* below show examples of sources and destinations of various platforms supported by Data Migration. The format of a platform is the ssame regardless of whether it is used as a source or a destination",
       "source_file": {
         "platform": "filesystem",
+        "comment_path": "This is the path seen by the spark application. For hfds paths, please prefix with hdfs:// . You can also use inline Spark SQL expressions to dynamically select the path. For example, if you want to pick a subfolder that has today's date, you can specify the path as /FOLDER/inlineexpr{{select date_format(now(), 'yyyy-MM-dd')}}/",
         "path": "/FOLDER/SUB_FOLDER/",
-        "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
+        "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro,sequencefile. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
         "fileformat": "parquet",
-        "comment_groupbyfields": "optional. Applies only to destinations. If specified, the records are group in nested subfolders named field1=value etc",
+        "comment_groupbyfields": "optional. Applies only to destinations where the format is not sequencefile. If specified, the records are group in nested subfolders named field1=value etc. For destinations that use the sequencefile format, you can create partitions by providing an inline expression in the destination file path",
         "groupbyfields": "field1,field2",
         "comment_delimiter": "Deprecated in favor of sparkoptions.delimiter. Optional, defaulted to comma(,). User \\t for tab-delimited files. Applies only for csv fileformat",
         "delimiter": ",",

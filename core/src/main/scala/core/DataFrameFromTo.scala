@@ -176,53 +176,12 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 * Get ngram transformation
 */
 
-  implicit class RichDF(val ds: org.apache.spark.sql.DataFrame) {
-    def showHTML(limit: Int = 100, truncate: Int = 100): String = {
-      import xml.Utility.escape
-      val data = ds.take(limit)
-      val header = ds.schema.fieldNames.toSeq
-      val rows: Seq[Seq[String]] = data.map { row =>
-        row.toSeq.map { cell =>
-          val str = cell match {
-            case null => "null"
-            case binary: Array[Byte] => binary.map("%02X".format(_)).mkString("[", " ", "]")
-            case array: Array[_] => array.mkString("[", ", ", "]")
-            case seq: Seq[_] => seq.mkString("[", ", ", "]")
-            case _ => cell.toString
-          }
-          if (truncate > 0 && str.length > truncate) {
-            // do not show ellipses for strings shorter than 4 characters.
-            if (truncate < 4) str.substring(0, truncate)
-            else str.substring(0, truncate - 3) + "..."
-          } else {
-            str
-          }
-        }: Seq[String]
-      }
-      var bodyHtml = StringBuilder.newBuilder
-      bodyHtml = bodyHtml.append(
-        s"""<style>table, th, td {border: 1px solid black;}</style> <table>
-                <tr>
-                 ${header.map(h => s"<th>${escape(h)}</th>").mkString}
-                </tr>
-                ${
-          rows.map { row =>
-            s"<tr>${row.map { c => s"<td>${escape(c)}</td>" }.mkString}</tr>"
-          }.mkString
-        }
-            </table>
-        """)
-      bodyHtml.toString()
-
-    }
-  }
-
   def dataFrameToEmail(to: String, subject: String, df: org.apache.spark.sql.DataFrame, limit: String, truncate: String): Unit = {
     if (df == null) {
       throw new Exception("Platform cannot have null values")
     }
 
-    val bodyHtml = df.showHTML(limit.toInt, truncate.toInt)
+    val bodyHtml = helper.showHTML(df, limit.toInt, truncate.toInt)
     //DataMigrationFramework.SendEmail(to,bodyHtml,"","",subject)
     val yamlMapper = new ObjectMapper(new YAMLFactory());
     val inputStream = this.getClass().getClassLoader().getResourceAsStream("application-dev.yml");
@@ -370,6 +329,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
           dfWriter.save(s"$filePrefixString$filePath")
         } else if (fileFormat == "orc") {
           dfWriter.orc(s"$filePrefixString$filePath")
+        } else if (fileFormat == "sequencefile") {
+          dft.rdd.saveAsObjectFile(s"$filePrefixString$filePath")
         } else {
           //parquet
           dfWriter.parquet(s"$filePrefixString$filePath")

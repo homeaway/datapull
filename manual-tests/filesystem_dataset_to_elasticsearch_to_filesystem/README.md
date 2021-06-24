@@ -5,6 +5,7 @@
 1. Data can be upserted to a new Elasticsearch Index
 1. Data can be read from an Elasticsearch index
 1. Pre- and post-migrate commands for Elasticsearch work
+1. In-line Expressions work
 
 ## Pre-requisites
 
@@ -29,7 +30,7 @@
 
 1. Open the url http://localhost:5601/app/kibana#/dev_tools/console?_g=() on your host machine, to open Kibana Console Center for the dockerised Elasticsearch environment. In the Console, run the command `GET testindex1/_search?pretty=true` and conform that there are 3 documents in the index `testindex1`
 
-1. Open the folder `core/target/classes/SampleData_Csv` and confirm that there is a csv file with 3 records.
+1. Open the folder `core/target/classes/SampleData_Csv/{{today's date in the format yyyy-MM-dd}}` and confirm that there is a csv file with 3 records.
 
 ### Cleanup
 
