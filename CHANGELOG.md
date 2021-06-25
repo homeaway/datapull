@@ -8,14 +8,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.39] - 2021-06-24
 
 - Bug fix to pick up streaming parameters
-- Support for inline Spark SQL expressions in input json
+- Support for inline Spark SQL expressions in input json and sequencefile format
 - Support for Structured Streaming watermarks (for stream-to-stream left joins, etc.)
 
 ### Changed
 
 - Bug fix to pick up streaming parameters 
   - core/src/main/scala/core/Migration.scala
-- Support for inline Spark SQL expressions in input json
+- Support for inline Spark SQL expressions in input json and sequencefile format
   - core/src/main/scala/core/DataFrameFromTo.scala
   - core/src/main/scala/core/DataPull.scala
   - core/src/main/scala/helper/Helper.scala
