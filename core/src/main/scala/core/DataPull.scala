@@ -145,7 +145,7 @@ object DataPull {
     jobId = UUID.randomUUID().toString
     masterNode = sparkSession.conf.get("spark.driver.host")
 
-    var json = new JSONObject(jsonString)
+    var json = new JSONObject(helper.ReplaceInlineExpressions(jsonString, sparkSession))
 
     val listOfS3Path = new ListBuffer[String]()
 
@@ -160,7 +160,7 @@ object DataPull {
         listOfS3Path += jsonMap("s3path")
         setAWSCredentials(sparkSession, jsonMap)
         val rddjson = sparkSession.sparkContext.wholeTextFiles(s3Prefix + "://" + jsonMap("s3path"))
-        json = new JSONObject(rddjson.first()._2)
+        json = new JSONObject(helper.ReplaceInlineExpressions(rddjson.first()._2, sparkSession))
       }
     }
 

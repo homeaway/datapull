@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.39] - 2021-06-24
+
+- Bug fix to pick up streaming parameters
+- Support for inline Spark SQL expressions in input json and sequencefile format
+- Support for Structured Streaming watermarks (for stream-to-stream left joins, etc.)
+
+### Changed
+
+- Bug fix to pick up streaming parameters 
+  - core/src/main/scala/core/Migration.scala
+- Support for inline Spark SQL expressions in input json and sequencefile format
+  - core/src/main/scala/core/DataFrameFromTo.scala
+  - core/src/main/scala/core/DataPull.scala
+  - core/src/main/scala/helper/Helper.scala
+  - manual-tests/filesystem_dataset_to_elasticsearch_to_filesystem/README.md
+  - manual-tests/filesystem_dataset_to_elasticsearch_to_filesystem/datapull_input.json
+  - core/src/main/resources/Samples/Input_Json_Specification.json
+- Support for Structured Streaming watermarks (for stream-to-stream left joins, etc.)
+  - core/src/main/scala/core/DataFrameFromTo.scala
+  - core/src/main/resources/Samples/Input_Json_Specification.json
+
 ## [0.1.38] - 2021-06-14
 
 - Update jettison dependency

@@ -555,6 +555,8 @@ class Migration extends SparkListener {
         pemFilePath = propertiesMap.getOrElse("pemfilepath", ""),
         awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
         vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
+        isStream = propertiesMap.getOrElse("isstream", "false").toBoolean,
+        addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
         filePrefix = (if (propertiesMap.contains("fileprefix")) propertiesMap.get("fileprefix") else (if (propertiesMap.contains("s3_service_endpoint")) Some("s3a://") else None)),
         schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL(propertiesMap.getOrElse("schema", ""))) else None)
       )
@@ -597,6 +599,8 @@ class Migration extends SparkListener {
         pemFilePath = propertiesMap.getOrElse("pemfilepath", ""),
         awsEnv = propertiesMap.getOrElse("awsEnv", "false"),
         vaultEnv = propertiesMap.getOrElse("vaultEnv", "false"),
+        isStream = propertiesMap.getOrElse("isstream", "false").toBoolean,
+        addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
         filePrefix = propertiesMap.get("fileprefix"),
         schema = (if (propertiesMap.contains("schema")) Some(StructType.fromDDL(propertiesMap.getOrElse("schema", ""))) else None)
       )
