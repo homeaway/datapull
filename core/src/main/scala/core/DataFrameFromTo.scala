@@ -937,7 +937,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        keyFormat: String = "string",
                        valueFormat: String = "avro",
                        addlSparkOptions: Option[JSONObject] = None,
-                       isStream: Boolean = false): DataFrame = {
+                       isStream: Boolean = false,
+                       streamWatermarkField: String = "timestamp",
+                       streamWatermarkDelay: Option[String] = None): DataFrame = {
     var sparkOptions: Map[String, String] = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
 
     sparkOptions = sparkOptions ++ Map("kafka.bootstrap.servers" -> kafkaBroker, "subscribe" -> topic, "schema.registry.url" -> schemaRegistryUrl, "max.poll.records" -> "500", "session.timeout.ms" -> "120000")
@@ -952,6 +954,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         .format("kafka")
         .options(sparkOptions)
         .load()
+      if (!streamWatermarkDelay.isEmpty) {
+        df = df.withWatermark(streamWatermarkField, streamWatermarkDelay.get)
+      }
     } else {
       df = spark
         .read

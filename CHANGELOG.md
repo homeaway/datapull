@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Bug fix to pick up streaming parameters
 - Support for inline Spark SQL expressions in input json
+- Support for Structured Streaming watermarks (for stream-to-stream left joins, etc.)
 
 ### Changed
 
@@ -20,6 +21,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   - core/src/main/scala/helper/Helper.scala
   - manual-tests/filesystem_dataset_to_elasticsearch_to_filesystem/README.md
   - manual-tests/filesystem_dataset_to_elasticsearch_to_filesystem/datapull_input.json
+  - core/src/main/resources/Samples/Input_Json_Specification.json
+- Support for Structured Streaming watermarks (for stream-to-stream left joins, etc.)
+  - core/src/main/scala/core/DataFrameFromTo.scala
   - core/src/main/resources/Samples/Input_Json_Specification.json
 
 ## [0.1.38] - 2021-06-14
