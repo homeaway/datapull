@@ -51,7 +51,7 @@
       ],
       "destination": {
         "platform": "filesystem",
-        "path": "target/classes/SampleData_Csv/HelloWorld",
+        "path": "target/classes/SampleData_Csv/HelloWorld/inlineexpr{{select date_format(now(), 'yyyy-MM-dd')}}",
         "fileformat": "csv"
       },
       "sql": {

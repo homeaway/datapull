@@ -20,12 +20,15 @@ import java.io.{PrintWriter, StringWriter}
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import config.AppConfig
+
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
-import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.{DataFrame, Row}
 import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
 import za.co.absa.abris.avro.registry.SchemaSubject
 import za.co.absa.abris.config.{AbrisConfig, FromAvroConfig, FromStrategyConfigFragment, ToAvroConfig, ToSchemaDownloadingConfigFragment, ToStrategyConfigFragment}
+
+import scala.collection.mutable.StringBuilder
 
 class Helper(appConfig: AppConfig) {
 
@@ -66,11 +69,6 @@ class Helper(appConfig: AppConfig) {
     var pkcs7 = getHttpResponse("http://169.254.169.254/latest/dynamic/instance-identity/pkcs7", 100000, 10000, "GET").ResponseBody
     pkcs7 = pkcs7.split('\n').mkString
     pkcs7
-  }
-
-  def GetEC2Role(): String = {
-    var role = getHttpResponse("http://169.254.169.254/latest/meta-data/iam/security-credentials/", 100000, 10000, "GET").ResponseBody
-    role
   }
 
   /**
@@ -169,6 +167,11 @@ class Helper(appConfig: AppConfig) {
     }
 
     HttpResponse(responseCode, content)
+  }
+
+  def GetEC2Role(): String = {
+    var role = getHttpResponse("http://169.254.169.254/latest/meta-data/iam/security-credentials/", 100000, 10000, "GET").ResponseBody
+    role
   }
 
   def buildSecureKafkaProperties(keyStorePath: Option[String],
@@ -309,6 +312,49 @@ class Helper(appConfig: AppConfig) {
     }
   }
 
+  def showHTML(ds: org.apache.spark.sql.DataFrame, limit: Int = 100, truncate: Int = 100): String = {
+    import xml.Utility.escape
+    val data = ds.take(limit)
+    val header = ds.schema.fieldNames.toSeq
+    val rows: Seq[Seq[String]] = data.map { row =>
+      rowToStrings(row, truncate)
+    }
+    var bodyHtml = StringBuilder.newBuilder
+    bodyHtml = bodyHtml.append(
+      s"""<style>table, th, td {border: 1px solid black;}</style> <table>
+                <tr>
+                 ${header.map(h => s"<th>${escape(h)}</th>").mkString}
+                </tr>
+                ${
+        rows.map { row =>
+          s"<tr>${row.map { c => s"<td>${escape(c)}</td>" }.mkString}</tr>"
+        }.mkString
+      }
+            </table>
+        """)
+    bodyHtml.toString
+
+  }
+
+  private def rowToStrings(row: Row, truncate: Int): Seq[String] = {
+    row.toSeq.map { cell =>
+      val str = cell match {
+        case null => "null"
+        case binary: Array[Byte] => binary.map("%02X".format(_)).mkString("[", " ", "]")
+        case array: Array[_] => array.mkString("[", ", ", "]")
+        case seq: Seq[_] => seq.mkString("[", ", ", "]")
+        case _ => cell.toString
+      }
+      if (truncate > 0 && str.length > truncate) {
+        // do not show ellipses for strings shorter than 4 characters.
+        if (truncate < 4) str.substring(0, truncate)
+        else str.substring(0, truncate - 3) + "..."
+      } else {
+        str
+      }
+    }: Seq[String]
+  }
+
   class CustomListOfExceptions(message: String) extends Exception(message) {
 
     def this(message: String, cause: Throwable) {
@@ -323,6 +369,17 @@ class Helper(appConfig: AppConfig) {
     def this() {
       this(null: String)
     }
+  }
+
+  def ReplaceInlineExpressions(inputString: String, sparkSession: org.apache.spark.sql.SparkSession): String = {
+    val RegexForInlineExpr = """inlineexpr\{\{(.*)}}""".r
+    RegexForInlineExpr.replaceAllIn(inputString, _ match { case RegexForInlineExpr(inlineExprr) => println(inlineExprr);
+      val df = sparkSession.sql(inlineExprr);
+      val rows = df.take(1);
+      if (rows.length == 1) {
+        this.rowToStrings(rows(0), 0).mkString(",")
+      } else ""
+    })
   }
 
   // Bypasses both client and server validation.
