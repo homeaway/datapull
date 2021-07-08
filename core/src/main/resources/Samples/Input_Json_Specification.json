@@ -29,7 +29,7 @@
         "platform": "filesystem",
         "comment_path": "This is the path seen by the spark application. For hfds paths, please prefix with hdfs:// . You can also use inline Spark SQL expressions to dynamically select the path. For example, if you want to pick a subfolder that has today's date, you can specify the path as /FOLDER/inlineexpr{{select date_format(now(), 'yyyy-MM-dd')}}/",
         "path": "/FOLDER/SUB_FOLDER/",
-        "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro,sequencefile. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
+        "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro,sequencefile,sequencefilesnappy (requires snappy codec in spark extra library paths),sequencefiledeflate. Sequencefiles formats are currently supported for writes alone. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
         "fileformat": "parquet",
         "comment_groupbyfields": "optional. Applies only to destinations where the format is not sequencefile. If specified, the records are group in nested subfolders named field1=value etc. For destinations that use the sequencefile format, you can create partitions by providing an inline expression in the destination file path",
         "groupbyfields": "field1,field2",
@@ -48,7 +48,7 @@
         },
         "comment_fileprefix": "Optional. If set, this explicitely sets the file prefix.",
         "fileprefix": "hdfs://",
-        "comment_schema": "Optional, applies only to sources. If set, this explicitely sets the schema of the read files. If not set, the schema is inferred if possible",
+        "comment_schema": "Optional, applies only to sources. If set, this explicitly sets the schema of the read files. If not set, the schema is inferred if possible",
         "schema": "`id` BIGINT,`name` STRING"
       },
       "source_s3": {
@@ -72,6 +72,8 @@
         "delimiter": "\t",
         "comment_mergeschema": "Optional, this is to merge different schemas when reading parquet files. the default value for this is false",
         "mergeschema": false,
+        "comment_schema": "Optional, applies only to sources. If set, this explicitly sets the schema of the read files. If not set, the schema is inferred if possible",
+        "schema": "`id` BIGINT,`name` STRING",
         "comment_coalescefilecount": "Optional, Specify the number of partitions, which determine the number of files in the destination folder. Applies only to destinations, not sources",
         "coalescefilecount": null,
         "comment_enable_server_side_encryption": "Optional, to access the buckets which have server side encryption enabled with AES 256 to be set true. Default: false",

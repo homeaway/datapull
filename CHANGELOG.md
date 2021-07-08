@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.40] - 2021-06-30
+
+- Bug fix to pick up streaming parameters
+- Sequencefile write with long key and default/snappy/deflate codecs
+
+### Changed
+
+- Bug fix to pick up streaming parameters
+  - core/src/main/scala/core/Migration.scala
+- Sequencefile write with long key and snappy codec
+  - core/src/main/scala/core/DataFrameFromTo.scala
+  - core/docker_spark_server/Dockerfile
+  - core/src/main/resources/Samples/Input_Json_Specification.json
+
 ## [0.1.39] - 2021-06-24
 
 - Bug fix to pick up streaming parameters
