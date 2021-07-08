@@ -330,7 +330,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         } else if (fileFormat == "orc") {
           dfWriter.orc(s"$filePrefixString$filePath")
         } else if (fileFormat == "sequencefile") {
-          dft.rdd.saveAsObjectFile(s"$filePrefixString$filePath")
+          dft.toJSON.rdd.zipWithIndex.map { case (v, i) => (i, v) }.saveAsSequenceFile(s"$filePrefixString$filePath", Some(classOf[org.apache.hadoop.io.compress.DefaultCodec]))
+        } else if (fileFormat == "sequencefilesnappy") {
+          dft.toJSON.rdd.zipWithIndex.map { case (v, i) => (i, v) }.saveAsSequenceFile(s"$filePrefixString$filePath", Some(classOf[org.apache.hadoop.io.compress.SnappyCodec]))
+        } else if (fileFormat == "sequencefiledeflate") {
+          dft.toJSON.rdd.zipWithIndex.map { case (v, i) => (i, v) }.saveAsSequenceFile(s"$filePrefixString$filePath", Some(classOf[org.apache.hadoop.io.compress.DeflateCodec]))
         } else {
           //parquet
           dfWriter.parquet(s"$filePrefixString$filePath")
@@ -939,7 +943,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        addlSparkOptions: Option[JSONObject] = None,
                        isStream: Boolean = false,
                        streamWatermarkField: String = "timestamp",
-                       streamWatermarkDelay: Option[String] = None): DataFrame = {
+                       streamWatermarkDelay: Option[String] = None
+                      ): DataFrame = {
     var sparkOptions: Map[String, String] = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
 
     sparkOptions = sparkOptions ++ Map("kafka.bootstrap.servers" -> kafkaBroker, "subscribe" -> topic, "schema.registry.url" -> schemaRegistryUrl, "max.poll.records" -> "500", "session.timeout.ms" -> "120000")

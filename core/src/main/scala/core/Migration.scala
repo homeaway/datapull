@@ -632,7 +632,10 @@ class Migration extends SparkListener {
         keyFormat = propertiesMap.getOrElse("keyformat", "avro"),
         valueFormat = propertiesMap.getOrElse("valueformat", "avro"),
         addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
-        isStream = propertiesMap.getOrElse("isstream", "false").toBoolean)
+        isStream = propertiesMap.getOrElse("isstream", "false").toBoolean,
+        streamWatermarkField = propertiesMap.getOrElse("streamwatermarkfield", "timestamp"),
+        streamWatermarkDelay = propertiesMap.get("streamwatermarkdelay")
+      )
     }
     else if (platform == "elastic") {
       dataframeFromTo.ElasticToDataframe(
