@@ -29,9 +29,9 @@ ENV PYTHONHASHSEED 0
 ENV PYTHONIOENCODING UTF-8
 ENV PIP_DISABLE_PIP_VERSION_CHECK 1
 
-# JAVA
+# JAVA & snappy
 RUN apt-get update \
- && apt-get install -y openjdk-8-jre \
+ && apt-get install -y openjdk-8-jre libsnappy-dev \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
