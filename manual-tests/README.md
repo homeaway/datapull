@@ -15,7 +15,7 @@ Docker Desktop
 #### Steps
 
 1. Open a terminal pointing to the root folder of this repo
-1. Please run DataPull locally in a Dockerised environment, by following all the steps defined in the section "Build and execute within a Dockerised Spark environment" of the [README file in the repo's root folder](../README.md).
+1. Please run DataPull locally in a Dockerised environment, by following all the steps defined in the section [Build and execute within a Dockerised Spark environment](../README.md#build-and-execute-within-a-dockerised-spark-environment).
 1. Confirm the previous step ran successfully, and that you are in the correct folder, by running the following command in the terminal. It should return at least one json file.
     ```shell
     ls target/classes/SampleData_Json/IntField\=1/
