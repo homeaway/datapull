@@ -34,7 +34,7 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
   cp ./src/main/resources/application-dev.yml ./src/main/resources/application.yml
   docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:3.6.3-jdk-8 mvn clean install
   ```
-* Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld/HelloWorld.csv) to a folder of json files named SampleData_Json.  
+* Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld/HelloWorld.csv) to a folder of json files named SampleData_Json.  
   ```
   docker run -v $(pwd):/core -w /core -it --rm expedia/spark2.4.8-scala2.11-hadoop2.10.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.8,org.apache.spark:spark-avro_2.11:2.4.8,org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.8 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
   ```
