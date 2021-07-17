@@ -127,7 +127,7 @@
       "comment_sql": "Optional, if Any complex sql queries to be executed on multiple sources then this can be used.",
       "sql": {
         "comment_query": "The sql query to be executed on the sources mentioned.",
-        "query": "any sql query."
+        "query": "any Spark sql query."
       },
       "source_cassandra": {
         "platform": "cassandra",
@@ -182,7 +182,7 @@
         "comment_server": "This element accepts both IPs and CNAMEs e.g. mydbserver.domain.internal. CNAMEs are required if Vault integration is used to fetch the credentials",
         "server": "IP_ADDR_OR_DNS_NAME",
         "database": "DATABASE_NAME",
-        "table": "SCHEMA_NAME.TABLE_NAME",
+        "table": "SCHEMA_NAME.TABLE_NAME OR native SQL query executed by the RDBMS with a format like: (select id from SCHEMA_NAME.TABLE_NAME) A",
         "comment_querys3sqlfile": "optional. SQL Query provided instrea of a source table, in a .sql file uploaded to S3. If this is provided along with the table element, this takes priority",
         "querys3sqlfile": {
           "s3path": "BUCKET_NAME/FOLDER_PATH",
@@ -542,7 +542,7 @@
     "comment_product": "The product information for which this is being done",
     "product": "my_product",
     "comment_ec2instanceprofile": "The role with whioch the emr cluster(ec2-instances) has to be spun up so that they can access vault.",
-    "ec2instanceprofile": "my-loader",
+    "ec2instanceprofile": "AWS Role for the EMR EC2, ex.: emr_ec2_datapull_role",
     "comment_componentinfo": "Dominion enforced UUID tag. ",
     "ComponentInfo": "00000000-0000-0000-0000-000000000000",
     "comment_cronexpression": "optional,this element will be used for scheduling the job and it will be defaulted for single run",
