@@ -31,22 +31,7 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
 * Build the Scala JAR from within the `core` folder
   ```shell script
   cd ./core
-  cp ./src/main/resources/application-dev.yml ./src/main/resources/application.yml
-  ```
-  Edit the file `./src/main/resources/application.yml` to specify the `inputjson:` value, for example:
-  ```yml
-  datapull:
-    ...
-    json:
-      inputjson: Input_Sample_filesystem-to-filesystem.json
-    ...
-  ```
-  From the Mac Terminal, you can achieve this by typing:
-  ```shell script
-  sed 's/inputjson:/inputjson: Input_Sample_filesystem-to-filesystem.json/g' src/main/resources/application.yml
-  ```
-  Then build the JAR:
-  ```shell script
+  cp ../master_application_config-dev.yml ./src/main/resources/application.yml
   docker run \
      -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" \
      --rm \
