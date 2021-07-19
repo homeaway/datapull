@@ -41,7 +41,7 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
       inputjson: Input_Sample_filesystem-to-filesystem.json
     ...
   ```
-  From the Mac Terminal, you can acheave this by typing:
+  From the Mac Terminal, you can achieve this by typing:
   ```shell script
   sed 's/inputjson:/inputjson: Input_Sample_filesystem-to-filesystem.json/g' src/main/resources/application.yml
   ```
