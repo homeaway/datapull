@@ -54,6 +54,7 @@
       "source_s3": {
         "platform": "s3",
         "s3path": "BUCKET_NAME/FOLDER_PATH",
+        "alias": "Alias to the data to be used by the 'query' field for the Spark query",
         "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
         "fileformat": "parquet",
         "comment_groupbyfields": "optional. Applies only to destinations. If specified, the records are group in nested subfolders named field1=value etc",
@@ -137,6 +138,7 @@
         "cluster": "IP_ADDR_OR_DNS_NAME",
         "keyspace": "YOURKEYSPACE_NAME",
         "table": "TABLE_NAME",
+        "alias": "Alias to the 'table' value to be used by the 'query' field for the Spark query",
         "login": "YOURKEYSPACENAME_APPUSER",
         "comment_password": "optional. Required if Vault integration is not used",
         "password": "PASSWORD",
@@ -183,6 +185,7 @@
         "server": "IP_ADDR_OR_DNS_NAME",
         "database": "DATABASE_NAME",
         "table": "SCHEMA_NAME.TABLE_NAME OR native SQL query executed by the RDBMS with a format like: (select id from SCHEMA_NAME.TABLE_NAME) A",
+        "alias": "Alias to the 'table' value to be used by the 'query' field for the Spark query",
         "comment_querys3sqlfile": "optional. SQL Query provided instrea of a source table, in a .sql file uploaded to S3. If this is provided along with the table element, this takes priority",
         "querys3sqlfile": {
           "s3path": "BUCKET_NAME/FOLDER_PATH",
