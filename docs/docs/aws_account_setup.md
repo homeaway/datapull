@@ -1,9 +1,9 @@
 # Setup VPC etc. in AWS Account for DataPull install
-The instructions for [deploying DataPull on AWS Fargate and AWS EMR](install_on_aws) assume that you already have available an S3 bucket, a VPC, subnets, etc. If you do not have these, or if you want to install DataPull in a new VPC dedicated to DataPull, please follow the following instructions. 
+The instructions for [deploying DataPull on AWS Fargate and AWS EMR](install_on_aws.md) assume that you already have available an S3 bucket, a VPC, subnets, etc. If you do not have these, or if you want to install DataPull in a new VPC dedicated to DataPull, please follow the following instructions. 
 
 > It is generally recommended to use your existing VPC, subnets, etc. since they are most likely already setup to access the data you want DatPull to work on, have access to other services like S3, etc. 
 
-When creating a VPC for DataPull, you need at least two subnets in different availability zones, since AWS Application Load Balancer requires a minimum of two availability zones. You can create a VPC with two public subnets (approach modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html) or a VPC with two private subnets and a public subnet (modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html).md
+When creating a VPC for DataPull, you need at least two subnets in different availability zones, since AWS Application Load Balancer requires a minimum of two availability zones. You can create a VPC with two public subnets (approach modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario1.html) or a VPC with two private subnets and a public subnet (modeled on https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Scenario2.html)
 
 ## VPC with two public subnets
 - create VPC `datatools` with IPv4 range `10.0.0.0/24`
