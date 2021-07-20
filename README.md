@@ -12,7 +12,7 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
 1. Execution logs and migration history configurable to Amazon AWS Cloudwatch, S3
 1. Use built-in cron scheduler, or call REST API from external schedulers
 
-... and many more features documented [here](https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json)
+... and many more features documented [here](./core/src/main/resources/Samples/Input_Json_Specification.json)
 
 ## Run DataPull locally
 > Note: DataPull consists of two services, an API written in Java Spring Boot, and a Spark app written in Scala. Although Scala apps can run on JDK 11, per [official docs](https://docs.scala-lang.org/overviews/jdk-compatibility/overview.html#jdk-11-compatibility-notes) it is recommended that Java 8 be used for compiling Scala code. The effort to upgrade to OpenJDK 11+ is tracked [here](https://github.com/homeaway/datapull/issues/2)
@@ -28,17 +28,32 @@ DataPull is a self-service Distributed ETL tool to join and transform data from 
   cd ./datapull
   docker build -f ./core/docker_spark_server/Dockerfile -t expedia/spark2.4.8-scala2.11-hadoop2.10.1 ./core/docker_spark_server
   ```
-* build the Scala JAR from within the core folder
+* Build the Scala JAR from within the `core` folder
   ```shell script
   cd ./core
-  cp ./src/main/resources/application-dev.yml ./src/main/resources/application.yml
-  docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v "${PWD}":/usr/src/mymaven -v "${HOME}/.m2":/root/.m2 -w /usr/src/mymaven maven:3.6.3-jdk-8 mvn clean install
+  cp ../master_application_config-dev.yml ./src/main/resources/application.yml
+  docker run \
+     -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" \
+     --rm \
+     -v "${PWD}":/usr/src/mymaven \
+     -v "${HOME}/.m2":/root/.m2 \
+     -w /usr/src/mymaven \
+     maven:3.6.3-jdk-8 mvn clean install
   ```
-* Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld/HelloWorld.csv) to a folder of json files named SampleData_Json.  
+* Execute a sample JSON input file [Input_Sample_filesystem-to-filesystem.json](core/src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json) that moves data from a CSV file [HelloWorld.csv](core/src/main/resources/SampleData/HelloWorld/HelloWorld.csv) to a folder of json files named SampleData_Json.  
   ```
-  docker run -v $(pwd):/core -w /core -it --rm expedia/spark2.4.8-scala2.11-hadoop2.10.1 spark-submit --packages org.apache.spark:spark-sql_2.11:2.4.8,org.apache.spark:spark-avro_2.11:2.4.8,org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.8 --deploy-mode client --class core.DataPull target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
+  docker run \
+     -v $(pwd):/core \
+     -w /core \
+     -it \
+     --rm \
+     expedia/spark2.4.8-scala2.11-hadoop2.10.1 spark-submit \
+        --packages org.apache.spark:spark-sql_2.11:2.4.8,org.apache.spark:spark-avro_2.11:2.4.8,org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.8 \
+        --deploy-mode client \
+        --class core.DataPull \
+        target/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar src/main/resources/Samples/Input_Sample_filesystem-to-filesystem.json local
   ```
-* Open the relative path target/classes/SampleData_Json to find the result of the DataPull i.e. the data from target/classes/SampleData/HelloWorld/HelloWorld.csv transformed into JSON.
+* Open the relative path `target/classes/SampleData_Json` to find the result of the DataPull i.e. the data from `target/classes/SampleData/HelloWorld/HelloWorld.csv` transformed into JSON.
 
 > Pro-tip: The folder `target/classes/SampleData_Json` is created by the docker spark container, so you will not be able to delete it until you take ownership of it by running `sudo chown -R $(whoami):$(whoami) .`
 
