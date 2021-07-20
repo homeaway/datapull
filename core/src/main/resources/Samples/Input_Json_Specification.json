@@ -548,7 +548,7 @@
     "comment_product": "The product information for which this is being done",
     "product": "my_product",
     "comment_ec2instanceprofile": "The role with whioch the emr cluster(ec2-instances) has to be spun up so that they can access vault.",
-    "ec2instanceprofile": "AWS Role for the EMR EC2, ex.: emr_ec2_datapull_role",
+    "ec2instanceprofile": "emr_ec2_datapull_role",
     "comment_componentinfo": "Dominion enforced UUID tag. ",
     "ComponentInfo": "00000000-0000-0000-0000-000000000000",
     "comment_cronexpression": "optional,this element will be used for scheduling the job and it will be defaulted for single run",
