@@ -128,7 +128,7 @@
       "comment_sql": "Optional, if Any complex sql queries to be executed on multiple sources then this can be used.",
       "sql": {
         "comment_query": "The sql query to be executed on the sources mentioned.",
-        "query": "any Spark sql query."
+        "query": "any Spark SQL query. This should reference one or more sources of the migration, using the alias of the source(s). i.e. if Spark SQL query is specified, then the alias is a required field for the source(s) the query refers to."
       },
       "source_cassandra": {
         "platform": "cassandra",
