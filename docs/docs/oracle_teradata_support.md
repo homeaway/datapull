@@ -25,8 +25,8 @@ To use Oracle and Teradata as sources/destinations for DataPull, you need to man
 </dependency>
 ```  
 ## Steps to include Teradata into the project
-   - Run these commands to include Teradata jars into maven repo. Run this command from folder where Teradata jars are present. Change the value of ```-Dversion=16.20.00.10``` in the command according to downloaded jar version.
-   - <b>Command</b>  : ````docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=terajdbc4.jar -DgroupId=com.teradata -DartifactId=terajdbc4 -Dversion=16.20.00.10 -Dpackaging=jar````
+   - Run these commands to include Teradata jars into maven repo. Run this command from folder where Teradata jars are present. Change the value of ```-Dversion=17.10.00.14``` in the command according to downloaded jar version.
+   - <b>Command</b>  : ````docker run -e MAVEN_OPTS="-Xmx1024M -Xss128M -XX:MetaspaceSize=512M -XX:MaxMetaspaceSize=1024M -XX:+CMSClassUnloadingEnabled" --rm -v $(pwd):/workdir  -v $HOME/.m2/:/root/.m2/ -w /workdir maven:alpine mvn install:install-file -Dfile=terajdbc4.jar -DgroupId=com.teradata -DartifactId=terajdbc4 -Dversion=17.10.00.14 -Dpackaging=jar````
    
    - Add below mentioned dependency to pom.xml(core/pom.xml) in DataPull core. Replace {version} with the downloaded jar version.
 ``` 
