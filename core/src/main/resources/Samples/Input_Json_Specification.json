@@ -185,7 +185,8 @@
         "server": "IP_ADDR_OR_DNS_NAME",
         "database": "DATABASE_NAME",
         "table": "SCHEMA_NAME.TABLE_NAME OR native SQL query executed by the RDBMS with a format like: (select id from SCHEMA_NAME.TABLE_NAME) A",
-        "alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
+        "comment_alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
+        "alias": "A",
         "comment_querys3sqlfile": "optional. SQL Query provided instrea of a source table, in a .sql file uploaded to S3. If this is provided along with the table element, this takes priority",
         "querys3sqlfile": {
           "s3path": "BUCKET_NAME/FOLDER_PATH",
