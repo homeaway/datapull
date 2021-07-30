@@ -16,14 +16,39 @@
 
 package security
 
-class SecretStore {
+import config.AppConfig
+import org.codehaus.jettison.json.JSONObject
 
-  def getSecret(env: String, clusterName: String, userName: String, keyStoreEnv: String): Map[String, String] = {
+import java.util.Base64
 
+class SecretStore (appConfig: AppConfig) {
+
+  def getSecret(secretName: String, env:Option[String]):String={
     null
   }
-  def getSecret(vaultPath: String, vaultKey: String,env:String):String={
-    null
+
+  def getSecret(awsEnv: String, clusterName: String, userName: String, vaultEnv: String): Map[String, String] = {
+    var usernameAndPassword: Map[String, String] = Map()
+    var vaultEnv_effective = awsEnv
+    if (vaultEnv != null && !vaultEnv.isEmpty) {
+      vaultEnv_effective = vaultEnv
+    }
+    val secretName = appConfig.static_secret_path_prefix + "/" + clusterName + "/" + userName
+    val username = this.getSecret(secretName, Some("username"), Some(vaultEnv_effective))
+    val password = this.getSecret(secretName, Some("password"), Some(vaultEnv_effective))
+    usernameAndPassword = Map("username" -> username, "password" -> password)
+    usernameAndPassword
+  }
+
+  def getSecret(secretName: String, secretKeyName: Option[String], env:Option[String]):String={
+    var secret = this.getSecret(secretName, env)
+    if (!(secretKeyName.getOrElse("")).isEmpty) {
+      val secretAsJson = new JSONObject(secret)
+      if (secretAsJson != null && secretAsJson.has(secretKeyName.get)) {
+        secret = secretAsJson.optString(secretKeyName.get)
+      }
+    }
+    secret
   }
 
 }

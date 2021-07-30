@@ -108,14 +108,7 @@ class DataPullLog(appConfig: AppConfig, pipeline: String) extends Logger {
     val awsLogsClient = appConfig.getCloudWatchClient(region);
     val logEvents = new java.util.ArrayList[InputLogEvent]
     import sparkSession.implicits._
-    val logStreamsRequest = new DescribeLogStreamsRequest().withLogGroupName(groupName)
-    logStreamsRequest.withLimit(5)
-    val logStreamList = awsLogsClient.describeLogStreams(logStreamsRequest).getLogStreams
     import scala.collection.JavaConversions._
-    var token: String = null;
-    for (logStream <- logStreamList) {
-      if (logStream.getLogStreamName.equals(streamName)) token = logStream.getUploadSequenceToken
-    }
     val dfData = df.map(x => x.mkString(",") + "  ").collect();
     for (i <- 0 until dfData.length) {
       val log = new InputLogEvent
@@ -127,7 +120,13 @@ class DataPullLog(appConfig: AppConfig, pipeline: String) extends Logger {
     putLogEventsRequest.setLogGroupName(groupName)
     putLogEventsRequest.setLogStreamName(streamName)
     putLogEventsRequest.setLogEvents(logEvents)
-    putLogEventsRequest.setSequenceToken(token)
-    val putLogEventsResult = awsLogsClient.putLogEvents(putLogEventsRequest)
+    val logStreamsRequest = new DescribeLogStreamsRequest().withLogGroupName(groupName).withLogStreamNamePrefix(streamName).withLimit(1)
+    val logStreamList = awsLogsClient.describeLogStreams(logStreamsRequest).getLogStreams
+    for (logStream <- logStreamList) {
+      if (logStream.getLogStreamName.equals(streamName)) {
+        putLogEventsRequest.setSequenceToken(logStream.getUploadSequenceToken)
+        awsLogsClient.putLogEvents(putLogEventsRequest)
+      }
+    }
   }
 }

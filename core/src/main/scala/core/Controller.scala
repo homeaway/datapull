@@ -226,7 +226,7 @@ class Controller(appConfig: AppConfig, pipeline: String) {
             if (password == "" || password == null) {
 
               val secretService = new SecretService(appConfig.smtpPasswordSecretStore, appConfig)
-              password = secretService.getSecret(appConfig.smtpPasswordVaultPath, appConfig.smtpPasswordVaultKey, env)
+              password = secretService.getSecret(appConfig.smtpPasswordVaultPath, Some(appConfig.smtpPasswordVaultKey), Some(env))
 
             }
             session = Session.getDefaultInstance(properties, new MailAuthenticator(username, password))

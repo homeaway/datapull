@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.41] - 2021-07-29
+
+- Added optional attributes to make it easier to process Kafka streams created by MongoDB kafka connect source 
+- Added support for sql queries (jdbc and spark sql queries) to passed in as sql files from filesystem/S3
+- Fixed bug in AWS Secrets Manager support, and added support for `inlinesecret{{}}`
+- Increased timeout for API health check
+- Fix bug of occasionally expiring CloudWatch log tokens
+- Fix bug of EMR clusters not being re-used occasionally
+
+### Changed
+
+- Added optional attributes to make it easier to process Kafka streams created by MongoDB kafka connect source
+  - core/src/main/scala/core/DataFrameFromTo.scala
+  - core/src/main/resources/Samples/Input_Json_Specification.json
+- Added support for sql queries (jdbc and spark sql queries) to passed in as sql files from filesystem/S3
+  - core/src/main/scala/core/DataPull.scala
+  - core/src/main/scala/helper/Helper.scala
+  - core/src/main/resources/Samples/Input_Json_Specification.json
+  - core/src/main/scala/core/Migration.scala
+- Fixed bug in AWS Secrets Manager support, and added support for `inlinesecret{{}}`
+  - core/src/main/scala/core/Controller.scala
+  - core/src/main/scala/helper/Helper.scala
+  - core/src/main/scala/core/Migration.scala
+  - core/src/main/scala/security/SecretService.scala
+  - core/src/main/scala/security/SecretsManager.scala
+  - core/src/main/scala/security/SecretStore.scala
+  - core/src/main/scala/security/Vault.scala
+  - docs/docs/access_secrets.md
+  - docs/mkdocs.yml
+- Increased timeout for API health check
+  - api/terraform/datapull_task/datapull_ecs.tf
+- Fix bug of expiring CloudWatch log tokens
+  - core/src/main/scala/logging/DataPullLog.scala
+- Fix bug of EMR clusters not being re-used occasionally
+  - api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
 ## [0.1.40] - 2021-06-30
 
 - Bug fix to pick up streaming parameters

@@ -20,7 +20,7 @@
   "parallelmigrations": false,
   "reportcounts": "default value for this is true and if you want to process the job a bit faster at the cost of not having counts in the email",
   "no_of_retries": "The number of retries the tasks within a job has to be tried in case of a failure",
-  "comment_failureemailaddress": "optional. If provided, an failure email report is sent to this address in case of job failures and for scheduled prod jobs can be paged/any default email in the properties file",
+  "comment_failureemailaddress": "Optional. If provided, a failure email report is sent to this address in case the DataPull job fails during the Spark execution. If the job fails when the Spark cluster is being spun up, because of AWS resourcing issues or if the IAM Role for the EMR cluster is invalid, no email will be sent out since it is the Spark cluster itself that is sending the failure email.",
   "failureemailaddress": "yourid@DOMAIN.com",
   "migrations": [
     {
@@ -127,7 +127,9 @@
       "comment_sql": "Optional, if Any complex sql queries to be executed on multiple sources then this can be used.",
       "sql": {
         "comment_query": "The sql query to be executed on the sources mentioned.",
-        "query": "any sql query."
+        "query": "any sql query.",
+        "commment_inputfile": "Optional. If a file in a Spark-accessible filesystem like EMR is specified, DataPull reads the contents of the file and injects the contents of the file into the query attribute above. If both the query and the inputfile attributes are present, the inputfile attribute takes priority",
+        "inputfile": "s3://some_bucket/some_file.sql"
       },
       "source_cassandra": {
         "platform": "cassandra",
@@ -183,7 +185,7 @@
         "server": "IP_ADDR_OR_DNS_NAME",
         "database": "DATABASE_NAME",
         "table": "SCHEMA_NAME.TABLE_NAME",
-        "comment_querys3sqlfile": "optional. SQL Query provided instrea of a source table, in a .sql file uploaded to S3. If this is provided along with the table element, this takes priority",
+        "comment_querys3sqlfile": "optional. SQL Query provided instead of a source table, in a .sql file uploaded to S3. If this is provided along with the table element, this takes priority",
         "querys3sqlfile": {
           "s3path": "BUCKET_NAME/FOLDER_PATH",
           "comment_awsaccesskeyid": "optional, if EMR runs in same environment as S3. Please replace this expired id with your own.",
@@ -289,6 +291,11 @@
         "streamwatermarkfield": "timestamp",
         "comment_streamwatermakdelay": "Optional. This provides the second argument in structured spak streaming's .withWatermark() function. More details at https://spark.apache.org/docs/2.4.6/structured-streaming-programming-guide.html#policy-for-handling-multiple-watermarks",
         "streamwatermarkdelay": "1 hour",
+        "comment_kafkaconnectmongodboptions": "Optional. Json Object that allows easier reading of Kafka events produced by MongoDB Kafka source connector https://docs.mongodb.com/kafka-connector/master/kafka-source/",
+        "kafkaconnectmongodboptions": {
+          "comment_documentschema": "Required if kafkaconnectmongodboptions is specified. The schema of the MongoDB collection(s) read by the MongoDB Kafka source connector, and put into the Kafka topic. Providing the schema will make thes field available for querying in spark SQL query as alias.value.fieldname. For example, if the documentschema in the example below is used to read a kafka topic aliased as x, then you can query the _id.$oid field using the query SELECT value._id.`$oid` as oid from x",
+          "documentschema": "_id:struct<`$oid`:string>,businessTypeTags:array<string>,legacyId:string,legacyIdType:string,name:string,status:string,type:string,parentPartnerId:string,jurisdiction:string,managementUnit:string,contacts:array<struct<_id:string,name:string,email:string,address:array<struct<line1:string,line2:string,line3:string,city:string,state:string,county:string,country:string,postalCode:string,type:string>>,phones:array<struct<number:string,type:string>>>>,email:string,website:string,address:array<struct<line1:string,line2:string,line3:string,city:string,state:string,county:string,country:string,postalCode:string,type:string>>,phones:array<struct<number:string,type:string>>,updatedDate:struct<`$date`:bigint>,updatedUser:string,uuid:string"
+        },
         "comment_sparkoptions": "Optional, this is to enable users to use structured streaming-specific configurations. These options will supercede explicitely named options above. For example, setting topic in sparkoptions will supercede the value of the topic attribute above. All options can be found at the official spark documentation: http://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html#kafka-specific-configurations",
         "sparkoptions": {
           "comment_startingOffsets": "Optional, defaults to \"latest\" for streaming, \"earliest\" for batch. You can also use startingOffsetsByTimestamp which takes precendence over this. Ref http://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html#kafka-specific-configurations for more information",
@@ -427,9 +434,9 @@
           "ordered": false,
           "readPreference.name": "Primary"
         },
-        "cpmment_pre_migrate_command": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
+        "comment_pre_migrate_command": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
         "pre_migrate_command": "{ delete: \"datapull_test\",deletes: [ { q: { user: \"abc123\" }, limit: 1 } ] }",
-        "cpmment_post_migrate_commands": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
+        "comment_post_migrate_commands": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
         "post_migrate_commands": [
           {
             "query": "{ delete: \"datapull_test\",deletes: [ { q: { user: \"abc123\" }, limit: 1 } ] }"
@@ -463,15 +470,15 @@
           "ordered": false,
           "readPreference.name": "Primary"
         },
-        "comment_secret_store": "Optional, this should be used if the secret has to be retrieved from secretmanager. Accepatble value is aws_secrets_manager",
-        "secret_store": "aws_secrets_manager",
-        "comment_secret_name": "if the aws_secrets_manager as selected as secret_store then this field should be used to provide the secret name",
+        "comment_secretstore": "Optional, deprecated, defaults to null. Please use the inlinesecrets{{}} capablity instead. secretstore can be used if a secret has to be retrieved from AWS Secrets Manager. This retrieved secret is injected into the password attribute's value. Acceptable value for secretstore is aws_secrets_manager",
+        "secretstore": null,
+        "comment_secret_name": "Deprecated. If the aws_secrets_manager as selected as secretstore then this attribute's value is used to provide the secret name. If the secret_key_name attribute is not set, then the full value of the AWS Secrets Manager secret with name secret_name is injected into the password attribute. The secret stored in Secrets Manager corresponding to a secret name, has a max size of 10 kb.",
         "secret_name": "AWS_SECRET_NAME",
-        "comment_secret_key_name": "Optional. The secret stored in Secrets Manager corresponding to a secret name, has a max size of 10 kb. If the secret is a JSON string (which is usually the case) or a binary map, then the secret_key_name specifies which JSON attribute/map key to use as the secret. If the secret_key_name is not specified then the whole string is used as the secret.",
+        "comment_secret_key_name": "Optional, deprecated. Used only if the aws_secrets_manager as selected as secretstore attribute's value. If the secret is a JSON string (which is usually the case) or a binary map, then the secret_key_name specifies which JSON attribute/map key to use as the secret. If the secret_key_name is not specified then the whole string is used as the secret.",
         "secret_key_name": null,
-        "cpmment_pre_migrate_command": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
+        "comment_pre_migrate_command": "Optional, this feature will allow users to run pre migrate command for any operations on the collections",
         "pre_migrate_command": "{ delete: \"datapull_test\",deletes: [ { q: { user: \"abc123\" }, limit: 1 } ] }",
-        "cpmment_post_migrate_commands": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
+        "comment_post_migrate_commands": "Optional, this feauture will allow users to run pre migrate command for any operations on the collections",
         "post_migrate_commands": [
           {
             "query": "{ delete: \"datapull_test\",deletes: [ { q: { user: \"abc123\" }, limit: 1 } ] }"
