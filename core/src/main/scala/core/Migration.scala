@@ -28,7 +28,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.SizeEstimator
 import org.codehaus.jettison.json.{JSONArray, JSONObject}
-import security.SecretsManager
+import security.{SecretService}
 
 import scala.collection.immutable.List
 import scala.collection.mutable.ListBuffer
@@ -117,7 +117,13 @@ class Migration extends SparkListener {
       if (migration.has("sql")) {
 
         val sql = migration.getJSONObject("sql")
-        overrideSql = sql.getString("query")
+        if (sql.has("inputfile")) {
+          val helper = new Helper(appConfig)
+          overrideSql = helper.InputFileJsonToString(sparkSession = sparkSession, jsonObject = sql).getOrElse("")
+        }
+        else if (sql.has("query")) {
+          overrideSql = sql.getString("query")
+        }
       }
 
       if (migration.has("sources")) {
@@ -634,7 +640,8 @@ class Migration extends SparkListener {
         addlSparkOptions = (if (platformObject.optJSONObject("sparkoptions") == null) None else Some(platformObject.optJSONObject("sparkoptions"))),
         isStream = propertiesMap.getOrElse("isstream", "false").toBoolean,
         streamWatermarkField = propertiesMap.getOrElse("streamwatermarkfield", "timestamp"),
-        streamWatermarkDelay = propertiesMap.get("streamwatermarkdelay")
+        streamWatermarkDelay = propertiesMap.get("streamwatermarkdelay"),
+        kafkaConnectMongodbOptions = (if (platformObject.optJSONObject("kafkaconnectmongodboptions") == null) None else Some(platformObject.optJSONObject("kafkaconnectmongodboptions")))
       )
     }
     else if (platform == "elastic") {
@@ -679,20 +686,18 @@ class Migration extends SparkListener {
   def mssqlPlatformQueryFromS3File(sparkSession: org.apache.spark.sql.SparkSession, platformObject: JSONObject): String = {
     var sqlQuery = ""
     if (platformObject.has("querys3sqlfile")) {
-      val jsonMap = jsonObjectPropertiesToMap(List("s3path", "awsaccesskeyid", "awssecretaccesskey"), platformObject.getJSONObject("querys3sqlfile"))
-      setAWSCredentials(sparkSession, jsonMap)
-      sqlQuery = sparkSession.sparkContext.wholeTextFiles("s3n://" + jsonMap("s3path")).first()._2
+      val helper = new Helper(appConfig)
+      sqlQuery = helper.InputFileJsonToString(sparkSession = sparkSession, jsonObject = platformObject, inputFileObjectKey = "querys3sqlfile").getOrElse("")
     }
     sqlQuery
   }
 
   def extractCredentialsFromSecretManager(destinationMap: Map[String, String]): Map[String, String] = {
-    val secretManager = new SecretsManager(appConfig)
+    val secretManager = new SecretService("aws_secrets_manager", appConfig)
     val secretName = destinationMap.getOrElse("secret_name", "");
     val mm = collection.mutable.Map[String, String]() ++= destinationMap
-    val key_name: String = destinationMap.getOrElse("secret_key_name", null)
     if (secretName != null && !secretName.isEmpty) {
-      val secretCredentials = secretManager.getSecret(secretName, key_name)
+      val secretCredentials = secretManager.getSecret(secretName, destinationMap.get("secret_key_name"), None)
       mm.put("password", secretCredentials)
     }
     mm.toMap

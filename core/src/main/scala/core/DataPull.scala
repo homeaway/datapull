@@ -153,14 +153,21 @@ object DataPull {
 
     breakable {
       while (json.has("jsoninputfile")) {
-        val jsonMap = jsonObjectPropertiesToMap(List("s3path", "awsaccesskeyid", "awssecretaccesskey"), json.getJSONObject("jsoninputfile"))
+        val jsonMap = jsonObjectPropertiesToMap(json.getJSONObject("jsoninputfile"))
         if (listOfS3Path.contains(jsonMap("s3path"))) {
           throw new Exception("New json is pointing to same json.")
         }
         listOfS3Path += jsonMap("s3path")
         setAWSCredentials(sparkSession, jsonMap)
-        val rddjson = sparkSession.sparkContext.wholeTextFiles(s3Prefix + "://" + jsonMap("s3path"))
-        json = new JSONObject(helper.ReplaceInlineExpressions(rddjson.first()._2, sparkSession))
+        json = new JSONObject(
+          helper.ReplaceInlineExpressions(
+            helper.InputFileJsonToString(
+              sparkSession = sparkSession,
+              jsonObject = json,
+              inputFileObjectKey = "jsoninputfile"
+            ).getOrElse(""), sparkSession
+          )
+        )
       }
     }
 

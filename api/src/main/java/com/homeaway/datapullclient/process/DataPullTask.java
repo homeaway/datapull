@@ -73,21 +73,15 @@ public class DataPullTask implements Runnable {
     }
 
     @Override
-    public void run(){
+    public void run() {
         this.runSparkCluster();
     }
 
-    private void runSparkCluster(){
+    private void runSparkCluster() {
 
         DataPullTask.log.info("Started cluster config taskId = " + this.taskId);
 
         final AmazonElasticMapReduce emr = this.config.getEMRClient();
-
-        final ListClustersResult res = emr.listClusters();
-
-        final List<ClusterSummary> clusters = res.getClusters().stream().filter(x -> x.getName().equals(this.taskId) &&
-                (ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.RUNNING) || ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.WAITING) || ClusterState.valueOf(x.getStatus().getState()).equals(ClusterState.STARTING))).
-                collect(Collectors.toList());
 
         final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
         final String logFilePath = dataPullProperties.getLogFilePath();
@@ -98,7 +92,68 @@ public class DataPullTask implements Runnable {
         s3JarPath = s3JarPath == null || s3JarPath.equals("") ?
                 "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar" : s3JarPath;
 
-//        s3JarPath = "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar";
+        List<ClusterSummary> clusters = new ArrayList<>();
+        ListClustersRequest listClustersRequest = new ListClustersRequest();
+        //Only get clusters that are in usable state
+        listClustersRequest.setClusterStates(Arrays.asList(ClusterState.RUNNING.toString(), ClusterState.WAITING.toString(), ClusterState.STARTING.toString()));
+
+        ListClustersResult listClustersResult = emr.listClusters(listClustersRequest);
+        while (true) {
+            for (ClusterSummary cluster : listClustersResult.getClusters()) {
+                if (cluster.getName().toLowerCase().equals(this.taskId.toLowerCase())) {
+                    clusters.add(cluster);
+                }
+            }
+            if (listClustersResult.getMarker() != null) {
+                listClustersRequest.setMarker(listClustersResult.getMarker());
+                listClustersResult = emr.listClusters(listClustersRequest);
+            } else {
+                break;
+            }
+        }
+
+        //find all datapull EMR clusters to be reaped
+        List<ClusterSummary> reapClusters = new ArrayList<>();
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.DATE, -2);
+        listClustersRequest.setClusterStates(Arrays.asList(ClusterState.WAITING.toString()));
+        listClustersRequest.setCreatedBefore(cal.getTime());
+        listClustersResult = emr.listClusters(listClustersRequest);
+        while (true) {
+            for (ClusterSummary cluster : listClustersResult.getClusters()) {
+                if (cluster.getName().matches(".*-emr-.*-pipeline")) {
+                    ListStepsRequest listSteps = new ListStepsRequest().withClusterId(cluster.getId());
+                    ListStepsResult steps = emr.listSteps(listSteps);
+                    Date maxStepEndTime = new Date(0);
+                    while (true) {
+                        for (StepSummary step : steps.getSteps()) {
+                            Date stepEndDate = step.getStatus().getTimeline().getEndDateTime();
+                            if (stepEndDate != null && stepEndDate.after(maxStepEndTime)) {
+                                maxStepEndTime = stepEndDate;
+                            }
+                        }
+                        if (steps.getMarker() != null) {
+                            listSteps.setMarker(steps.getMarker());
+                            steps = emr.listSteps(listSteps);
+                        } else {
+                            break;
+                        }
+                    }
+                    if (maxStepEndTime.before(cal.getTime())) {
+                        reapClusters.add(cluster);
+                    }
+                }
+            }
+            if (listClustersResult.getMarker() != null) {
+                listClustersRequest.setMarker(listClustersResult.getMarker());
+                listClustersResult = emr.listClusters(listClustersRequest);
+            } else {
+                break;
+            }
+        }
+
+        DataPullTask.log.info("Number of useable clusters for taskId " + this.taskId + " = " + clusters.size());
+        DataPullTask.log.info("Number of reapable clusters = " + reapClusters.size());
 
         if (!clusters.isEmpty()) {
             final ClusterSummary summary = clusters.get(0);
@@ -111,13 +166,28 @@ public class DataPullTask implements Runnable {
         }
 
         DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
+
+        if (!reapClusters.isEmpty()) {
+            reapClusters.forEach(cluster -> {
+                String clusterIdToReap = cluster.getId();
+                String clusterNameToReap = cluster.getName();
+                //ensure we don't reap the cluster we just used
+                if (!clusters.isEmpty() && clusters.get(0).getId().equals(clusterIdToReap)) {
+                    DataPullTask.log.info("Cannot reap in-use cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
+                } else {
+                    DataPullTask.log.info("About to reap cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
+                    emr.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(Arrays.asList(clusterIdToReap)));
+                    DataPullTask.log.info("Reaped cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
+                }
+            });
+        }
     }
 
     private List<String> prepareSparkSubmitParams(final String SparkSubmitParams) {
         final List<String> sparkSubmitParamsList = new ArrayList<>();
-        String[] sparkSubmitParamsArray=null;
-        if(SparkSubmitParams !=""){
-            sparkSubmitParamsArray= SparkSubmitParams.split("\\s+");
+        String[] sparkSubmitParamsArray = null;
+        if (SparkSubmitParams != "") {
+            sparkSubmitParamsArray = SparkSubmitParams.split("\\s+");
 
             sparkSubmitParamsList.add("spark-submit");
 
@@ -171,17 +241,17 @@ public class DataPullTask implements Runnable {
         final String slaveSecurityGroup = Objects.toString(this.clusterProperties.getSlaveSecurityGroup(), slaveSG != null ? slaveSG : "");
         final String serviceAccessSecurityGroup = Objects.toString(this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
 
-        if(!masterSecurityGroup.isEmpty()){
+        if (!masterSecurityGroup.isEmpty()) {
             jobConfig.withEmrManagedMasterSecurityGroup(masterSecurityGroup);
         }
-        if(!slaveSecurityGroup.isEmpty()){
+        if (!slaveSecurityGroup.isEmpty()) {
             jobConfig.withEmrManagedSlaveSecurityGroup(slaveSecurityGroup);
         }
-        if(!serviceAccessSecurityGroup.isEmpty()){
+        if (!serviceAccessSecurityGroup.isEmpty()) {
             jobConfig.withServiceAccessSecurityGroup(serviceAccessSecurityGroup);
         }
         final String slaveType = emrProperties.getSlaveType();
-        if(count > 1) {
+        if (count > 1) {
             jobConfig.withSlaveInstanceType(Objects.toString(this.clusterProperties.getSlaveInstanceType(), slaveType));
         }
 
@@ -211,7 +281,7 @@ public class DataPullTask implements Runnable {
                 .withServiceRole(Objects.toString(this.clusterProperties.getEmrServiceRole(), serviceRole))
                 .withJobFlowRole(Objects.toString(this.clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
                 .withVisibleToAllUsers(true)
-                .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties),myEmrfsConfig)
+                .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties), myEmrfsConfig)
                 .withInstances(jobConfig);
 
         if (!emrSecurityConfiguration.isEmpty()) {
@@ -258,7 +328,7 @@ public class DataPullTask implements Runnable {
         req.withJobFlowId(id);
         req.withSteps(step);
         this.config.getEMRClient().addJobFlowSteps(req);
-        if(terminateClusterAfterExecution){
+        if (terminateClusterAfterExecution) {
             this.addTerminateStep(id);
         }
     }

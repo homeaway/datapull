@@ -20,45 +20,38 @@ import config.AppConfig
 import helper.Helper
 import org.codehaus.jettison.json.JSONObject
 
-class Vault(appConfig: AppConfig) extends SecretStore {
+class Vault(appConfig: AppConfig) extends SecretStore (appConfig) {
 
   val helper = new Helper(appConfig)
 
-  override def getSecret(awsEnv: String, clusterName: String, userName: String, vaultEnv: String): Map[String, String] = {
-    var usernameAndPassword: Map[String, String] = Map()
-    var vaultEnv_effective = if (vaultEnv == "") awsEnv else vaultEnv
-    val token = GetVaultToken(awsEnv, vaultEnv_effective)
-    val url = appConfig.vault_url + appConfig.static_secret_path_prefix + "/" + clusterName + "/" + userName
+  override def getSecret(secretName: String, env: Option[String]): String = {
+    val token = GetVaultToken(env)
+    val url = GetVaultUrl(env) + secretName
     val credsString = getCredsString(url, token)
     val credJSON = new JSONObject(credsString)
-    val username = credJSON.getJSONObject("data").getString("username")
-    val password = credJSON.getJSONObject("data").getString("password")
-    usernameAndPassword = Map("username" -> username, "password" -> password)
-    usernameAndPassword
+    credJSON.getJSONObject("data").toString
   }
 
   private def getCredsString(url: String, token: String): String = {
     return (helper.getHttpResponse(url, 10000, 10000, "GET", Map("Content-Type" -> "application/x-www-form-urlencoded", "X-Vault-Token" -> token)).ResponseBody)
   }
 
-  override def getSecret(vaultPath: String, vaultKey: String,env:String):String={
-    var usernameAndPassword: Map[String, String] = Map()
-    var vaultEnv_effective = env
-    val token = GetVaultToken(env, vaultEnv_effective)
-    val url = appConfig.vault_url.replaceFirst("VAULTENV", vaultEnv_effective)+ ""+vaultPath
-    val credsString = getCredsString(url, token)
-    val credJSON = new JSONObject(credsString)
-    credJSON.getJSONObject("data").getString(vaultKey)
-  }
-
-  def GetVaultToken(awsEnv: String, vaultEnv: String): String = {
+  private def GetVaultToken(vaultEnv: Option[String]): String = {
     var jsonBody = new JSONObject()
-     jsonBody.put("role", helper.GetEC2Role())
+    jsonBody.put("role", helper.GetEC2Role())
     jsonBody.put("pkcs7", helper.GetEC2pkcs7())
     jsonBody.put("nonce", appConfig.vault_nonce)
-    val tokenJsonString = helper.getHttpResponse(appConfig.vault_url.replaceFirst("VAULTENV", vaultEnv) + appConfig.vault_path_login, 10000, 10000, "POST", Map("Content-Type" -> "application/x-www-form-urlencoded"), jsonBody.toString).ResponseBody
+    val tokenJsonString = helper.getHttpResponse(GetVaultUrl(vaultEnv) + appConfig.vault_path_login, 10000, 10000, "POST", Map("Content-Type" -> "application/x-www-form-urlencoded"), jsonBody.toString).ResponseBody
     val tokenJson = new JSONObject(tokenJsonString)
     val token = tokenJson.getJSONObject("auth").getString("client_token")
     token
+  }
+
+  private def GetVaultUrl(vaultEnv: Option[String]): String = {
+    if (vaultEnv.isEmpty) {
+      appConfig.vault_url
+    } else {
+      appConfig.vault_url.replaceAll("VAULTENV", vaultEnv.get)
+    }
   }
 }

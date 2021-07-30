@@ -943,7 +943,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
                        addlSparkOptions: Option[JSONObject] = None,
                        isStream: Boolean = false,
                        streamWatermarkField: String = "timestamp",
-                       streamWatermarkDelay: Option[String] = None
+                       streamWatermarkDelay: Option[String] = None,
+                       kafkaConnectMongodbOptions: Option[JSONObject] = None
                       ): DataFrame = {
     var sparkOptions: Map[String, String] = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
 
@@ -959,9 +960,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         .format("kafka")
         .options(sparkOptions)
         .load()
-      if (!streamWatermarkDelay.isEmpty) {
-        df = df.withWatermark(streamWatermarkField, streamWatermarkDelay.get)
-      }
     } else {
       df = spark
         .read
@@ -969,7 +967,6 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         .options(sparkOptions)
         .load()
     }
-    df.createOrReplaceTempView("df")
     var fromValueAvroConfig: FromAvroConfig = null
     if (valueFormat == "avro") {
       fromValueAvroConfig = helper.GetFromAvroConfig(
@@ -1011,8 +1008,28 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     dft = dft
       .drop("keyBinary")
       .drop("valueBinary")
+    dft = ProcessKafkaConnectMongodbOptions(
+      spark = spark,
+      df = dft,
+      kafkaConnectMongodbOptions = kafkaConnectMongodbOptions
+    )
     dft.printSchema()
+    if (isStream && !streamWatermarkDelay.isEmpty) {
+      dft = dft.withWatermark(streamWatermarkField, streamWatermarkDelay.get)
+    }
     dft
+  }
+
+  private def ProcessKafkaConnectMongodbOptions(spark: SparkSession, df: DataFrame, kafkaConnectMongodbOptions: Option[JSONObject] = None): DataFrame = {
+    var outputDf = df
+    if (!kafkaConnectMongodbOptions.isEmpty) {
+      if (kafkaConnectMongodbOptions.get.has("documentschema")) {
+        val documentSchema = kafkaConnectMongodbOptions.get.optString("documentschema")
+        outputDf.createOrReplaceTempView("df")
+        outputDf = spark.sql("SELECT \n        df2.topic, df2.partition, df2.offset, ifnull(to_timestamp(from_unixtime(df2.payload.clusterTime.`$timestamp`.t)), df2.timestamp) as timestamp, df2.payload.fullDocument._id as key, struct(df2.payload.fullDocument.*) as value \nFROM  (\n        select df.topic, df.partition, df.offset, df.timestamp,\n                from_json (\n                        from_json (\n                                value,\n                                'struct<payload:string,schema:struct<optional:boolean,type:string>>'\n                        ).payload , \n                        'struct<\n                                operationType:string,\n                                clusterTime:struct<`$timestamp`:struct<t:long,i:long>>,\n                                fullDocument:struct<" + documentSchema + ">,\n                                ns:struct<coll:string,db:string>\n                        >'\n                ) as payload from df\n) df2")
+      }
+    }
+    outputDf
   }
 
   def isJSONString(jsonString: String): Boolean = {

@@ -19,24 +19,20 @@ package security
 import config.AppConfig
 
 
-class SecretService(secretStoreType: String,appConfig: AppConfig) {
-
-  var secretStore = new SecretStore()
-
+class SecretService(secretStoreType: String, appConfig: AppConfig) {
+  var secretStore: SecretStore = null
   if (secretStoreType == "vault") {
     secretStore = new Vault(appConfig)
-
   }
-
-  if (secretStoreType == "kms") {
-
+  else if (secretStoreType == "aws_secrets_manager") {
+    secretStore = new SecretsManager(appConfig)
   }
 
   def getSecret(env: String, clusterName: String, userName: String, keyStoreEnv: String): Map[String, String] = {
-
     secretStore.getSecret(env, clusterName, userName, keyStoreEnv)
   }
-  def getSecret(vaultPath:String,vaultKey:String,env:String):String={
-    secretStore.getSecret(vaultPath, vaultKey, env)
+
+  def getSecret(secretName: String, secretKeyName: Option[String], env: Option[String]): String = {
+    secretStore.getSecret(secretName, secretKeyName, env)
   }
 }

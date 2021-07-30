@@ -107,8 +107,8 @@ resource "aws_alb_target_group" "datapull-web-api-targetgroup" {
   health_check {
     healthy_threshold   = 3
     unhealthy_threshold = 10
-    timeout             = 5
-    interval            = 10
+    timeout             = 10
+    interval            = 30
     path                = "/api/v1/healthCheck"
     port                = "8080"
   }

@@ -20,15 +20,19 @@ import java.io.{PrintWriter, StringWriter}
 import java.net.URLEncoder
 import java.security.cert.X509Certificate
 import config.AppConfig
+import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials}
 
 import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
-import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.{DataFrame, Row, SparkSession}
+import org.codehaus.jettison.json.JSONObject
+import security.{SecretService}
 import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
 import za.co.absa.abris.avro.registry.SchemaSubject
 import za.co.absa.abris.config.{AbrisConfig, FromAvroConfig, FromStrategyConfigFragment, ToAvroConfig, ToSchemaDownloadingConfigFragment, ToStrategyConfigFragment}
 
 import scala.collection.mutable.StringBuilder
+import scala.util.control.Breaks.breakable
 
 class Helper(appConfig: AppConfig) {
 
@@ -373,13 +377,52 @@ class Helper(appConfig: AppConfig) {
 
   def ReplaceInlineExpressions(inputString: String, sparkSession: org.apache.spark.sql.SparkSession): String = {
     val RegexForInlineExpr = """inlineexpr\{\{(.*)}}""".r
-    RegexForInlineExpr.replaceAllIn(inputString, _ match { case RegexForInlineExpr(inlineExprr) => println(inlineExprr);
+    val returnVal = RegexForInlineExpr.replaceAllIn(inputString, _ match { case RegexForInlineExpr(inlineExprr) => println(inlineExprr);
       val df = sparkSession.sql(inlineExprr);
       val rows = df.take(1);
       if (rows.length == 1) {
         this.rowToStrings(rows(0), 0).mkString(",")
       } else ""
     })
+
+    val RegexForInlineSecret = """inlinesecret\{\{(.*)}}""".r
+    RegexForInlineSecret.replaceAllIn(returnVal, _ match { case RegexForInlineSecret(inlineExprr) => println(inlineExprr);
+      val inlineExprrAsJson = new JSONObject(new JSONObject("{\"data\": \"{" + inlineExprr + "}\"}").getString("data"))
+      if (inlineExprrAsJson.has("secretstore") && inlineExprrAsJson.has("secretname")) {
+        val secretStore = inlineExprrAsJson.getString("secretstore")
+        val secretName = inlineExprrAsJson.getString("secretname")
+        var secretKeyName: Option[String] = None
+        if (inlineExprrAsJson.has("secretkeyname")) {
+          secretKeyName = Some(inlineExprrAsJson.getString("secretkeyname"))
+        }
+        val secretService = new SecretService(secretStore.toLowerCase(), appConfig)
+        secretService.getSecret(secretName, secretKeyName, None)
+      } else {
+        ""
+      }
+    })
+  }
+
+  //Get string from input file specificed in json
+  def InputFileJsonToString(sparkSession: SparkSession, jsonObject: JSONObject, inputFileObjectKey: String = "inputfile"): Option[String] = {
+    var retVal: Option[String] = None
+    if (jsonObject.has(inputFileObjectKey)) {
+      breakable {
+        val jsonMap = jsonObjectPropertiesToMap(jsonObject.getJSONObject(inputFileObjectKey))
+        var inputFile = ""
+        if (jsonMap.contains("s3path")) {
+          val s3Prefix = if (sparkSession.sparkContext.master == "local[*]") "s3a" else "s3"
+          setAWSCredentials(sparkSession, jsonMap)
+          inputFile = s3Prefix + "://" + jsonMap("s3path")
+        }
+        else {
+          inputFile = jsonMap("path")
+        }
+        val rddjson = sparkSession.sparkContext.wholeTextFiles(inputFile)
+        retVal = Some(rddjson.first()._2)
+      }
+    }
+    retVal
   }
 
   // Bypasses both client and server validation.
