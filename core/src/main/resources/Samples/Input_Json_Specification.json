@@ -54,6 +54,7 @@
       "source_s3": {
         "platform": "s3",
         "s3path": "BUCKET_NAME/FOLDER_PATH",
+        "alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
         "comment_fileformat": "Supported formats are parquet,json,csv,orc,avro. Tab-delimited files can be read by cboosing the fileformat as csv and setting the delimiter to \t",
         "fileformat": "parquet",
         "comment_groupbyfields": "optional. Applies only to destinations. If specified, the records are group in nested subfolders named field1=value etc",
@@ -127,7 +128,7 @@
       "comment_sql": "Optional, if Any complex sql queries to be executed on multiple sources then this can be used.",
       "sql": {
         "comment_query": "The sql query to be executed on the sources mentioned.",
-        "query": "any sql query."
+        "query": "any Spark SQL query. This should reference one or more sources of the migration, using the alias of the source(s). i.e. if Spark SQL query is specified, then the alias is a required field for the source(s) the query refers to."
       },
       "source_cassandra": {
         "platform": "cassandra",
@@ -137,6 +138,7 @@
         "cluster": "IP_ADDR_OR_DNS_NAME",
         "keyspace": "YOURKEYSPACE_NAME",
         "table": "TABLE_NAME",
+        "alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
         "login": "YOURKEYSPACENAME_APPUSER",
         "comment_password": "optional. Required if Vault integration is not used",
         "password": "PASSWORD",
@@ -182,7 +184,9 @@
         "comment_server": "This element accepts both IPs and CNAMEs e.g. mydbserver.domain.internal. CNAMEs are required if Vault integration is used to fetch the credentials",
         "server": "IP_ADDR_OR_DNS_NAME",
         "database": "DATABASE_NAME",
-        "table": "SCHEMA_NAME.TABLE_NAME",
+        "table": "SCHEMA_NAME.TABLE_NAME OR native SQL query executed by the RDBMS with a format like: (select id from SCHEMA_NAME.TABLE_NAME) A",
+        "comment_alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
+        "alias": "A",
         "comment_querys3sqlfile": "optional. SQL Query provided instrea of a source table, in a .sql file uploaded to S3. If this is provided along with the table element, this takes priority",
         "querys3sqlfile": {
           "s3path": "BUCKET_NAME/FOLDER_PATH",
@@ -253,6 +257,8 @@
         "comment_schemaregistries": "comma-separated list of schema registry servers for the kafka cluster. If the valueformat and keyformat are both string, then the schemaregistries attribute is ignored.",
         "schemaregistries": "http://KAFKA_SCHEMA_REGISTRY:8081",
         "topic": "TOPIC_NAME",
+        "comment_alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
+        "alias": "A",
         "comment_valuesubjectnamingstrategy": "Optional, defaults to TopicNameStrategy. Other options are RecordNameStrategy, TopicRecordNameStrategy. Subject naming strategy to use when getting/setting value's schema subject. Ref https://docs.confluent.io/6.0.0/schema-registry/serdes-develop/index.html#subject-name-strategy",
         "valuesubjectnamingstrategy": "TopicNameStrategy",
         "comment_valuesubjectrecordnamespace": "Optional, defaults to empty string. Used only with RecordNameStrategy, TopicRecordNameStrategy. Record Namespace to use. e.g. if topic = test123, valuesubjectnamingstrategy = TopicRecordNameStrategy, valuesubjectrecordnamespace = com.expediagroup.dataplatform, valuesubjectrecordname = PotentialRmdEntry; then subject name for the topic's value  = test123-com.expediagroup.dataplatform.PotentialRmdEntry",
@@ -369,6 +375,8 @@
         "awsenv": "dev",
         "clustername": "localhost",
         "database": "mydb",
+        "comment_alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
+        "alias": "A",
         "measurementname": "cpu",
         "login": "login",
         "password": "password",
@@ -412,6 +420,8 @@
         "replicaset": "REPLICASET_NAME",
         "database": "DATABASE_NAME",
         "collection": "COLLECTION_NAME",
+        "comment_alias": "Mandatory field, when a Spark SQL query is provided in the 'query' field, the alias represent the table name of the data from this source",
+        "alias": "A",
         "login": "LOGIN_NAME",
         "comment_password": "optional. Required if Vault integration is not used",
         "password": "PASSWORD",
@@ -541,8 +551,8 @@
     "portfolio": "my_portfolio",
     "comment_product": "The product information for which this is being done",
     "product": "my_product",
-    "comment_ec2instanceprofile": "The role with whioch the emr cluster(ec2-instances) has to be spun up so that they can access vault.",
-    "ec2instanceprofile": "my-loader",
+    "comment_ec2instanceprofile": "For DataPulls running on EMR, the AWS Role with which the EC2 nodes of the EMR cluster have to be spun up so that they can access Vault.",
+    "ec2instanceprofile": "emr_ec2_datapull_role",
     "comment_componentinfo": "Dominion enforced UUID tag. ",
     "ComponentInfo": "00000000-0000-0000-0000-000000000000",
     "comment_cronexpression": "optional,this element will be used for scheduling the job and it will be defaulted for single run",

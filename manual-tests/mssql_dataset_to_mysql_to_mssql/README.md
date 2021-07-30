@@ -9,7 +9,7 @@
 
 ## Pre-requisites
 
-1. Confirm DataPull can run locally, by following the instructions under "Confirm DataPull can run locally" in the [parent folder's README](../README.md)
+1. Confirm DataPull can run locally, by following the instructions under "Confirm DataPull can run locally" in the [parent folder's README](../README.md#confirm-datapull-can-run-locally)
 
 ## Steps
 
