@@ -1,5 +1,5 @@
 # Setup VPC etc. in AWS Account for DataPull install
-The instructions for [deploying DataPull on AWS Fargate and AWS EMR](/install_on_aws) assume that you already have available an S3 bucket, a VPC, subnets, etc. If you do not have these, or if you want to install DataPull in a new VPC dedicated to DataPull, please follow the following instructions. 
+The instructions for [deploying DataPull on AWS Fargate and AWS EMR](install_on_aws.md) assume that you already have available an S3 bucket, a VPC, subnets, etc. If you do not have these, or if you want to install DataPull in a new VPC dedicated to DataPull, please follow the following instructions. 
 
 > It is generally recommended to use your existing VPC, subnets, etc. since they are most likely already setup to access the data you want DatPull to work on, have access to other services like S3, etc. 
 
