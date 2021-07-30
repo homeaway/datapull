@@ -115,14 +115,33 @@ public class DataPullTask implements Runnable {
         //find all datapull EMR clusters to be reaped
         List<ClusterSummary> reapClusters = new ArrayList<>();
         Calendar cal = Calendar.getInstance();
-        cal.add(Calendar.DATE, -3);
+        cal.add(Calendar.DATE, -2);
         listClustersRequest.setClusterStates(Arrays.asList(ClusterState.WAITING.toString()));
         listClustersRequest.setCreatedBefore(cal.getTime());
         listClustersResult = emr.listClusters(listClustersRequest);
         while (true) {
             for (ClusterSummary cluster : listClustersResult.getClusters()) {
                 if (cluster.getName().matches(".*-emr-.*-pipeline")) {
-                    reapClusters.add(cluster);
+                    ListStepsRequest listSteps = new ListStepsRequest().withClusterId(cluster.getId());
+                    ListStepsResult steps = emr.listSteps(listSteps);
+                    Date maxStepEndTime = new Date(0);
+                    while (true) {
+                        for (StepSummary step : steps.getSteps()) {
+                            Date stepEndDate = step.getStatus().getTimeline().getEndDateTime();
+                            if (stepEndDate != null && stepEndDate.after(maxStepEndTime)) {
+                                maxStepEndTime = stepEndDate;
+                            }
+                        }
+                        if (steps.getMarker() != null) {
+                            listSteps.setMarker(steps.getMarker());
+                            steps = emr.listSteps(listSteps);
+                        } else {
+                            break;
+                        }
+                    }
+                    if (maxStepEndTime.before(cal.getTime())) {
+                        reapClusters.add(cluster);
+                    }
                 }
             }
             if (listClustersResult.getMarker() != null) {
