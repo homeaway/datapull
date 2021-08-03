@@ -16,17 +16,12 @@
 
 package core
 
-import java.io.File
-import java.nio.ByteBuffer
-import java.time._
-import java.util.{Scanner, UUID}
 import com.datastax.driver.core.utils.UUIDs
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.mongodb.spark.sql.fieldTypes.Binary
 import config.AppConfig
 import helper._
-import javax.net.ssl._
 import logging._
 import org.apache.commons.codec.binary.{Base64, Hex}
 import org.apache.spark.sql.SparkSession
@@ -34,6 +29,12 @@ import org.bson.codecs.{EncoderContext, UuidCodec}
 import org.bson.{BsonDocument, BsonDocumentWriter, UuidRepresentation}
 import org.codehaus.jettison.json.{JSONArray, JSONObject}
 import security._
+
+import java.io.File
+import java.nio.ByteBuffer
+import java.time._
+import java.util.{Scanner, UUID}
+import javax.net.ssl._
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.breakable
 
@@ -291,7 +292,7 @@ object DataPull {
   }
 
   def setAWSCredentialsByPrefix(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String], s3Prefix: String): Unit = {
-    if (sourceDestinationMap("awssecretaccesskey") != "") {
+    if (sourceDestinationMap.contains("awssecretaccesskey") && sourceDestinationMap("awssecretaccesskey") != "") {
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".access.key", sourceDestinationMap("awsaccesskeyid"))
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".secret.key", sourceDestinationMap("awssecretaccesskey"))
     }

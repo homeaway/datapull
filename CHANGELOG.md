@@ -5,9 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.42] - 2021-08-03
+
+- Fixed a bug which was mandating aws secret access key for every migration
+
+### Changed
+
+- core/src/main/scala/core/DataPull.scala
+
 ## [0.1.41] - 2021-07-29
 
-- Added optional attributes to make it easier to process Kafka streams created by MongoDB kafka connect source 
+- Added optional attributes to make it easier to process Kafka streams created by MongoDB kafka connect source
 - Added support for sql queries (jdbc and spark sql queries) to passed in as sql files from filesystem/S3
 - Fixed bug in AWS Secrets Manager support, and added support for `inlinesecret{{}}`
 - Increased timeout for API health check
