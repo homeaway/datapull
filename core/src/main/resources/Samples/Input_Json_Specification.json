@@ -572,7 +572,10 @@
     "NodeCount": 6,
     "comment_sparksubmitparams": "optional, this option will give the ability to add the users to add the spark submit options for your use case",
     "sparksubmitparams": "--conf spark.driver.memory=10g --deploy-mode cluster --class DataMigrationFramework s3://BUCKET_NAME/FOLDER_PATH/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies_test.jar",
-    "comment_emr_service_role": "optional, thsi option should be used set the emr service role. Default: emr_datapull_role",
-    "emr_service_role": "emr_datapull_role"
+    "comment_emr_service_role": "optional, this option should be used set the emr service role. Default: emr_datapull_role",
+    "emr_service_role": "emr_datapull_role",
+    "comment_emr_service_role":"optional, this option should be used when running cluster will be terminated and new cluster is created. Default: false",
+    "forcerestart": false
+
   }
 }

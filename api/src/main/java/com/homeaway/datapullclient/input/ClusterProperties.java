@@ -106,6 +106,9 @@ public class ClusterProperties {
     @JsonProperty("bootstrapactionstring")
     private String bootstrapactionstring;
 
+    @JsonProperty("forcerestart")
+    private Boolean forceRestart;
+
     private String env;
 
     @Override
@@ -134,6 +137,7 @@ public class ClusterProperties {
                 ", env='" + env + '\'' +
                 ", brand='" + brand + '\'' +
                 ", costcenter='" + costCenter + '\'' +
+                ", forcerestart='" + forceRestart + '\'' +
                 ", application='" + application + '\'' +
                 '}';
     }

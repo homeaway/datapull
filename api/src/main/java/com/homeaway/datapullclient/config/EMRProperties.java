@@ -66,5 +66,8 @@ public class EMRProperties {
     @Value( "${bootstrap_folder_path:}" )
     private String bootstrapFolderPath;
 
+    @Value( "${forcerestart:false}" )
+    private Boolean forceRestart;
+
     private Map<String, String> tags = new HashMap<String, String>();
 }
