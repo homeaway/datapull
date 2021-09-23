@@ -157,10 +157,16 @@ public class DataPullTask implements Runnable {
 
         if (!clusters.isEmpty()) {
             final ClusterSummary summary = clusters.get(0);
+            final Boolean forceRestart = clusterProperties.getForceRestart();
 
-            if (summary != null) {
+            if (summary != null && !forceRestart) {
                 this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
+            } else if (summary != null && forceRestart) {
+                // kill cluster and start a new cluster
+                emr.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(summary.getId()));
+                this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
             }
+
         } else {
             final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
         }
