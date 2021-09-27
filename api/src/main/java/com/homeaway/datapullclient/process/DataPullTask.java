@@ -162,9 +162,11 @@ public class DataPullTask implements Runnable {
             if (summary != null && !forceRestart) {
                 this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
             } else if (summary != null && forceRestart) {
-                // kill cluster and start a new cluster
+                emr.setTerminationProtection(new SetTerminationProtectionRequest().withJobFlowIds(summary.getId()).withTerminationProtected(false));
                 emr.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(summary.getId()));
+                DataPullTask.log.info("Task " + this.taskId + " is forced to be terminated");
                 this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
+                DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
             }
 
         } else {
