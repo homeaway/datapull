@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -82,7 +83,7 @@ public class DataPullTask implements Runnable {
         DataPullTask.log.info("Started cluster config taskId = " + this.taskId);
 
         final AmazonElasticMapReduce emr = this.config.getEMRClient();
-
+        final int MAX_RETRY = 10;
         final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
         final String logFilePath = dataPullProperties.getLogFilePath();
         final String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
@@ -123,7 +124,25 @@ public class DataPullTask implements Runnable {
             for (ClusterSummary cluster : listClustersResult.getClusters()) {
                 if (cluster.getName().matches(".*-emr-.*-pipeline")) {
                     ListStepsRequest listSteps = new ListStepsRequest().withClusterId(cluster.getId());
-                    ListStepsResult steps = emr.listSteps(listSteps);
+                    ListStepsResult steps = null;
+                    int retry = 0;
+                    while (steps == null && retry <= MAX_RETRY) {
+                        try {
+                            steps = emr.listSteps(listSteps);
+                        } catch (AmazonElasticMapReduceException e) {
+                            retry++;
+                            try {
+                                int second = ThreadLocalRandom.current().nextInt(1, 5);
+                                Thread.sleep(1000 * second);
+                            } catch (InterruptedException interruptedException) {
+                                interruptedException.printStackTrace();
+                            }
+                            if (retry == MAX_RETRY)
+                                throw e;
+                            log.info("Task: " + this.taskId + " AWS ElasticMapReduce reach rate limit, retry times: " + retry);
+                        }
+                    }
+
                     Date maxStepEndTime = new Date(0);
                     while (true) {
                         for (StepSummary step : steps.getSteps()) {
@@ -157,7 +176,7 @@ public class DataPullTask implements Runnable {
 
         if (!clusters.isEmpty()) {
             final ClusterSummary summary = clusters.get(0);
-            final Boolean forceRestart = clusterProperties.getForceRestart();
+            final Boolean forceRestart = clusterProperties.getForceRestart() != null && clusterProperties.getForceRestart();
 
             if (summary != null && !forceRestart) {
                 this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
