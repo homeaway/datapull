@@ -176,7 +176,7 @@ public class DataPullTask implements Runnable {
 
         if (!clusters.isEmpty()) {
             final ClusterSummary summary = clusters.get(0);
-            final Boolean forceRestart = clusterProperties.getForceRestart() != null && clusterProperties.getForceRestart();
+            final Boolean forceRestart = clusterProperties.getForceRestart() != null ? clusterProperties.getForceRestart() : false;
 
             if (summary != null && !forceRestart) {
                 this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
