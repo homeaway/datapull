@@ -233,7 +233,8 @@ public class DataPullTask implements Runnable {
         final String masterType = emrProperties.getMasterType();
         final DataPullProperties datapullProperties = this.config.getDataPullProperties();
 
-        final String applicationSubnet = datapullProperties.getApplicationSubnet1();
+
+        final String applicationSubnet = Objects.toString(this.clusterProperties.getSubnetId(),datapullProperties.getApplicationSubnet1());
 
         final int count = Integer.valueOf(Objects.toString(this.clusterProperties.getEmrInstanceCount(), Integer.toString(instanceCount)));
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
