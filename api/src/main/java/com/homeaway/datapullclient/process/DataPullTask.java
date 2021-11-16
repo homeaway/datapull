@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -82,7 +83,7 @@ public class DataPullTask implements Runnable {
         DataPullTask.log.info("Started cluster config taskId = " + this.taskId);
 
         final AmazonElasticMapReduce emr = this.config.getEMRClient();
-
+        final int MAX_RETRY = 16;
         final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
         final String logFilePath = dataPullProperties.getLogFilePath();
         final String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
@@ -97,7 +98,7 @@ public class DataPullTask implements Runnable {
         //Only get clusters that are in usable state
         listClustersRequest.setClusterStates(Arrays.asList(ClusterState.RUNNING.toString(), ClusterState.WAITING.toString(), ClusterState.STARTING.toString()));
 
-        ListClustersResult listClustersResult = emr.listClusters(listClustersRequest);
+        ListClustersResult listClustersResult = retryListClusters(emr, MAX_RETRY, listClustersRequest);
         while (true) {
             for (ClusterSummary cluster : listClustersResult.getClusters()) {
                 if (cluster.getName().toLowerCase().equals(this.taskId.toLowerCase())) {
@@ -106,7 +107,7 @@ public class DataPullTask implements Runnable {
             }
             if (listClustersResult.getMarker() != null) {
                 listClustersRequest.setMarker(listClustersResult.getMarker());
-                listClustersResult = emr.listClusters(listClustersRequest);
+                listClustersResult = retryListClusters(emr, MAX_RETRY, listClustersRequest);
             } else {
                 break;
             }
@@ -118,12 +119,13 @@ public class DataPullTask implements Runnable {
         cal.add(Calendar.DATE, -2);
         listClustersRequest.setClusterStates(Arrays.asList(ClusterState.WAITING.toString()));
         listClustersRequest.setCreatedBefore(cal.getTime());
-        listClustersResult = emr.listClusters(listClustersRequest);
+        listClustersResult = retryListClusters(emr, MAX_RETRY, listClustersRequest);
         while (true) {
             for (ClusterSummary cluster : listClustersResult.getClusters()) {
                 if (cluster.getName().matches(".*-emr-.*-pipeline")) {
                     ListStepsRequest listSteps = new ListStepsRequest().withClusterId(cluster.getId());
-                    ListStepsResult steps = emr.listSteps(listSteps);
+                    ListStepsResult steps = retryListSteps(emr, MAX_RETRY, listSteps);
+
                     Date maxStepEndTime = new Date(0);
                     while (true) {
                         for (StepSummary step : steps.getSteps()) {
@@ -134,7 +136,7 @@ public class DataPullTask implements Runnable {
                         }
                         if (steps.getMarker() != null) {
                             listSteps.setMarker(steps.getMarker());
-                            steps = emr.listSteps(listSteps);
+                            steps = retryListSteps(emr, MAX_RETRY, listSteps);
                         } else {
                             break;
                         }
@@ -146,7 +148,7 @@ public class DataPullTask implements Runnable {
             }
             if (listClustersResult.getMarker() != null) {
                 listClustersRequest.setMarker(listClustersResult.getMarker());
-                listClustersResult = emr.listClusters(listClustersRequest);
+                listClustersResult = retryListClusters(emr, MAX_RETRY, listClustersRequest);
             } else {
                 break;
             }
@@ -162,9 +164,10 @@ public class DataPullTask implements Runnable {
             if (summary != null && !forceRestart) {
                 this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
             } else if (summary != null && forceRestart) {
-                // kill cluster and start a new cluster
                 emr.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(summary.getId()));
+                DataPullTask.log.info("Task " + this.taskId + " is forced to be terminated");
                 this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
+                DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
             }
 
         } else {
@@ -406,5 +409,50 @@ public class DataPullTask implements Runnable {
             this.addTag(tagName, value);
         });
         return this;
+    }
+
+    private ListStepsResult retryListSteps(final AmazonElasticMapReduce emr, final int MaxRetry, final ListStepsRequest listSteps) {
+        ListStepsResult steps = null;
+        int retry = 0;
+        while (steps == null && retry <= MaxRetry) {
+            try {
+                steps = emr.listSteps(listSteps);
+            } catch (AmazonElasticMapReduceException e) {
+                retry++;
+                try {
+                    int second = ThreadLocalRandom.current().nextInt(1, 5);
+                    Thread.sleep(1000 * second);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+                if (retry == MaxRetry)
+                    throw e;
+                log.info("Task: " + this.taskId + " emr list steps - AWS ElasticMapReduce reach rate limit, retry times: " + retry);
+            }
+        }
+        return steps;
+    }
+
+    private ListClustersResult retryListClusters(final AmazonElasticMapReduce emr, final int MaxRetry, final ListClustersRequest listClustersRequest) {
+        ListClustersResult listClustersResult = null;
+        int retry = 0;
+        while (listClustersResult == null && retry <= MaxRetry) {
+            try {
+                listClustersResult = emr.listClusters(listClustersRequest);
+            } catch (AmazonElasticMapReduceException e) {
+                retry++;
+                try {
+                    int second = ThreadLocalRandom.current().nextInt(1, 5);
+                    Thread.sleep(1000 * second);
+                } catch (InterruptedException interruptedException) {
+                    interruptedException.printStackTrace();
+                }
+                if (retry == MaxRetry)
+                    throw e;
+                log.info("Task: " + this.taskId + " emr list clusters - AWS ElasticMapReduce reach rate limit, retry times: " + retry);
+            }
+        }
+
+        return listClustersResult;
     }
 }

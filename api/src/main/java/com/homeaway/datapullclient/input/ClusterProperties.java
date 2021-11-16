@@ -107,7 +107,7 @@ public class ClusterProperties {
     private String bootstrapactionstring;
 
     @JsonProperty("forcerestart")
-    private Boolean forceRestart;
+    private Boolean forceRestart = false;
 
     private String env;
 
