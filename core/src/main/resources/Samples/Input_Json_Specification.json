@@ -544,6 +544,12 @@
         "numrows": 20,
         "comment_truncate": "Optional, defaults to true. Controls whether to truncate long dataframe data",
         "truncate": true
+      },
+      "comment_properties": "this to set additional configs for spark session config i.e. spark.conf",
+      "properties": {
+        "spark.sql.parquet.writeLegacyFormat": "true",
+        "spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version": "2",
+        "spark.sql.parquet.fs.optimized.committer.optimization-enabled": "true"
       }
     }
   ],

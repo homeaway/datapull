@@ -16,11 +16,12 @@ package core
 import java.io.{FileNotFoundException, PrintWriter, StringWriter}
 import java.time.Instant
 import java.util.UUID
+
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 import com.amazonaws.regions.{DefaultAwsRegionProviderChain, Regions}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import config.AppConfig
-import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials}
+import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials, setExternalSparkConf}
 import helper._
 import logging._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerStageCompleted}
@@ -28,7 +29,7 @@ import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.util.SizeEstimator
 import org.codehaus.jettison.json.{JSONArray, JSONObject}
-import security.{SecretService}
+import security.SecretService
 
 import scala.collection.immutable.List
 import scala.collection.mutable.ListBuffer
@@ -112,6 +113,10 @@ class Migration extends SparkListener {
     }
 
     try {
+
+      if (migration.has("properties")) {
+        setExternalSparkConf(sparkSession, migration.getJSONObject("properties"))
+      }
 
       var overrideSql = ""
       if (migration.has("sql")) {
@@ -463,10 +468,10 @@ class Migration extends SparkListener {
 
       if (hasExceptions)
       //in case of exceptions, the job will be logged in as failed.
-        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Failed", jobId, sparkSession)
+      dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Failed", jobId, sparkSession)
       else
       //in case of no exceptions here the job will be logged as completed.
-        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Completed", jobId, sparkSession)
+      dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Completed", jobId, sparkSession)
 
       reportRowHtml.append("<tr><td>")
       for (a <- 0 to sources.length() - 1) {
