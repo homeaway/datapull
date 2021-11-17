@@ -575,7 +575,11 @@
     "comment_emr_service_role": "optional, this option should be used set the emr service role. Default: emr_datapull_role",
     "emr_service_role": "emr_datapull_role",
     "comment_emr_service_role":"optional, this option should be used when running cluster will be terminated and new cluster is created. Default: false",
-    "forcerestart": false
+    "forcerestart": false,
+    "comment_bootstrapactionstring": "Optional, it will add any additional commands which needs to be executed on the all the nodes as part of the bootstrap action",
+    "bootstrapactionstring": "sudo yum install openssl11-libs -y",
+    "comment_subnet_id": "Optional, the EMR cluster will be spun up in the default subnet of the environment if this is not provided by teh user",
+    "subnet_id": "application_subnet_1"
 
   }
 }

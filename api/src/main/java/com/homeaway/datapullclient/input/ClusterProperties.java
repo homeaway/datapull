@@ -70,7 +70,7 @@ public class ClusterProperties {
     @JsonProperty("sparksubmitparams")
     private String sparksubmitparams;
 
-    @JsonProperty("subnet_id")
+    @JsonAlias({"subnet_id","subnet"})
     private String subnetId;
 
     @JsonAlias({"emr_instance_count", "nodecount", "NodeCount"})
