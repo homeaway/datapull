@@ -16,12 +16,18 @@
 
 package core
 
+import java.io.File
+import java.nio.ByteBuffer
+import java.time._
+import java.util.{Scanner, UUID}
+
 import com.datastax.driver.core.utils.UUIDs
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.mongodb.spark.sql.fieldTypes.Binary
 import config.AppConfig
 import helper._
+import javax.net.ssl._
 import logging._
 import org.apache.commons.codec.binary.{Base64, Hex}
 import org.apache.spark.sql.SparkSession
@@ -30,11 +36,6 @@ import org.bson.{BsonDocument, BsonDocumentWriter, UuidRepresentation}
 import org.codehaus.jettison.json.{JSONArray, JSONObject}
 import security._
 
-import java.io.File
-import java.nio.ByteBuffer
-import java.time._
-import java.util.{Scanner, UUID}
-import javax.net.ssl._
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.breakable
 
@@ -289,6 +290,14 @@ object DataPull {
   def setAWSCredentials(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String]): Unit = {
     setAWSCredentialsByPrefix(sparkSession, sourceDestinationMap, "s3")
     setAWSCredentialsByPrefix(sparkSession, sourceDestinationMap, "s3a")
+  }
+
+  def setExternalSparkConf(sparkSession: SparkSession, properties: JSONObject): Unit = {
+    val keys = properties.keys()
+    while (keys.hasNext()) {
+      val key = keys.next().toString()
+      sparkSession.conf.set(key, properties.getString(key))
+    }
   }
 
   def setAWSCredentialsByPrefix(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String], s3Prefix: String): Unit = {
