@@ -209,7 +209,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   }
 
-  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: Integer, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: Boolean, filePrefix: Option[String] = None, addlSparkOptions: Option[JSONObject] = None): Unit = {
+  def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: String, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: Boolean, filePrefix: Option[String] = None, addlSparkOptions: Option[JSONObject] = None): Unit = {
 
     if (filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && SparkSession == null) {
       throw new Exception("Platform cannot have null values")
@@ -242,10 +242,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       }
     }
     else {
-      if (coalescefilecount < df.rdd.partitions.size)
-        dft = df.coalesce(coalescefilecount)
-      else if (coalescefilecount > df.rdd.partitions.size)
-        dft = df.repartition(coalescefilecount)
+      val coalsceFileCount_tmp = coalescefilecount.toInt
+      if (coalsceFileCount_tmp < df.rdd.partitions.size)
+        dft = df.coalesce(coalsceFileCount_tmp)
+      else if (coalsceFileCount_tmp > df.rdd.partitions.size)
+        dft = df.repartition(coalsceFileCount_tmp)
     }
     var filePrefixString = filePrefix.getOrElse("")
     if (isS3) {
