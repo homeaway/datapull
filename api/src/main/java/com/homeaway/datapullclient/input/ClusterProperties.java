@@ -20,11 +20,15 @@ import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode
+@ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ClusterProperties {
 
@@ -111,7 +115,7 @@ public class ClusterProperties {
 
     private String env;
 
-    @Override
+   /* @Override
     public String toString() {
         return "ClusterProperties{" +
                 "pipelineName='" + pipelineName + '\'' +
@@ -140,5 +144,5 @@ public class ClusterProperties {
                 ", forcerestart='" + forceRestart + '\'' +
                 ", application='" + application + '\'' +
                 '}';
-    }
+    }*/
 }

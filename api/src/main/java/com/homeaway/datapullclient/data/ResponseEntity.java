@@ -21,23 +21,25 @@ import io.swagger.annotations.ApiModelProperty;
 import org.springframework.http.HttpStatus;
 
 @ApiModel(value = "Response entity for DataPull")
-public class ResponseEntity {
+public class ResponseEntity<T> {
 
     @ApiModelProperty("HTTP code for response")
     private int statusCode = HttpStatus.OK.value();
 
-    @ApiModelProperty("Response Message")
-    private String message;
+    @ApiModelProperty("Response Body")
+    private T t;
 
-    public ResponseEntity(int status, String statusCode) {
+
+    public ResponseEntity(int status, T t) {
         this.statusCode = status;
-        this.message = statusCode;
+        this.t = t;
     }
+
     public int getStatus() {
         return statusCode;
     }
 
-    public String getMessage() {
-        return message;
+    public T getMessage() {
+        return t;
     }
 }

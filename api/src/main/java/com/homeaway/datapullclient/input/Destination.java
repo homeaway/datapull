@@ -19,8 +19,12 @@ package com.homeaway.datapullclient.input;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
+@EqualsAndHashCode
+@ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Destination {
     @JsonProperty("platform")
@@ -59,7 +63,7 @@ public class Destination {
     @JsonProperty("jksfiles")
     private String[] jksfiles;
 
-    @Override
+    /*@Override
     public String toString() {
         return "Destination{" +
                 "platform='" + platform + '\'' +
@@ -74,5 +78,5 @@ public class Destination {
                 ", database='" + database + '\'' +
                 ", jksfilepath='" + jksfiles + '\'' +
                 '}';
-    }
+    }*/
 }

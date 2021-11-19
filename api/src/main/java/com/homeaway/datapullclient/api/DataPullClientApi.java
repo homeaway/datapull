@@ -79,4 +79,15 @@ public interface DataPullClientApi {
             @ApiImplicitParam(name = "pipelinename", value = "pipelinename", required = true, dataType = "String", paramType = "query")
     })
     SimpleResponseEntity startSimpleDataPull(@RequestParam("pipelinename") String pipelinename , @RequestParam("awsenv") String  awenv);
+
+    @ApiOperation(value = "Given source or destination platform the api returns the existing ran sample config json.",
+            produces = MediaType.APPLICATION_JSON_VALUE, response = ResponseEntity.class
+            , notes = "Given either source/s or destination Or both we can fetch the existing json. ", nickname = "sampleInput")
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @RequestMapping(value = "/getSampleInputJson", method = GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "sources", value = "Specify one or more comma seperated sources for the config being search.", required = false, dataType = "String", paramType = "query"),
+            @ApiImplicitParam(name = "destination", value = "Specify the destination for the config to be searched", required = false, dataType = "String", paramType = "query")
+    })
+    ResponseEntity getSampleInputJson(@RequestParam("sources") String sources, @RequestParam("destination") String destination);
 }
