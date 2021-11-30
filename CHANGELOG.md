@@ -16,21 +16,21 @@ The json will be indexed in the cache based on source , destination and source/d
 Every time a new input is received the cache is updated as it saved in s3. 
 
 ### Changed
-api/src/main/java/com/homeaway/datapullclient/api/DataPullClientApi.java            
-api/src/main/java/com/homeaway/datapullclient/data/ResponseEntity.java              
-api/src/main/java/com/homeaway/datapullclient/handlers/DataPullRequestHandler.java  
-api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java          
-api/src/main/java/com/homeaway/datapullclient/input/Destination.java                
-api/src/main/java/com/homeaway/datapullclient/input/Migration.java                  
-api/src/main/java/com/homeaway/datapullclient/input/Source.java                     
-api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java 
+* api/src/main/java/com/homeaway/datapullclient/api/DataPullClientApi.java            
+* api/src/main/java/com/homeaway/datapullclient/data/ResponseEntity.java              
+* api/src/main/java/com/homeaway/datapullclient/handlers/DataPullRequestHandler.java  
+* api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java          
+* api/src/main/java/com/homeaway/datapullclient/input/Destination.java                
+* api/src/main/java/com/homeaway/datapullclient/input/Migration.java                  
+* api/src/main/java/com/homeaway/datapullclient/input/Source.java                     
+* api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java 
 
 ### Created New
-api/src/main/java/com/homeaway/datapullclient/config/StoredInputProviderConfig.java
-api/src/main/java/com/homeaway/datapullclient/input/InputConfiguration.java
-api/src/main/java/com/homeaway/datapullclient/process/SampleInputFetchImpl.java
-api/src/main/java/com/homeaway/datapullclient/service/SampleInputFetchService.java
-api/src/main/java/com/homeaway/datapullclient/util/InputJsonHelper.java
+* api/src/main/java/com/homeaway/datapullclient/config/StoredInputProviderConfig.java
+* api/src/main/java/com/homeaway/datapullclient/input/InputConfiguration.java
+* api/src/main/java/com/homeaway/datapullclient/process/SampleInputFetchImpl.java
+* api/src/main/java/com/homeaway/datapullclient/service/SampleInputFetchService.java
+* api/src/main/java/com/homeaway/datapullclient/util/InputJsonHelper.java
 
 
 ## [0.1.47] - 2021-11-17
