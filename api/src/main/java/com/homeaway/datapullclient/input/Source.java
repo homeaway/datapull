@@ -16,15 +16,18 @@
 
 package com.homeaway.datapullclient.input;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
 @EqualsAndHashCode
 @ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Source {
 
@@ -75,6 +78,18 @@ public class Source {
 
     @JsonProperty("sparkoptions")
     private SparkOptions sparkoptions;
+    @JsonIgnore
+    private Map<String, Object> additionalProperties = new HashMap<>();
+
+    @JsonAnyGetter
+    public Map<String, Object> otherFields() {
+        return additionalProperties;
+    }
+
+    @JsonAnySetter
+    public void setOtherField(String name, Object value) {
+        additionalProperties.put(name, value);
+    }
 
     /*@Override
     public String toString() {
