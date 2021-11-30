@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
+## [0.1.48] - 2021-11-30
+
+The new end point added. **/getSampleInputJson**
+This endpoint help the user to fetch the existing input configuration based on source and destination.
+
+### Theory
+
+At the start of application all the input json will be pulled in the background asynchronously. 
+The json will be indexed in the cache based on source , destination and source/destination.
+Every time a new input is received the cache is updated as it saved in s3. 
+
+### Changed
+api/src/main/java/com/homeaway/datapullclient/api/DataPullClientApi.java            
+api/src/main/java/com/homeaway/datapullclient/data/ResponseEntity.java              
+api/src/main/java/com/homeaway/datapullclient/handlers/DataPullRequestHandler.java  
+api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java          
+api/src/main/java/com/homeaway/datapullclient/input/Destination.java                
+api/src/main/java/com/homeaway/datapullclient/input/Migration.java                  
+api/src/main/java/com/homeaway/datapullclient/input/Source.java                     
+api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java 
+
+### Created New
+api/src/main/java/com/homeaway/datapullclient/config/StoredInputProviderConfig.java
+api/src/main/java/com/homeaway/datapullclient/input/InputConfiguration.java
+api/src/main/java/com/homeaway/datapullclient/process/SampleInputFetchImpl.java
+api/src/main/java/com/homeaway/datapullclient/service/SampleInputFetchService.java
+api/src/main/java/com/homeaway/datapullclient/util/InputJsonHelper.java
+
 
 ## [0.1.47] - 2021-11-17
 
