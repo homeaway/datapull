@@ -24,6 +24,7 @@ Every time a new input is received the cache is updated as it saved in s3.
 * api/src/main/java/com/homeaway/datapullclient/input/Migration.java                  
 * api/src/main/java/com/homeaway/datapullclient/input/Source.java                     
 * api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java 
+* docs/mkdocs.yml
 
 ### Created New
 * api/src/main/java/com/homeaway/datapullclient/config/StoredInputProviderConfig.java
@@ -31,7 +32,7 @@ Every time a new input is received the cache is updated as it saved in s3.
 * api/src/main/java/com/homeaway/datapullclient/process/SampleInputFetchImpl.java
 * api/src/main/java/com/homeaway/datapullclient/service/SampleInputFetchService.java
 * api/src/main/java/com/homeaway/datapullclient/util/InputJsonHelper.java
-
+* docs/docs/fetching_existing_json.md
 
 ## [0.1.47] - 2021-11-17
 
