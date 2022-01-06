@@ -16,7 +16,7 @@ DataPull supports the following datastores as sources and destinations.
 | Cassandra | ✔ | ✔ |
 | Elasticsearch | ✔ | ✔ |
 | FileSystem | ✔ | ✔ |
-| Hive     | ✔ |**X**|
+| Hive     | **X** |**X**|
 | InfluxDB | ✔ | ✔ |
 | Kafka | ✔ | ✔ |
 | Mongodb | ✔ | ✔ |
