@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.49] - 2022-01-28
+
+This is to add the functionality for inline expression evaluation for rdbms data stores.
+
+### Changed
+
+- core/src/main/scala/core/Migration.scala
+- core/src/main/scala/core/DataFrameFromTo.scala
+- core/src/main/scala/helper/Helper.scala
+
 ## [0.1.48] - 2021-12-15
 This is to upgrade the log4j to fix vulnerability
 

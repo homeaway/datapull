@@ -16,25 +16,28 @@
 
 package helper
 
-import java.io.{PrintWriter, StringWriter}
-import java.net.URLEncoder
-import java.security.cert.X509Certificate
 import config.AppConfig
 import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials}
-
-import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.codehaus.jettison.json.JSONObject
-import security.{SecretService}
+import security.SecretService
 import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
 import za.co.absa.abris.avro.registry.SchemaSubject
-import za.co.absa.abris.config.{AbrisConfig, FromAvroConfig, FromStrategyConfigFragment, ToAvroConfig, ToSchemaDownloadingConfigFragment, ToStrategyConfigFragment}
+import za.co.absa.abris.config._
+import java.io.{PrintWriter, StringWriter}
+import java.net.URLEncoder
+import java.security.cert.X509Certificate
+
+import core.DataFrameFromTo
+import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 
 import scala.collection.mutable.StringBuilder
 import scala.util.control.Breaks.breakable
 
 class Helper(appConfig: AppConfig) {
+
+  val secretStoreDefaultValue: String = "vault"
 
   /**
    * Returns the text (content) from a REST URL as a String.
@@ -340,6 +343,84 @@ class Helper(appConfig: AppConfig) {
 
   }
 
+  def ReplaceInlineExpressions(inputString: String, sparkSession: org.apache.spark.sql.SparkSession): String = {
+    val RegexForInlineExpr = """inlineexpr\{\{(.*)}}""".r
+    val returnVal = RegexForInlineExpr.replaceAllIn(inputString, _ match { case RegexForInlineExpr(inlineExprr) => println(inlineExprr);
+      val df = sparkSession.sql(inlineExprr);
+      val rows = df.take(1);
+      if (rows.length == 1) {
+        this.rowToStrings(rows(0), 0).mkString(",")
+      } else ""
+    })
+
+    val RegexForInlineSecret = """inlinesecret\{\{(.*)}}""".r
+    RegexForInlineSecret.replaceAllIn(returnVal, _ match { case RegexForInlineSecret(inlineExprr) => println(inlineExprr);
+      val inlineExprrAsJson = new JSONObject(new JSONObject("{\"data\": \"{" + inlineExprr + "}\"}").getString("data"))
+      if (inlineExprrAsJson.has("secretstore") && inlineExprrAsJson.has("secretname")) {
+        val secretStore = inlineExprrAsJson.getString("secretstore")
+        val secretName = inlineExprrAsJson.getString("secretname")
+        var secretKeyName: Option[String] = None
+        if (inlineExprrAsJson.has("secretkeyname")) {
+          secretKeyName = Some(inlineExprrAsJson.getString("secretkeyname"))
+        }
+        val secretService = new SecretService(secretStore.toLowerCase(), appConfig)
+        secretService.getSecret(secretName, secretKeyName, None)
+      } else {
+        ""
+      }
+    })
+
+  }
+
+  def ReplaceInlineExpressions(platformObject: JSONObject, optionalJsonPropertiesList:List[String]): JSONObject ={
+    val RegexForJDBCInlineExpr = """inlineexprforjdbc\{\{(.*)}}""".r
+    println(platformObject)
+    val returnVal=  RegexForJDBCInlineExpr.replaceAllIn(platformObject.toString, _ match { case RegexForJDBCInlineExpr(inlineExprr) => println(inlineExprr);
+      val inlineexprforjdbcasJson=  new JSONObject(new JSONObject("{\"data\": \"{" + inlineExprr + "}\"}").getString("data"))
+      val propertiesMap = jsonObjectPropertiesToMap(jsonObject = platformObject ) ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList, platformObject)
+      println(propertiesMap)
+      val dataframeFromTo = new DataFrameFromTo(appConfig, "test")
+      val colType=  jsonObjectPropertiesToMap(inlineexprforjdbcasJson).get("coltype")
+      val rs=  dataframeFromTo.rdbmsRunCommand(
+        platform = platformObject.getString("platform"),
+        awsEnv = propertiesMap("awsenv"),
+        server = propertiesMap("server"),
+        port = propertiesMap.getOrElse("port", null),
+        sslEnabled = propertiesMap.getOrElse("sslenabled", "false").toBoolean,
+        database = propertiesMap("database"),
+        sql_command = inlineexprforjdbcasJson.getString("sql"),
+        login = propertiesMap("login"),
+        password = propertiesMap("password"),
+        vaultEnv = propertiesMap("vaultenv"),
+        secretStore = propertiesMap.getOrElse("secretstore", secretStoreDefaultValue),
+        isWindowsAuthenticated = propertiesMap.getOrElse("iswindowsauthenticated", propertiesMap.getOrElse("isWindowsAuthenticated", "false")).toBoolean,
+        domainName = propertiesMap.getOrElse("domain", null),
+        typeForTeradata = propertiesMap.get("typeforteradata"),
+        colType = colType
+      )
+      var returnString: String= null
+      while (rs.next()) {
+        if (colType == "int") {
+          returnString=  String.valueOf(rs.getInt(1))
+        } else if (colType == "string") {
+          returnString= rs.getString(1)
+        } else if(colType=="float"){
+          returnString= String.valueOf(rs.getFloat(1))
+        } else if(colType== "date"){
+          returnString= String.valueOf(rs.getDate(1))
+        } else if(colType== "long"){
+          returnString= String.valueOf(rs.getLong(1))
+        } else {
+          returnString= String.valueOf(rs.getInt(1))
+        }
+      }
+      println(returnString)
+      returnString
+    })
+    println(returnVal)
+    new JSONObject(returnVal)
+  }
+
   private def rowToStrings(row: Row, truncate: Int): Seq[String] = {
     row.toSeq.map { cell =>
       val str = cell match {
@@ -373,34 +454,6 @@ class Helper(appConfig: AppConfig) {
     def this() {
       this(null: String)
     }
-  }
-
-  def ReplaceInlineExpressions(inputString: String, sparkSession: org.apache.spark.sql.SparkSession): String = {
-    val RegexForInlineExpr = """inlineexpr\{\{(.*)}}""".r
-    val returnVal = RegexForInlineExpr.replaceAllIn(inputString, _ match { case RegexForInlineExpr(inlineExprr) => println(inlineExprr);
-      val df = sparkSession.sql(inlineExprr);
-      val rows = df.take(1);
-      if (rows.length == 1) {
-        this.rowToStrings(rows(0), 0).mkString(",")
-      } else ""
-    })
-
-    val RegexForInlineSecret = """inlinesecret\{\{(.*)}}""".r
-    RegexForInlineSecret.replaceAllIn(returnVal, _ match { case RegexForInlineSecret(inlineExprr) => println(inlineExprr);
-      val inlineExprrAsJson = new JSONObject(new JSONObject("{\"data\": \"{" + inlineExprr + "}\"}").getString("data"))
-      if (inlineExprrAsJson.has("secretstore") && inlineExprrAsJson.has("secretname")) {
-        val secretStore = inlineExprrAsJson.getString("secretstore")
-        val secretName = inlineExprrAsJson.getString("secretname")
-        var secretKeyName: Option[String] = None
-        if (inlineExprrAsJson.has("secretkeyname")) {
-          secretKeyName = Some(inlineExprrAsJson.getString("secretkeyname"))
-        }
-        val secretService = new SecretService(secretStore.toLowerCase(), appConfig)
-        secretService.getSecret(secretName, secretKeyName, None)
-      } else {
-        ""
-      }
-    })
   }
 
   //Get string from input file specificed in json
