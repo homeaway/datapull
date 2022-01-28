@@ -13,15 +13,11 @@
 
 package core
 
-import java.io.{FileNotFoundException, PrintWriter, StringWriter}
-import java.time.Instant
-import java.util.UUID
-
 import com.amazonaws.auth.{AWSStaticCredentialsProvider, BasicAWSCredentials, DefaultAWSCredentialsProviderChain}
 import com.amazonaws.regions.{DefaultAwsRegionProviderChain, Regions}
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import config.AppConfig
-import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials, setExternalSparkConf}
+import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials}
 import helper._
 import logging._
 import org.apache.spark.scheduler.{SparkListener, SparkListenerStageCompleted}
@@ -31,6 +27,9 @@ import org.apache.spark.util.SizeEstimator
 import org.codehaus.jettison.json.{JSONArray, JSONObject}
 import security.SecretService
 
+import java.io.{FileNotFoundException, PrintWriter, StringWriter}
+import java.time.Instant
+import java.util.UUID
 import scala.collection.immutable.List
 import scala.collection.mutable.ListBuffer
 
@@ -38,11 +37,10 @@ import scala.collection.mutable.ListBuffer
 class Migration extends SparkListener {
   //do a migration dammit!
 
-  var appConfig: AppConfig = null;
-
   //constants
   val elasticSearchDefaultPort: Int = 9200
   val secretStoreDefaultValue: String = "vault"
+  var appConfig: AppConfig = null;
 
   def migrate(migrationJSONString: String, reportEmailAddress: String, migrationId: String, verifymigration: Boolean, reportCounts: Boolean, no_of_retries: Int, custom_retries: Boolean, migrationLogId: String, isLocal: Boolean, preciseCounts: Boolean, appConfig: AppConfig, pipeline: String): Map[String, String] = {
     val s3TempFolderDeletionError = StringBuilder.newBuilder
@@ -50,7 +48,7 @@ class Migration extends SparkListener {
     val migration: JSONObject = new JSONObject(migrationJSONString)
     val dataPullLogs = new DataPullLog(appConfig, pipeline)
     this.appConfig = appConfig;
-
+    val helper = new Helper(appConfig)
     var sparkSession: SparkSession = null
 
     if (isLocal) {
@@ -114,16 +112,12 @@ class Migration extends SparkListener {
 
     try {
 
-      if (migration.has("properties")) {
-        setExternalSparkConf(sparkSession, migration.getJSONObject("properties"))
-      }
-
       var overrideSql = ""
       if (migration.has("sql")) {
 
         val sql = migration.getJSONObject("sql")
         if (sql.has("inputfile")) {
-          val helper = new Helper(appConfig)
+
           overrideSql = helper.InputFileJsonToString(sparkSession = sparkSession, jsonObject = sql).getOrElse("")
         }
         else if (sql.has("query")) {
@@ -149,7 +143,7 @@ class Migration extends SparkListener {
         //run the pre-migration command for the source, if any
         jsonSourceDestinationRunPrePostMigrationCommand(selectedSource, true, reportRowHtml, sparkSession, pipeline)
 
-        df = jsonSourceDestinationToDataFrame(sparkSession, selectedSource, migrationLogId, jobId, s3TempFolderDeletionError, pipeline)
+        df = jsonSourceDestinationToDataFrame(sparkSession, selectedSource, migrationLogId, jobId, s3TempFolderDeletionError, pipeline,appConfig)
 
         if (platform == "mssql") {
           size_of_the_records += SizeEstimator.estimate(df)
@@ -436,7 +430,7 @@ class Migration extends SparkListener {
       if (reportEmailAddress != "") {
         sparkSession.sparkContext.setJobDescription("Count destination " + migrationId)
         if (verifymigration) {
-          var dfd = jsonSourceDestinationToDataFrame(sparkSession, destination, migrationLogId, jobId, s3TempFolderDeletionError, pipeline)
+          var dfd = jsonSourceDestinationToDataFrame(sparkSession, destination, migrationLogId, jobId, s3TempFolderDeletionError, pipeline, appConfig)
           verified = verifymigrations(df, dfd, sparkSession)
 
         }
@@ -468,10 +462,10 @@ class Migration extends SparkListener {
 
       if (hasExceptions)
       //in case of exceptions, the job will be logged in as failed.
-      dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Failed", jobId, sparkSession)
+        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Failed", jobId, sparkSession)
       else
       //in case of no exceptions here the job will be logged as completed.
-      dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Completed", jobId, sparkSession)
+        dataPullLogs.jobLog(migrationLogId, migrationStartTime.toString, Instant.now().toString, System.currentTimeMillis() - startTime_in_milli, migrationJSONString, processedTableCount, size_of_the_records, "Completed", jobId, sparkSession)
 
       reportRowHtml.append("<tr><td>")
       for (a <- 0 to sources.length() - 1) {
@@ -489,20 +483,11 @@ class Migration extends SparkListener {
     Map("reportRowHtml" -> reportRowHtml.toString(), "migrationError" -> migrationException, "deletionError" -> s3TempFolderDeletionError.toString())
   }
 
-  def jsonArrayToList(jsonArray: JSONArray): List[String] = {
-    if (jsonArray != null) {
-      val arrayLen = jsonArray.length()
-      val retVal = new Array[String](arrayLen)
-      for (i <- 0 to arrayLen - 1) {
-        retVal(i) = jsonArray.getString(i)
-      }
-      retVal.toList
-    } else {
-      List.empty[String]
-    }
-  }
+  def jsonSourceDestinationToDataFrame(sparkSession: org.apache.spark.sql.SparkSession, platformObject1: JSONObject, migrationId: String, jobId: String, s3TempFolderDeletionError: StringBuilder, pipeline: String, appConfig: AppConfig): org.apache.spark.sql.DataFrame = {
 
-  def jsonSourceDestinationToDataFrame(sparkSession: org.apache.spark.sql.SparkSession, platformObject: JSONObject, migrationId: String, jobId: String, s3TempFolderDeletionError: StringBuilder, pipeline: String): org.apache.spark.sql.DataFrame = {
+    val helper = new Helper(appConfig)
+    val platformObject= helper.ReplaceInlineExpressions(platformObject1,optionalJsonPropertiesList())
+
     var propertiesMap = jsonObjectPropertiesToMap(platformObject)
     //add optional keysp explicitely else the map will complain they don't exist later down
     propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList(), platformObject)
@@ -511,12 +496,12 @@ class Migration extends SparkListener {
       propertiesMap = extractCredentialsFromSecretManager(propertiesMap)
     }
 
-
-    var platform = propertiesMap("platform")
-    var dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
+    val platform = propertiesMap("platform")
+    val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
 
 
     if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
+
       val sqlQuery = mssqlPlatformQueryFromS3File(sparkSession, platformObject)
       dataframeFromTo.rdbmsToDataFrame(
         platform = platform,
@@ -708,6 +693,23 @@ class Migration extends SparkListener {
     mm.toMap
   }
 
+  def deriveClusterIPFromConsul(clusterMap: Map[String, String]): Map[String, String] = {
+    var hostMap: Map[String, String] = Map()
+    if (!clusterMap.contains("cluster") || "".equals(clusterMap("cluster"))) {
+      //derive cluster using "cluster_key", "consul_dc"
+      val dnsName = s"${clusterMap("cluster_key")}.service.${clusterMap("consul_dc")}.consul"
+      val consul = new Consul(dnsName, appConfig)
+      if (!consul.ipAddresses.isEmpty) {
+        hostMap += "cluster" -> consul.ipAddresses.head
+      }
+    }
+    return hostMap
+  }
+
+  def optionalJsonPropertiesList(): List[String] = {
+    List("awsenv", "local_dc", "pre_migrate_command", "post_migrate_command", "groupbyfields", "primarykey", "lowerBound", "upperBound", "numPartitions", "s3path", "awsaccesskeyid", "awssecretaccesskey", "password", "vaultenv", "secret_store")
+  }
+
   def jsonSourceDestinationRunPrePostMigrationCommand(platformObject: JSONObject, runPreMigrationCommand: Boolean, reportbodyHtml: StringBuilder, sparkSession: SparkSession, pipeline: String): Unit = {
     var propertiesMap = jsonObjectPropertiesToMap(platformObject)
     //add optional keys explicitly else the map will complain they don't exist later down
@@ -785,7 +787,8 @@ class Migration extends SparkListener {
             secretStore = propertiesMap.getOrElse("secretstore", secretStoreDefaultValue),
             isWindowsAuthenticated = propertiesMap.getOrElse("iswindowsauthenticated", propertiesMap.getOrElse("isWindowsAuthenticated", "false")).toBoolean,
             domainName = propertiesMap.getOrElse("domain", null),
-            typeForTeradata = propertiesMap.get("typeforteradata")
+            typeForTeradata = propertiesMap.get("typeforteradata"),
+            colType = propertiesMap.get("coltype")
           )
         }
         else if (platform == "cassandra") {
@@ -820,10 +823,6 @@ class Migration extends SparkListener {
 
   }
 
-  def optionalJsonPropertiesList(): List[String] = {
-    List("awsenv", "local_dc", "pre_migrate_command", "post_migrate_command", "groupbyfields", "primarykey", "lowerBound", "upperBound", "numPartitions", "s3path", "awsaccesskeyid", "awssecretaccesskey", "password", "vaultenv", "secret_store")
-  }
-
   def s3ClientBuilder(platformObject: JSONObject, sparkSession: SparkSession): AmazonS3 = {
     var accessKey = ""
     var secretKey = ""
@@ -848,19 +847,6 @@ class Migration extends SparkListener {
     val s3Client = AmazonS3ClientBuilder.standard.withRegion(Regions.fromName(s3Region)).withCredentials(credentialsProvider).build
 
     s3Client
-  }
-
-  def deriveClusterIPFromConsul(clusterMap: Map[String, String]): Map[String, String] = {
-    var hostMap: Map[String, String] = Map()
-    if (!clusterMap.contains("cluster") || "".equals(clusterMap("cluster"))) {
-      //derive cluster using "cluster_key", "consul_dc"
-      val dnsName = s"${clusterMap("cluster_key")}.service.${clusterMap("consul_dc")}.consul"
-      val consul = new Consul(dnsName, appConfig)
-      if (!consul.ipAddresses.isEmpty) {
-        hostMap += "cluster" -> consul.ipAddresses.head
-      }
-    }
-    return hostMap
   }
 
   def printableSourceTargetInfo(platformObject: JSONObject): String = {
@@ -912,6 +898,19 @@ class Migration extends SparkListener {
     }
     else {
       return "failed"
+    }
+  }
+
+  def jsonArrayToList(jsonArray: JSONArray): List[String] = {
+    if (jsonArray != null) {
+      val arrayLen = jsonArray.length()
+      val retVal = new Array[String](arrayLen)
+      for (i <- 0 to arrayLen - 1) {
+        retVal(i) = jsonArray.getString(i)
+      }
+      retVal.toList
+    } else {
+      List.empty[String]
     }
   }
 

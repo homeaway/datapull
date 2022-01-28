@@ -16,17 +16,9 @@
 
 package core
 
-import java.io.{File, PrintWriter, StringWriter}
-import java.nio.charset.StandardCharsets
-import java.sql.{Connection, DriverManager, Statement, Timestamp}
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.util
-import java.util.{Calendar, UUID}
 import com.amazonaws.services.logs.model.{DescribeLogStreamsRequest, InputLogEvent, PutLogEventsRequest}
 import com.amazonaws.services.s3.model._
 import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
-import com.datastax.driver.core.exceptions.TruncateException
 import com.datastax.spark.connector.cql.CassandraConnector
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -38,9 +30,6 @@ import com.mongodb.{MongoClient, MongoClientURI}
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
-
-import javax.mail.internet.{InternetAddress, MimeMessage}
-import javax.mail.{Message, Session, Transport}
 import net.snowflake.spark.snowflake.Utils.SNOWFLAKE_SOURCE_NAME
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FSDataOutputStream, FileSystem, Path}
@@ -58,8 +47,16 @@ import security._
 import za.co.absa.abris.avro.functions.{from_avro, to_avro}
 import za.co.absa.abris.config.FromAvroConfig
 
+import java.io.{File, PrintWriter, StringWriter}
+import java.nio.charset.StandardCharsets
+import java.sql._
+import java.text.SimpleDateFormat
+import java.time.Instant
+import java.util
+import java.util.{Calendar, UUID}
+import javax.mail.internet.{InternetAddress, MimeMessage}
+import javax.mail.{Message, Session, Transport}
 import scala.collection.JavaConversions._
-import scala.collection.immutable.List
 import scala.collection.mutable.{ArrayBuffer, ListBuffer, StringBuilder}
 
 class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializable {
@@ -716,7 +713,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         val cConnect = CassandraConnector(conf)
         cConnect.withSessionDo(session => session.execute(cql_command))
       } catch {
-        case e: TruncateException =>
+        case e: Exception =>
           val sw = new StringWriter
           e.printStackTrace()
           e.printStackTrace(new PrintWriter(sw))
@@ -1251,7 +1248,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .insertInto(table)
   }
 
-  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String]): Unit = {
+  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], colType: Option[String]): ResultSet = {
+
+    var resultSet:ResultSet = null
     if (sql_command != "") {
 
       val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled)
@@ -1282,7 +1281,16 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
         // create the statement, and run the command
         val statement = connection.createStatement()
-        val isSuccess = statement.execute(sql_command)
+
+        if (colType != null) {
+          resultSet=  statement.executeQuery(sql_command)
+
+        }
+        else {
+          statement.execute(sql_command)
+          null
+        }
+
       } catch {
         case e: Throwable => e.printStackTrace
           throw (e)
@@ -1294,6 +1302,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         }
       }
     }
+    resultSet
   }
 
   def dataFrameToCloudWatch(groupName: String, streamName: String, region: String, accessKey: String, secretKey: String, timeStampColumn: String, timestampFormat: String, df: org.apache.spark.sql.DataFrame, sparkSession: SparkSession): Unit = {
