@@ -373,7 +373,7 @@ class Helper(appConfig: AppConfig) {
   }
 
   def ReplaceInlineExpressions(platformObject: JSONObject, optionalJsonPropertiesList:List[String]): JSONObject ={
-    val RegexForJDBCInlineExpr = """inlineexprforjdbc\{\{(.*)}}""".r
+    val RegexForJDBCInlineExpr = """inlineexprforjdbc\{\{(.*?)}}""".r
     println(platformObject)
     val returnVal=  RegexForJDBCInlineExpr.replaceAllIn(platformObject.toString, _ match { case RegexForJDBCInlineExpr(inlineExprr) => println(inlineExprr);
       val inlineexprforjdbcasJson=  new JSONObject(new JSONObject("{\"data\": \"{" + inlineExprr + "}\"}").getString("data"))
@@ -400,15 +400,15 @@ class Helper(appConfig: AppConfig) {
       )
       var returnString: String= null
       while (rs.next()) {
-        if (colType == "int") {
+        if (colType.toString.equals("Some(int)")) {
           returnString=  String.valueOf(rs.getInt(1))
-        } else if (colType == "string") {
+        } else if (colType.toString.equals("Some(string)")) {
           returnString= rs.getString(1)
-        } else if(colType=="float"){
+        } else if (colType.toString.equals("Some(float)")) {
           returnString= String.valueOf(rs.getFloat(1))
-        } else if(colType== "date"){
+        } else if (colType.toString.equals("Some(date)")) {
           returnString= String.valueOf(rs.getDate(1))
-        } else if(colType== "long"){
+        } else if (colType.toString.equals("Some(long)")) {
           returnString= String.valueOf(rs.getLong(1))
         } else {
           returnString= String.valueOf(rs.getInt(1))
