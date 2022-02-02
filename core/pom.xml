@@ -135,7 +135,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.1</version>
+            <version>42.2.25</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.scalatest/scalatest -->
