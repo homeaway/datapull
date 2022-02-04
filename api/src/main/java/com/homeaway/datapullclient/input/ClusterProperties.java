@@ -79,6 +79,9 @@ public class ClusterProperties {
     @JsonProperty("emr_release_version")
     private String emrReleaseVersion;
 
+    @JsonProperty("hive_metastore_uris")
+    private String hiveMetastoreUris;
+
     @JsonAlias({"ComponentInfo", "component_info"})
     private String componentInfo;
 

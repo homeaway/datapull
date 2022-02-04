@@ -281,12 +281,23 @@ public class DataPullTask implements Runnable {
         Configuration myEmrfsConfig = new Configuration()
                 .withClassification("emrfs-site")
                 .withProperties(emrfsProperties);
+        System.out.println("CT - runExampleConfig: " + runExampleConfig);
+
+        Map<String, String> hiveProperties = new HashMap<String, String>();
+        Configuration myHiveConfig = new Configuration()
+                .withClassification("spark-hive-site");
+
+        if (clusterProperties.getHiveMetastoreUris() != "") {
+            hiveProperties.put("hive.metastore.uris", clusterProperties.getHiveMetastoreUris());
+            myHiveConfig.withProperties(hiveProperties);
+        }
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
                 .withReleaseLabel(Objects.toString(this.clusterProperties.getEmrReleaseVersion(), emrReleaseVersion))
                 .withSteps(customExampleStep)
                 .withApplications(spark)
+                .withConfigurations(myHiveConfig)
                 .withLogUri(logPath)
                 .withServiceRole(Objects.toString(this.clusterProperties.getEmrServiceRole(), serviceRole))
                 .withJobFlowRole(Objects.toString(this.clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
