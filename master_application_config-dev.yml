@@ -35,6 +35,10 @@ datapull:
     emr_security_group_master:
     emr_security_group_slave:
     emr_security_group_service_access:
+    hive_properties:
+      hive_metastore_uris:
+      hive_security_authorization_createtable_role_grants:
+      hive_metastore_client_socket_timeout:
     tags:
       Brand:
       Category: EMRPipeline

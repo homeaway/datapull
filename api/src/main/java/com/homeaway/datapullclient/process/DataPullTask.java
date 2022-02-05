@@ -227,6 +227,7 @@ public class DataPullTask implements Runnable {
                 .withHadoopJarStep(runExampleConfig);
 
         final Application spark = new Application().withName("Spark");
+        final Application hive = new Application().withName("Hive");
 
         final EMRProperties emrProperties = this.config.getEmrProperties();
         final int instanceCount = emrProperties.getInstanceCount();
@@ -281,29 +282,32 @@ public class DataPullTask implements Runnable {
         Configuration myEmrfsConfig = new Configuration()
                 .withClassification("emrfs-site")
                 .withProperties(emrfsProperties);
-        System.out.println("CT - runExampleConfig: " + runExampleConfig);
 
         Map<String, String> hiveProperties = new HashMap<String, String>();
-        Configuration myHiveConfig = new Configuration()
-                .withClassification("spark-hive-site");
+        hiveProperties.put("hive.metastore.uris", Objects.toString(this.clusterProperties.getHiveMetastoreUris(), config.getEmrProperties().getHiveProperties().get("hive_metastore_uris")));
+        hiveProperties.put("hive.security.authorization.createtable.role.grants", Objects.toString(this.clusterProperties.getHiveSecurityAuthorizationCreatetableRoleGrants(), config.getEmrProperties().getHiveProperties().get("hive_security_authorization_createtable_role_grants")));
+        hiveProperties.put("hive.metastore.client.socket.timeout", Objects.toString(this.clusterProperties.getHiveMetastoreClientSocketTimeout(), config.getEmrProperties().getHiveProperties().get("hive_metastore_client_socket_timeout")));
 
-        if (clusterProperties.getHiveMetastoreUris() != "") {
-            hiveProperties.put("hive.metastore.uris", clusterProperties.getHiveMetastoreUris());
-            myHiveConfig.withProperties(hiveProperties);
-        }
+        Configuration hiveConfig = new Configuration()
+                .withClassification("spark-hive-site")
+                .withProperties(hiveProperties);
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
                 .withReleaseLabel(Objects.toString(this.clusterProperties.getEmrReleaseVersion(), emrReleaseVersion))
                 .withSteps(customExampleStep)
                 .withApplications(spark)
-                .withConfigurations(myHiveConfig)
                 .withLogUri(logPath)
                 .withServiceRole(Objects.toString(this.clusterProperties.getEmrServiceRole(), serviceRole))
                 .withJobFlowRole(Objects.toString(this.clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
                 .withVisibleToAllUsers(true)
                 .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties), myEmrfsConfig)
                 .withInstances(jobConfig);
+
+        if (!hiveProperties.isEmpty()) {
+            request.withConfigurations(hiveConfig)
+                    .withApplications(hive);
+        }
 
         if (!emrSecurityConfiguration.isEmpty()) {
             request.withSecurityConfiguration(emrSecurityConfiguration);
