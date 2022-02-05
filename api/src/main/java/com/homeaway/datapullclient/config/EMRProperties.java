@@ -69,7 +69,6 @@ public class EMRProperties {
     @Value( "${forcerestart:false}" )
     private Boolean forceRestart;
 
-    //@Value("${hive_properties:}")
     private Map<String, String> hiveProperties = new HashMap<String, String>();
 
     private Map<String, String> tags = new HashMap<String, String>();
