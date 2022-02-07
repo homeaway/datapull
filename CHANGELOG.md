@@ -11,7 +11,10 @@ Adding Hive support for API
 
 ### Changed
 
-- core/src/main/scala/helper/Helper.scala
+- api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java
+- api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- config yaml files
 
 
 ## [0.1.50] - 2022-01-28
