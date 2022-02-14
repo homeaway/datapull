@@ -16,20 +16,26 @@
 
 package com.homeaway.datapullclient.input;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 @Data
+@EqualsAndHashCode
+@ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Migration {
     @JsonProperty("source")
     private Source source;
 
     @JsonProperty("sources")
-    private Source [] sources;
+    private Set<Source> sources;
 
     @JsonProperty("destination")
     private Destination destination;
@@ -38,10 +44,16 @@ public class Migration {
         return source != null ?  true : false;
     }
 
-    @Override
-    public String toString() {
-        return "Migration{" + (isSingleSource() ? "source = "+source : "sources = "+Arrays.toString(sources))+
-                ", destination=" + destination +
-                '}';
+    @JsonIgnore
+    private Map<String, Object> additionalProperties = new HashMap<>();
+    @JsonAnyGetter
+    public Map<String, Object> otherFields() {
+        return additionalProperties;
     }
+
+    @JsonAnySetter
+    public void setOtherField(String name, Object value) {
+        additionalProperties.put(name, value);
+    }
+
 }

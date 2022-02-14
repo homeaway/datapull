@@ -21,7 +21,9 @@ import com.homeaway.datapullclient.data.ResponseEntity;
 import com.homeaway.datapullclient.data.SimpleResponseEntity;
 import com.homeaway.datapullclient.exception.InputException;
 import com.homeaway.datapullclient.exception.ProcessingException;
+import com.homeaway.datapullclient.input.InputConfiguration;
 import com.homeaway.datapullclient.service.DataPullClientService;
+import com.homeaway.datapullclient.service.SampleInputFetchService;
 import io.swagger.annotations.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @RestController
@@ -38,6 +41,8 @@ public class DataPullRequestHandler implements DataPullClientApi {
 
     @Autowired
     private DataPullClientService service;
+    @Autowired
+    private SampleInputFetchService inputFetchService;
 
     @Override
     public ResponseEntity startDataPull(HttpEntity<String> inputJson) {
@@ -81,6 +86,25 @@ public class DataPullRequestHandler implements DataPullClientApi {
         if(log.isDebugEnabled())
             log.debug("startSimpleDataPull <- return");
 
+        return entity;
+    }
+    @Override
+    public ResponseEntity<?> getSampleInputJson(String sources, String destination) {
+        log.info("Source : {} && Destination : {}", sources, destination);
+        ResponseEntity entity = null;
+        try {
+            Set<InputConfiguration> response = inputFetchService.getSampleInputConfs(sources, destination);
+            entity =
+                    new ResponseEntity(
+                            response != null && !response.isEmpty()
+                                    ? HttpStatus.OK.value()
+                                    : HttpStatus.NO_CONTENT.value(),
+                            response);
+        } catch (InputException exception) {
+            entity = new ResponseEntity(HttpStatus.BAD_REQUEST.value(), exception.getMessage());
+        } catch (Exception exception) {
+            entity = new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR.value(), exception.getMessage());
+        }
         return entity;
     }
 }

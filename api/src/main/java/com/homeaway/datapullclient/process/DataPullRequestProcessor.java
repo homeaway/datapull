@@ -21,10 +21,7 @@ import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.homeaway.datapullclient.config.DataPullClientConfig;
-import com.homeaway.datapullclient.config.DataPullContext;
-import com.homeaway.datapullclient.config.DataPullContextHolder;
-import com.homeaway.datapullclient.config.DataPullProperties;
+import com.homeaway.datapullclient.config.*;
 import com.homeaway.datapullclient.exception.InvalidPointedJsonException;
 import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.input.ClusterProperties;
@@ -72,6 +69,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private Schema inputJsonSchema;
     @Autowired
     private DataPullClientConfig config;
+    @Autowired
+    private StoredInputProviderConfig inputProviderConfig;
 
     @Value( "${env:dev}" )
     private String env;
@@ -177,6 +176,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
             DataPullTask task = createDataPullTask(filePath, jksFilePath, reader, jobName, creator, node.path("sparkjarfile").asText(), bootstrapActionFiles);
             if(!isStart) {
                 json = originalInputJson.equals(json) ? json : originalInputJson;
+                inputProviderConfig.processCacheStore(json);
                 saveConfig(applicationHistoryFolderPath, jobName + ".json", json);
             }
             if (!isStart && tasksMap.containsKey(jobName))
@@ -223,8 +223,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
                     list.addAll(Arrays.asList(mig.getSource().getJksfiles()));
                 }
             } else {
-                Source[] sources = mig.getSources();
-                if (sources != null && sources.length > 0) {
+                Set<Source> sources = mig.getSources();
+                if (sources != null && !sources.isEmpty()) {
                     for (Source source : sources) {
                         if (source.getJksfiles() != null) {
                             list.addAll(Arrays.asList(source.getJksfiles()));

@@ -16,11 +16,18 @@
 
 package com.homeaway.datapullclient.input;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
+@EqualsAndHashCode
+@ToString
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Destination {
     @JsonProperty("platform")
@@ -58,8 +65,18 @@ public class Destination {
 
     @JsonProperty("jksfiles")
     private String[] jksfiles;
+    @JsonIgnore
+    private Map<String, Object> additionalProperties = new HashMap<>();
+    @JsonAnyGetter
+    public Map<String, Object> otherFields() {
+        return additionalProperties;
+    }
 
-    @Override
+    @JsonAnySetter
+    public void setOtherField(String name, Object value) {
+        additionalProperties.put(name, value);
+    }
+    /*@Override
     public String toString() {
         return "Destination{" +
                 "platform='" + platform + '\'' +
@@ -74,5 +91,5 @@ public class Destination {
                 ", database='" + database + '\'' +
                 ", jksfilepath='" + jksfiles + '\'' +
                 '}';
-    }
+    }*/
 }
