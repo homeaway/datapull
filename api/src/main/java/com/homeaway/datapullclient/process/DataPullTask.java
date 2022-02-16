@@ -52,6 +52,7 @@ public class DataPullTask implements Runnable {
     private final Map<String, Tag> emrTags = new HashMap<>();
     private ClusterProperties clusterProperties;
     private List<String> bootstrapFilesList;
+    private String bootstrapActionStringFromUser;
 
     public DataPullTask(final String taskId, final String s3File, final String jksFilePath) {
         s3FilePath = s3File;
@@ -298,7 +299,7 @@ public class DataPullTask implements Runnable {
             request.withSecurityConfiguration(emrSecurityConfiguration);
         }
 
-        if (!bootstrapFilesList.isEmpty()) {
+        if (!bootstrapFilesList.isEmpty() || !bootstrapActionStringFromUser.isEmpty()) {
             final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
             bsConfig.setName("bootstrapaction");
             bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath("s3://" + this.jksS3Path));
@@ -402,6 +403,12 @@ public class DataPullTask implements Runnable {
 
     public DataPullTask bootstrapFilesList(final List<String> bootstrapFilesList) {
         this.bootstrapFilesList = bootstrapFilesList;
+        return this;
+    }
+    
+    
+    public DataPullTask bootstrapActionStringFromUser(final String bootstrapActionStringFromUser) {
+        this.bootstrapActionStringFromUser = bootstrapActionStringFromUser;
         return this;
     }
 
