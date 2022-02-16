@@ -238,7 +238,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 }
             }
         }
-        if (!list.isEmpty()) {
+        if (!list.isEmpty() || !bootstrapActionStringFromUser.isEmpty()) {
             stringBuilder = createBootstrapString(list.toArray(), bootstrapActionStringFromUser);
         }
         if (stringBuilder.length() > 0) {
@@ -249,7 +249,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private DataPullTask createDataPullTask(String fileS3Path, String jksFilePath, ClusterProperties properties, String jobName, String creator, String customJarFilePath, List<String> bootstrapFilesList) {
         String creatorTag = String.join(" ", Arrays.asList(creator.split(",|;")));
-        DataPullTask task = config.getTask(jobName, fileS3Path, jksFilePath).withClusterProperties(properties).withCustomJar(customJarFilePath).bootstrapFilesList(bootstrapFilesList)
+        DataPullTask task = config.getTask(jobName, fileS3Path, jksFilePath).withClusterProperties(properties).withCustomJar(customJarFilePath).bootstrapFilesList(bootstrapFilesList).bootstrapActionStringFromUser(Objects.toString(properties.getBootstrapactionstring(), ""))
                 .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
                 .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull")
