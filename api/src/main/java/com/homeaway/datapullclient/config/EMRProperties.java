@@ -68,6 +68,9 @@ public class EMRProperties {
 
     @Value( "${forcerestart:false}" )
     private Boolean forceRestart;
+    
+    @Value( "${default_bootstrapstring}" )
+    private String defaultBootstrapString;
 
     private Map<String, String> tags = new HashMap<String, String>();
 }
