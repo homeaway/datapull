@@ -71,5 +71,7 @@ public class EMRProperties {
 
     private Map<String, String> hiveProperties = new HashMap<String, String>();
 
+    private Map<String, String> sparkHiveProperties = new HashMap<String, String>();
+
     private Map<String, String> tags = new HashMap<String, String>();
 }

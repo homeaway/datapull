@@ -283,13 +283,18 @@ public class DataPullTask implements Runnable {
                 .withClassification("emrfs-site")
                 .withProperties(emrfsProperties);
 
-        Map<String, String> hiveProperties = new HashMap<String, String>();
-        hiveProperties.put("hive.metastore.uris", Objects.toString(this.clusterProperties.getHiveMetastoreUris(), config.getEmrProperties().getHiveProperties().get("hive_metastore_uris")));
-        hiveProperties.put("hive.security.authorization.createtable.role.grants", Objects.toString(this.clusterProperties.getHiveSecurityAuthorizationCreatetableRoleGrants(), config.getEmrProperties().getHiveProperties().get("hive_security_authorization_createtable_role_grants")));
-        hiveProperties.put("hive.metastore.client.socket.timeout", Objects.toString(this.clusterProperties.getHiveMetastoreClientSocketTimeout(), config.getEmrProperties().getHiveProperties().get("hive_metastore_client_socket_timeout")));
+        Map<String, String> sparkHiveProperties = emrProperties.getSparkHiveProperties().entrySet().stream().filter(keyVal -> !keyVal.getValue().isEmpty()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        sparkHiveProperties.putAll(this.clusterProperties.getSparkHiveProperties());
+
+        Map<String, String> hiveProperties = emrProperties.getHiveProperties().entrySet().stream().filter(keyVal -> !keyVal.getValue().isEmpty()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        hiveProperties.putAll(this.clusterProperties.getHiveProperties());
+
+        Configuration sparkHiveConfig = new Configuration()
+                .withClassification("spark-hive-site")
+                .withProperties(sparkHiveProperties);
 
         Configuration hiveConfig = new Configuration()
-                .withClassification("spark-hive-site")
+                .withClassification("hive-site")
                 .withProperties(hiveProperties);
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
@@ -307,6 +312,11 @@ public class DataPullTask implements Runnable {
         if (!hiveProperties.isEmpty()) {
             request.withConfigurations(hiveConfig)
                     .withApplications(hive);
+        }
+
+        if (!sparkHiveProperties.isEmpty()) {
+            request.withConfigurations(sparkHiveConfig)
+                    .withApplications(spark);
         }
 
         if (!emrSecurityConfiguration.isEmpty()) {

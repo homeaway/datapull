@@ -80,15 +80,10 @@ public class ClusterProperties {
     private String emrReleaseVersion;
 
     @JsonProperty("hive_properties")
-    private void hivePropertiesDeserializer(Map<String, String> hiveProperties) {
-        this.hiveMetastoreUris = hiveProperties.get("hive_metastore_uris");
-        this.hiveSecurityAuthorizationCreatetableRoleGrants = hiveProperties.get("hive_security_authorization_createtable_role_grants");
-        this.hiveMetastoreClientSocketTimeout = hiveProperties.get("hive_metastore_client_socket_timeout");
-    }
-    private String hiveMetastoreUris;
-    private String hiveMetastoreClientSocketTimeout;
-    private String hiveSecurityAuthorizationCreatetableRoleGrants;
+    private Map<String, String> hiveProperties = new HashMap<String, String>();
 
+    @JsonProperty("spark_hive_properties")
+    private Map<String, String> sparkHiveProperties = new HashMap<String, String>();
 
     @JsonAlias({"ComponentInfo", "component_info"})
     private String componentInfo;
