@@ -585,8 +585,17 @@
     "forcerestart": false,
     "comment_bootstrapactionstring": "Optional, it will add any additional commands which needs to be executed on the all the nodes as part of the bootstrap action",
     "bootstrapactionstring": "sudo yum install openssl11-libs -y",
-    "comment_subnet_id": "Optional, the EMR cluster will be spun up in the default subnet of the environment if this is not provided by teh user",
-    "subnet_id": "application_subnet_1"
+    "comment_subnet_id": "Optional, the EMR cluster will be spun up in the default subnet of the environment if this is not provided by the user",
+    "subnet_id": "application_subnet_1",
+    "comment_hive_properties": "Optional, the EMR cluster will be spun up with user provided hive-site classification properties, see for more configuration properties: https://cwiki.apache.org/confluence/display/hive/configuration+properties",
+    "hive_properties":{
+      "hive.exec.max.dynamic.partitions": 100000,
+      "hive.exec.max.dynamic.partitions.pernode":10000
+    },
+    "comment_spark_hive_properties": "Optional, the EMR cluster will be spun up with user provided spark-hive-site classification properties",
+    "spark_hive_properties": {
+      "hive.metastore.uris": "thrift://your.apiary.address:9083"
+    }
 
   }
 }

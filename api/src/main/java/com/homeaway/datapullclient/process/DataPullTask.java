@@ -283,10 +283,14 @@ public class DataPullTask implements Runnable {
                 .withClassification("emrfs-site")
                 .withProperties(emrfsProperties);
 
-        Map<String, String> sparkHiveProperties = emrProperties.getSparkHiveProperties().entrySet().stream().filter(keyVal -> !keyVal.getValue().isEmpty()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, String> sparkHiveProperties = emrProperties.getSparkHiveProperties().entrySet().stream()
+                .filter(keyVal -> !keyVal.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         sparkHiveProperties.putAll(this.clusterProperties.getSparkHiveProperties());
 
-        Map<String, String> hiveProperties = emrProperties.getHiveProperties().entrySet().stream().filter(keyVal -> !keyVal.getValue().isEmpty()).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<String, String> hiveProperties = emrProperties.getHiveProperties().entrySet().stream()
+                .filter(keyVal -> !keyVal.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         hiveProperties.putAll(this.clusterProperties.getHiveProperties());
 
         Configuration sparkHiveConfig = new Configuration()
@@ -301,7 +305,7 @@ public class DataPullTask implements Runnable {
                 .withName(this.taskId)
                 .withReleaseLabel(Objects.toString(this.clusterProperties.getEmrReleaseVersion(), emrReleaseVersion))
                 .withSteps(customExampleStep)
-                .withApplications(spark)
+                .withApplications(spark, hive)
                 .withLogUri(logPath)
                 .withServiceRole(Objects.toString(this.clusterProperties.getEmrServiceRole(), serviceRole))
                 .withJobFlowRole(Objects.toString(this.clusterProperties.getInstanceProfile(), jobFlowRole))  //addAdditionalInfoEntry("maximizeResourceAllocation", "true")
@@ -310,13 +314,11 @@ public class DataPullTask implements Runnable {
                 .withInstances(jobConfig);
 
         if (!hiveProperties.isEmpty()) {
-            request.withConfigurations(hiveConfig)
-                    .withApplications(hive);
+            request.withConfigurations(hiveConfig);
         }
 
         if (!sparkHiveProperties.isEmpty()) {
-            request.withConfigurations(sparkHiveConfig)
-                    .withApplications(spark);
+            request.withConfigurations(sparkHiveConfig);
         }
 
         if (!emrSecurityConfiguration.isEmpty()) {

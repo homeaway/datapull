@@ -11,22 +11,22 @@ datapull:
     emr_security_group_slave:
     emr_security_group_service_access:
     hive_properties:
-      hive_metastore_uris:
-      hive_security_authorization_createtable_role_grants:
-      hive_metastore_client_socket_timeout:
-      hive_security_authorization_manager:
-      hive_exec_max_dynamic_partitions:
-      hive_exec_max_dynamic_partitions_pernode:
-      hive_exec_compress_output:
-      hive_optimize_sort_dynamic_partition:
-      hive_metastore_filter_hook:
-      mapreduce_map_java_opts:
-      mapreduce_map_memory_mb:
-      tez_am_resource_memory_mb:
-      hive_tez_container_size:
-      parquet_compression:
+      hive.metastore.uris:
+      hive.security.authorization.createtable.role.grants:
+      hive.metastore.client.socket.timeout:
+      hive.security.authorization.manager:
+      hive.exec.max.dynamic.partitions:
+      hive.exec.max.dynamic.partitions.pernode:
+      hive.exec.compress.output:
+      hive.optimize.sort.dynamic.partition:
+      hive.metastore.filter.hook:
+      mapreduce.map.java.opts:
+      mapreduce.map.memory.mb:
+      tez.am.resource.memory.mb:
+      hive.tez.container.size:
+      parquet.compression:
     spark_hive_properties:
-        hive_metastore_uris:
+        hive.metastore.uris:
     tags:
       Brand:
       Category:
