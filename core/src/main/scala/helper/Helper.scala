@@ -16,8 +16,14 @@
 
 package helper
 
+import java.io.{PrintWriter, StringWriter}
+import java.net.URLEncoder
+import java.security.cert.X509Certificate
+
 import config.AppConfig
+import core.DataFrameFromTo
 import core.DataPull.{jsonObjectPropertiesToMap, setAWSCredentials}
+import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
 import org.codehaus.jettison.json.JSONObject
 import security.SecretService
@@ -25,12 +31,6 @@ import za.co.absa.abris.avro.parsing.utils.AvroSchemaUtils
 import za.co.absa.abris.avro.read.confluent.SchemaManagerFactory
 import za.co.absa.abris.avro.registry.SchemaSubject
 import za.co.absa.abris.config._
-import java.io.{PrintWriter, StringWriter}
-import java.net.URLEncoder
-import java.security.cert.X509Certificate
-
-import core.DataFrameFromTo
-import javax.net.ssl.{HostnameVerifier, SSLSession, X509TrustManager}
 
 import scala.collection.mutable.StringBuilder
 import scala.util.control.Breaks.breakable
@@ -272,7 +272,7 @@ class Helper(appConfig: AppConfig) {
     fromAvroConfig
   }
 
-  def buildRdbmsURI(platform: String, server: String, port: String, database: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], sslEnabled: Boolean): Map[String, String] = {
+  def buildRdbmsURI(platform: String, server: String, port: String, database: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], sslEnabled: Boolean, addlJdbcOptions: JSONObject): Map[String, String] = {
 
     var driver: String = null
     var url: String = null
@@ -293,7 +293,7 @@ class Helper(appConfig: AppConfig) {
     }
     else if (platform == "teradata") {
       driver = "com.teradata.jdbc.TeraDriver"
-      url = buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated, typeForTeradata = typeForTeradata)
+      url = buildTeradataURI(server, database, if (port == null) None else Some(port.toInt), isWindowsAuthenticated, typeForTeradata = typeForTeradata, addlJdbcOptions = addlJdbcOptions)
     }
     else if (platform == "mysql") {
       driver = "com.mysql.jdbc.Driver"
@@ -304,11 +304,16 @@ class Helper(appConfig: AppConfig) {
       driver = "org.postgresql.Driver"
       url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == true) "?sslmode=require" else "")
     }
+    println("logging the URI: " + url)
     Map("driver" -> driver, "url" -> url)
   }
 
-  def buildTeradataURI(server: String, database: String, port: Option[Int], isWindowsAuthenticated: Boolean, typeForTeradata: Option[String]): String = {
-    "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
+  def buildTeradataURI(server: String, database: String, port: Option[Int], isWindowsAuthenticated: Boolean, typeForTeradata: Option[String], addlJdbcOptions: JSONObject): String = {
+    var URI: String = null
+    if (addlJdbcOptions != null && addlJdbcOptions.has("logging_level"))
+      "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString + ",LOG=" + jsonObjectPropertiesToMap(addlJdbcOptions).get("logging_level")
+    else
+      "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
   }
 
   def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean, sslEnabled: String): String = {
