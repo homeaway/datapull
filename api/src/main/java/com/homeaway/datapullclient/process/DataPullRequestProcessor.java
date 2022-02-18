@@ -25,6 +25,7 @@ import com.homeaway.datapullclient.config.DataPullClientConfig;
 import com.homeaway.datapullclient.config.DataPullContext;
 import com.homeaway.datapullclient.config.DataPullContextHolder;
 import com.homeaway.datapullclient.config.DataPullProperties;
+import com.homeaway.datapullclient.config.EMRProperties;
 import com.homeaway.datapullclient.exception.InvalidPointedJsonException;
 import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.input.ClusterProperties;
@@ -124,6 +125,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private void runDataPull(String json, boolean isStart, boolean validateJson) throws ProcessingException {
         String originalInputJson = json;
         json = extractUserJsonFromS3IfProvided(json, isStart);
+
+        final EMRProperties emrProperties = this.config.getEmrProperties();
+
         if (log.isDebugEnabled())
             log.debug("runDataPull -> json = " + json + " isStart = " + isStart);
 
@@ -169,7 +173,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
             String bootstrapFile = jobName + ".sh";
             String jksFilePath = bootstrapFilePath + "/" + bootstrapFile;
             String bootstrapActionStringFromUser = Objects.toString(reader.getBootstrapactionstring(), "");
-            Boolean haveBootstrapAction = createBootstrapScript(myObjects, bootstrapFile, bootstrapFilePath, bootstrapActionStringFromUser);
+            String defaultBootstrapString= emrProperties.getDefaultBootstrapString();
+            Boolean haveBootstrapAction = createBootstrapScript(myObjects, bootstrapFile, bootstrapFilePath, bootstrapActionStringFromUser, defaultBootstrapString);
 
             DataPullTask task = createDataPullTask(filePath, jksFilePath, reader, jobName, creator, node.path("sparkjarfile").asText(), haveBootstrapAction);
 
@@ -204,12 +209,12 @@ public class DataPullRequestProcessor implements DataPullClientService {
             }
         }
         if (bootstrapActionStringFromUser != null && !bootstrapActionStringFromUser.isEmpty()) {
-            stringBuilder.append(bootstrapActionStringFromUser);
+            stringBuilder.append(bootstrapActionStringFromUser).append(System.getProperty("line.separator"));
         }
         return stringBuilder;
     }
 
-    private Boolean createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath, String bootstrapActionStringFromUser) throws ProcessingException {
+    private Boolean createBootstrapScript(Migration[] myObjects, String bootstrapFile, String bootstrapFilePath, String bootstrapActionStringFromUser, String defaultbootstrapString) throws ProcessingException {
 
         StringBuilder stringBuilder = new StringBuilder();
         List<String> list = new ArrayList<>();
@@ -239,6 +244,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
         }
         if (!list.isEmpty() || !bootstrapActionStringFromUser.isEmpty()) {
             stringBuilder = createBootstrapString(list.toArray(), bootstrapActionStringFromUser);
+        }
+        if(!defaultbootstrapString.isEmpty()){
+            stringBuilder.append(defaultbootstrapString);
         }
         if (stringBuilder.length() > 0) {
             saveConfig(bootstrapFilePath, bootstrapFile, stringBuilder.toString());
