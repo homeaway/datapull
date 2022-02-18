@@ -204,7 +204,9 @@
         "port": "1433/3306/1521/5432",
         "comment_jdbcoptions": "Optional, this json object accepts all jdbc configuration options which are related to jdbc datastores",
         "jdbcoptions": {
-          "fetchsize": "72000"
+          "fetchsize": "72000",
+          "comment_logging_level": "Optional, currently this is for Teradata datastore only. accepted values are ERROR/TIMING/INFO/DEBUG. more information can be found here: https://teradata-docs.s3.amazonaws.com/doc/connectivity/jdbc/reference/current/jdbcug_chapter_2.html#URL_LOG",
+          "logging_level": "ERROR"
         },
         "comment_sslenabled": "optional, this option is currently supported for postgres",
         "sslenabled": false,
