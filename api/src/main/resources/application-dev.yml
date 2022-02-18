@@ -10,6 +10,7 @@ datapull:
     emr_security_group_master:
     emr_security_group_slave:
     emr_security_group_service_access:
+    default_bootstrapstring:
     tags:
       Brand:
       Category:
