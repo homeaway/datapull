@@ -79,6 +79,12 @@ public class ClusterProperties {
     @JsonProperty("emr_release_version")
     private String emrReleaseVersion;
 
+    @JsonProperty("hive_properties")
+    private Map<String, String> hiveProperties = new HashMap<String, String>();
+
+    @JsonProperty("spark_hive_properties")
+    private Map<String, String> sparkHiveProperties = new HashMap<String, String>();
+
     @JsonAlias({"ComponentInfo", "component_info"})
     private String componentInfo;
 

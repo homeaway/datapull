@@ -35,11 +35,28 @@ datapull:
     emr_security_group_master:
     emr_security_group_slave:
     emr_security_group_service_access:
+    hive_properties:
+      hive.metastore.uris:
+      hive.security.authorization.createtable.role.grants:
+      hive.metastore.client_socket.timeout:
+      hive.security.authorization.manager:
+      hive.exec.max.dynamic.partitions:
+      hive.exec.max.dynamic.partitions.pernode:
+      hive.exec.compress.output:
+      hive.optimize.sort.dynamic.partition:
+      hive.metastore.filter.hook:
+      mapreduce.map.java.opts:
+      mapreduce.map.memory.mb:
+      tez.am.resource.memory.mb:
+      hive.tez.container.size:
+      parquet.compression:
+    spark_hive_properties:
+      hive.metastore.uris:
     default_bootstrapstring:
     tags:
       Brand:
       Category: EMRPipeline
-      Owner: datatools
+      Owner:
       Purpose: EMRPipeline
       Service: emr
       Platform: EMRPipeline

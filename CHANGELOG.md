@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.53] - 2022-02-19
+
+Adding Hive support for API
+
+### Changed
+
+- api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java
+- api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- config yaml files
+
 
 ## [0.1.52] - 2022-02-18
 

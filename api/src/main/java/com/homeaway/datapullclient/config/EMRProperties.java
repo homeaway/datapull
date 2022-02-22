@@ -72,5 +72,9 @@ public class EMRProperties {
     @Value( "${default_bootstrapstring}" )
     private String defaultBootstrapString;
 
+    private Map<String, String> hiveProperties = new HashMap<String, String>();
+
+    private Map<String, String> sparkHiveProperties = new HashMap<String, String>();
+
     private Map<String, String> tags = new HashMap<String, String>();
 }
