@@ -51,7 +51,8 @@ datapull:
       hive.tez.container.size:
       parquet.compression:
     spark_hive_properties:
-      hive.metastore.uris:git
+      hive.metastore.uris:
+    default_bootstrapstring:
     tags:
       Brand:
       Category: EMRPipeline

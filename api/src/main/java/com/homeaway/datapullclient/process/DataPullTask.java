@@ -51,7 +51,7 @@ public class DataPullTask implements Runnable {
     private static final String JSON_WITH_INPUT_FILE_PATH = "{\r\n  \"jsoninputfile\": {\r\n    \"s3path\": \"%s\"\r\n  }\r\n}";
     private final Map<String, Tag> emrTags = new HashMap<>();
     private ClusterProperties clusterProperties;
-    private List<String> bootstrapFilesList;
+    private Boolean haveBootstrapAction;
 
     public DataPullTask(final String taskId, final String s3File, final String jksFilePath) {
         s3FilePath = s3File;
@@ -162,16 +162,16 @@ public class DataPullTask implements Runnable {
             final Boolean forceRestart = clusterProperties.getForceRestart();
 
             if (summary != null && !forceRestart) {
-                this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
+                this.runTaskOnExistingCluster(summary.getId(), this.s3JarPath, Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "false")), Objects.toString(this.clusterProperties.getSparksubmitparams(), ""));
             } else if (summary != null && forceRestart) {
                 emr.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(summary.getId()));
                 DataPullTask.log.info("Task " + this.taskId + " is forced to be terminated");
-                this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
+                this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), haveBootstrapAction);
                 DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
             }
 
         } else {
-            final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), bootstrapFilesList);
+            final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), haveBootstrapAction);
         }
 
         DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
@@ -207,7 +207,7 @@ public class DataPullTask implements Runnable {
         return sparkSubmitParamsList;
     }
 
-    private RunJobFlowResult runTaskInNewCluster(final AmazonElasticMapReduce emr, final String logPath, final String jarPath, final String sparkSubmitParams, final List<String> bootstrapFilesList) {
+    private RunJobFlowResult runTaskInNewCluster(final AmazonElasticMapReduce emr, final String logPath, final String jarPath, final String sparkSubmitParams, final Boolean haveBootstrapAction) {
 
         HadoopJarStepConfig runExampleConfig = null;
 
@@ -325,7 +325,7 @@ public class DataPullTask implements Runnable {
             request.withSecurityConfiguration(emrSecurityConfiguration);
         }
 
-        if (!bootstrapFilesList.isEmpty()) {
+        if (haveBootstrapAction) {
             final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
             bsConfig.setName("bootstrapaction");
             bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath("s3://" + this.jksS3Path));
@@ -341,7 +341,7 @@ public class DataPullTask implements Runnable {
         this.addTags(tags);
     }
 
-    private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams, final List<String> bootstrapFilesList) {
+    private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
 
         final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
 
@@ -427,8 +427,8 @@ public class DataPullTask implements Runnable {
         return this;
     }
 
-    public DataPullTask bootstrapFilesList(final List<String> bootstrapFilesList) {
-        this.bootstrapFilesList = bootstrapFilesList;
+    public DataPullTask haveBootstrapAction(final Boolean haveBootstrapAction) {
+        this.haveBootstrapAction = haveBootstrapAction;
         return this;
     }
 
