@@ -255,6 +255,11 @@
           "es.read.field.as.array.include": "tags"
         }
       },
+      "source_hive": {
+        "platform": "hive",
+        "comment_query": "Mandatory field, the provided query will be executed as sql in Spark Session",
+        "query": "select * from db.table"
+      },
       "source_kafka": {
         "platform": "kafka",
         "comment_bootstrapservers": "comma-separated list of bootstrap servers for the kafka cluster",
@@ -590,13 +595,19 @@
     "comment_subnet_id": "Optional, the EMR cluster will be spun up in the default subnet of the environment if this is not provided by the user",
     "subnet_id": "application_subnet_1",
     "comment_hive_properties": "Optional, the EMR cluster will be spun up with user provided hive-site classification properties, see for more configuration properties: https://cwiki.apache.org/confluence/display/hive/configuration+properties",
-    "hive_properties":{
-      "hive.exec.max.dynamic.partitions": 100000,
-      "hive.exec.max.dynamic.partitions.pernode":10000
+    "hive_properties": {
+      "hive.security.authorization.createtable.role.grants": "public:select",
+      "hive.metastore.client_socket.timeout": "1800s",
+      "hive.security.authorization.manager": "",
+      "hive.exec.max.dynamic.partitions": "100000",
+      "hive.exec.max.dynamic.partitions.pernode": "10000",
+      "hive.exec.compress.output": "true",
+      "hive.optimize.sort.dynamic.partition": "false",
+      "hive.metastore.filter.hook": ""
     },
     "comment_spark_hive_properties": "Optional, the EMR cluster will be spun up with user provided spark-hive-site classification properties",
     "spark_hive_properties": {
-      "hive.metastore.uris": "thrift://your.apiary.address:9083"
+      "hive.metastore.uris": ""
     }
 
   }

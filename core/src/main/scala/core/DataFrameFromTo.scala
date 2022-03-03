@@ -1216,30 +1216,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     df_temp.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
   }
 
-  def hiveToDataFrame(cluster: String, sparkSession: org.apache.spark.sql.SparkSession, dbtable: String, username: String, fetchsize: String): org.apache.spark.sql.DataFrame = {
-
-    import org.apache.spark.sql.jdbc.JdbcDialect
-
-    val HiveDialect = new JdbcDialect {
-      override def canHandle(url: String): Boolean = url.startsWith("jdbc:hive2") || url.contains("hive2")
-
-      override def quoteIdentifier(colName: String): String = {
-        s"$colName"
-      }
-
-    }
-
-    JdbcDialects.registerDialect(HiveDialect)
-
-    val jdbcDF = sparkSession.read
-      .format("jdbc")
-      .option("url", cluster)
-      .option("dbtable", dbtable)
-      .option("username", username)
-      // .option("fetchsize", fetchsize.toInt)
-      .load()
-
-    jdbcDF
+  def hiveToDataFrame(sparkSession: org.apache.spark.sql.SparkSession, query: String): org.apache.spark.sql.DataFrame = {
+    sparkSession.sql(query);
   }
 
   def dataFrameToHive(table: String, saveMode: String, df: org.apache.spark.sql.DataFrame): Unit = {
