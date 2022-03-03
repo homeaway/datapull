@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.54] - 2022-03-03
 
-Adding Hive support for API
+Adding Hive as source platform
 
 ### Added
 
