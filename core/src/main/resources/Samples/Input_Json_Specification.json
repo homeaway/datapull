@@ -257,18 +257,18 @@
       },
       "source_hive": {
         "platform": "hive",
-        "comment_query": "Mandatory field, the provided query will be executed as sql in Spark Session",
+        "comment_query": "Mandatory , the provided query will be executed as sql in Spark Session",
         "query": "select * from db.table"
       },
       "destination_hive": {
         "platform": "hive",
-        "comment_table": "Mandatory field, will be used to specify table being written"
+        "comment_table": "Mandatory, will be used to specify table being written"
         "table": "TABLE_NAME",
-        "comment_format": "Mandatory field, specify the format of the saved data. Ex. json, csv, parquet",
+        "comment_format": "Mandatory, specify the format of the saved data. Ex. json, csv, parquet",
         "format": "parquet",
-        "comment_savemode": "Mandatory, defaults to append. Ex. overwrite, ignore",
+        "comment_savemode": "Mandatory, specify how data will be saved to the destination table. If partitioned, enter true. Options include append, overwrite, ignore",
         "savemode": "append",
-        "comment_partitions": "Mandatory, defaults to true, specify whether or not the destination table is partitioned",
+        "comment_partitions": "Mandatory, specify whether or not the destination table is partitioned. If partitioned, enter true. If not, enter false",
         "partitions": false
       },
       "source_kafka": {
