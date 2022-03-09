@@ -1217,14 +1217,26 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
   }
 
   def hiveToDataFrame(sparkSession: org.apache.spark.sql.SparkSession, query: String): org.apache.spark.sql.DataFrame = {
-    sparkSession.sql(query);
+    sparkSession.sql(query)
   }
 
-  def dataFrameToHive(table: String, saveMode: String, df: org.apache.spark.sql.DataFrame): Unit = {
+  def dataFrameToHive(sparkSession: SparkSession, df: org.apache.spark.sql.DataFrame, table: String, database: String, format: String, saveMode: String, partitions: Boolean): Unit = {
+    sparkSession.sql("use " + database)
 
-    df.write
-      .mode(SaveMode.valueOf(saveMode))
-      .insertInto(table)
+    if (!partitions) {
+      df.write
+        .format(format)
+        .mode(saveMode)
+        .insertInto(table)
+    } else {
+      sparkSession.sqlContext.setConf("hive.exec.dynamic.partition", "true")
+      sparkSession.sqlContext.setConf("hive.exec.dynamic.partition.mode", "nonstrict")
+
+      df.write
+        .format(format)
+        .mode(saveMode)
+        .insertInto(table)
+    }
   }
 
   def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], colType: Option[String]): ResultSet = {

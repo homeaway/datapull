@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.55] - 2022-03-09
+
+Adding Hive support for Core
+
+### Added
+
+- core/src/main/resources/Samples/Input_Sample_s3-to-hive.json
+
+### Changed
+
+- core/src/main/resources/Samples/Input_Json_Specification.json
+- core/src/main/scala/core/DataFrameFromTo.scala
+- core/src/main/scala/core/Migration.scala
+
+### Removed
+
+- core/src/main/resources/Samples/Input_Sample_hive-to-filesystem
+
 ## [0.1.54] - 2022-03-03
 
 Adding Hive support for API

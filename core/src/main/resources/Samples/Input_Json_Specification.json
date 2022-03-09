@@ -260,6 +260,17 @@
         "comment_query": "Mandatory field, the provided query will be executed as sql in Spark Session",
         "query": "select * from db.table"
       },
+      "destination_hive": {
+        "platform": "hive",
+        "comment_table": "Mandatory field, will be used to specify table being written"
+        "table": "TABLE_NAME",
+        "comment_format": "Mandatory field, specify the format of the saved data. Ex. json, csv, parquet",
+        "format": "parquet",
+        "comment_savemode": "Optional, defaults to append. Ex. overwrite, ignore",
+        "savemode": "append",
+        "comment_partitions": "Optional, defaults to true, specify whether or not the destination table is partitioned",
+        "partitions": false
+      },
       "source_kafka": {
         "platform": "kafka",
         "comment_bootstrapservers": "comma-separated list of bootstrap servers for the kafka cluster",
@@ -607,7 +618,7 @@
     },
     "comment_spark_hive_properties": "Optional, the EMR cluster will be spun up with user provided spark-hive-site classification properties",
     "spark_hive_properties": {
-      "hive.metastore.uris": ""
+      "hive.metastore.uris": "thrift://your.apiary.address:9083"
     }
 
   }
