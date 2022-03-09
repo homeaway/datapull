@@ -266,7 +266,7 @@
         "table": "TABLE_NAME",
         "comment_format": "Mandatory field, specify the format of the saved data. Ex. json, csv, parquet",
         "format": "parquet",
-        "comment_savemode": "Optional, defaults to append. Ex. overwrite, ignore",
+        "comment_savemode": "Mandatory, defaults to append. Ex. overwrite, ignore",
         "savemode": "append",
         "comment_partitions": "Optional, defaults to true, specify whether or not the destination table is partitioned",
         "partitions": false
