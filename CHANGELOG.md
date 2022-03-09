@@ -18,6 +18,7 @@ Adding Hive support for Core
 - core/src/main/resources/Samples/Input_Json_Specification.json
 - core/src/main/scala/core/DataFrameFromTo.scala
 - core/src/main/scala/core/Migration.scala
+- api/pom.xml
 
 ### Removed
 
