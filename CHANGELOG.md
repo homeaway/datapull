@@ -25,7 +25,7 @@ Adding Hive support for Core
 
 ## [0.1.54] - 2022-03-03
 
-Adding Hive support for API
+Adding Hive as source platform
 
 ### Added
 
