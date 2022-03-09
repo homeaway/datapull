@@ -310,7 +310,7 @@ class Migration extends SparkListener {
         }
       }
       else if (destinationMap("platform") == "hive") {
-        dataframeFromTo.dataFrameToHive(sparkSession, dft, destinationMap("table"), destinationMap("database"), destinationMap("format"), destinationMap.getOrElse("savemode", "Append"), destinationMap.getOrElse("partitions", "true").toBoolean)
+        dataframeFromTo.dataFrameToHive(sparkSession, dft, destinationMap("table"), destinationMap("database"), destinationMap("format"), destinationMap("savemode"), destinationMap.getOrElse("partitions", "true").toBoolean)
       } else if (destinationMap("platform") == "mongodb") {
         dataframeFromTo.dataFrameToMongodb(destinationMap("awsenv"), destinationMap("cluster"), destinationMap("database"), destinationMap("authenticationdatabase"), destinationMap("collection"), destinationMap("login"), destinationMap("password"), destinationMap.getOrElse("replicaset", null), destinationMap.getOrElse("replacedocuments", "true"), destinationMap.getOrElse("orderedrecords", "false"), dft, sparkSession, destinationMap.getOrElse("documentfromjsonfield", "false"), destinationMap.getOrElse("jsonfield", "jsonfield"), destinationMap("vaultenv"), destinationMap.getOrElse("secretstore", secretStoreDefaultValue), destination.optJSONObject("sparkoptions"), destinationMap.get("maxBatchSize").getOrElse(null), destinationMap.getOrElse("authenticationenabled", true).asInstanceOf[Boolean], destinationMap.getOrElse("sslenabled", "false"))
       } else if (destinationMap("platform") == "kafka") {
