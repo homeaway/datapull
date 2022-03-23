@@ -1,0 +1,39 @@
+{
+  "useremailaddress": "test@DOMAIN.com",
+  "migrations": [
+    {
+      "comment": "Migration with all data read from source and filtered in Spark memory",
+      "source": {
+        "platform": "hive",
+        "query": "select * from DATABASE_NAME.TABLE_NAME"
+      },
+      "destination": {
+        "platform": "s3",
+        "s3path": "BUCKET_NAME/FOLDER_PATH",
+        "fileformat": "json"
+      }
+    }
+  ],
+  "cluster": {
+    "pipelinename": "sample_pipeline",
+    "awsenv": "test",
+    "portfolio": "Data Engineering Services",
+    "product": "Data Engineering - COE",
+    "ec2instanceprofile": "Iam role",
+    "cronexpression":"21 * * * *",
+    "ComponentInfo":"YOUR_Component-UUID_dominion",
+    "hive_properties":{
+      "hive.security.authorization.createtable.role.grants": "public:select",
+      "hive.metastore.client_socket.timeout": "1800s",
+      "hive.security.authorization.manager": "",
+      "hive.exec.max.dynamic.partitions": "100000",
+      "hive.exec.max.dynamic.partitions.pernode": "10000",
+      "hive.exec.compress.output": "true",
+      "hive.optimize.sort.dynamic.partition": "false",
+      "hive.metastore.filter.hook": ""
+    },
+    "spark_hive_properties":{
+      "hive.metastore.uris": ""
+    }
+  }
+}
