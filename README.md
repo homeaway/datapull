@@ -107,7 +107,7 @@ DataPull documentation is available at https://homeaway.github.io/datapull/ . To
     mkdocs serve
     ```
 
-1. Open http://127.0.0.1/8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
+1. Open http://127.0.0.1:8000 to see a preview of the documentation site. You can edit the documentation by following https://www.mkdocs.org/#getting-started
 
 1. Once you're done updating the documentation, please commit and push your updates to your forked repo. 
 
