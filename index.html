@@ -696,7 +696,7 @@
 </p>
 
 <h1 id="datapull">DataPull</h1>
-<p>DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data across heterogeneous datastores effortlessly. When deployed to Amazon AWS, DataPull spins up EMR Spark infrastructure, does the data movement and terminates the infrastructure once the job is complete; to minimize costs. 
+<p>DataPull is a self-service tool provided by HomeAway's Data Tools team to migrate data across heterogeneous datastores effortlessly. When deployed to Amazon AWS, DataPull spins up EMR Spark infrastructure, does the data movement and terminates the infrastructure once the job is complete; to minimize costs.
 Multiple data migrations can be done ither serially or in parallel within a DataPull job. There also exists built-in integration with <a href="https://www.vaultproject.io/">Hashicorp Vault</a> so that datastore credentials are never exposed. DataPull also has a built-in scheduler for daily/recurring jobs; or its REST API endpoints can be invoked by a third-party scheduler.</p>
 <h2 id="platforms-supported">Platforms supported</h2>
 <p>DataPull supports the following datastores as sources and destinations.</p>
@@ -797,7 +797,7 @@ Multiple data migrations can be done ither serially or in parallel within a Data
 <li>Create a json file/string that has the source/s, destination/s and the portfolio information for tagging the ephemeral infrastructure needed to do the DataPull</li>
 <li>Here are some sample JSON files for some common use cases: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples</li>
 <li>Here is JSON specification document which has all the possible options supported by DataPull: https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Json_Specification.json</li>
-<li>Please provide an email address for the element "useremailaddress" in the JSON input. Once your DataPull completes, an email will be sent with all the migration details along with the source, destination details of the migrations, the time taken for the migrations to complete and the number of records processed, etc. </li>
+<li>Please provide an email address for the element "useremailaddress" in the JSON input. Once your DataPull completes, an email will be sent with all the migration details along with the source, destination details of the migrations, the time taken for the migrations to complete and the number of records processed, etc.</li>
 <li>For DataPull to get access to the source and destination data platforms, you need to either provide the login and password within the JSON (not recommended for Stage and Production environments); or provide the login and an IAM Role which is mapped to the credentials in Vault (you also need to add the <code>"awsenv"</code> and <code>"vaultenv"</code> elements to the source(s) and destination in the json input).</li>
 <li>Navigate to your swagger api URL and invoke this REST API with the json as input.</li>
 </ul>
@@ -809,12 +809,12 @@ Multiple data migrations can be done ither serially or in parallel within a Data
 <li>Cluster</li>
 </ol>
 <p>The basic information section is there for allowing the users to put their email address, enabling the jobs to run in parallel or serial etc.</p>
-<p>Migrations section is an array and primarily covers source and the destination details of a migration. It can have multiple migration objects. And enabling the any options/features is very easy, we just have to add the element as specified in the Input_specifications document which is available in the resources folder. If you want to migrate only set of columns of the source data, DataPull supports this by using Mappings array inside a migration object and Please check the sample JSONs available for a example. </p>
-<p>Cluster section is mostly related to the infrastructure of the migration job which has details about the portfolio, product, Cron expression and environment in which the job will be running etc. The cluster will be spun up based on the awsenv(aws environment) element in this section among dev/test/stage/prod. </p>
+<p>Migrations section is an array and primarily covers source and the destination details of a migration. It can have multiple migration objects. And enabling the any options/features is very easy, we just have to add the element as specified in the Input_specifications document which is available in the resources folder. If you want to migrate only set of columns of the source data, DataPull supports this by using Mappings array inside a migration object and Please check the sample JSONs available for a example.</p>
+<p>Cluster section is mostly related to the infrastructure of the migration job which has details about the portfolio, product, Cron expression and environment in which the job will be running etc. The cluster will be spun up based on the awsenv(aws environment) element in this section among dev/test/stage/prod.</p>
 <p><a href="https://github.com/homeaway/datapull/blob/master/core/src/main/resources/Samples/Input_Sample_MySql_to_S3.json">This sample JSON input</a> moves data from MySql to AWS S3</p>
 <h2 id="how-does-datapull-work">How does DataPull work?</h2>
 <p>Spark is the main engine which drives the DataPull. So technically it will run on any spark environment. But we are biased to Amazon's Elastic Map Reduce(EMR) to have minimum dependencies(AWS versus AWS+Qubole) and our app does use EMR to spin up the spark clusters. But after all as it is a spark application it will run on any spark cluster whether it is EMR or Qubole or any other spark clusters.</p>
-<p>DataPull expects the Input JSON as an argument and irrespective of any spark environment we have to pass the Input JSON as an argument to make the DataPull work.   </p>
+<p>DataPull expects the Input JSON as an argument and irrespective of any spark environment we have to pass the Input JSON as an argument to make the DataPull work.</p>
 <h3 id="how-do-i-do-delta-moves-for-datapull">How do I do Delta Moves for DataPull?</h3>
 <p>Here is an example</p>
 <pre><code>{
