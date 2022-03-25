@@ -18,6 +18,8 @@ nav:
           - Uninstalling DataPull on AWS Fargate and S3: uninstall_on_aws.md
     - Support for Oracle and Teradata: oracle_teradata_support.md
     - Access secrets: access_secrets.md
-    - Sample input JSON: transformation.md
+    - Sample input JSON:
+          - Elastic to Sql: transformation.md
+          - Hive examples: hive.md
     - Monitor DataPull jobs using Spark UI: monitor_spark_ui.md
     - FAQs: faq.md
