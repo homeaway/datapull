@@ -13,7 +13,7 @@
         <spark.version>2.4.6</spark.version>
         <spark.minor.version>2.4</spark.minor.version>
         <maven.plugin.version>3.2.0</maven.plugin.version>
-        <hadoop.version>2.10.1</hadoop.version>
+        <hadoop.version>3.2.3</hadoop.version>
         <aws.java.sdk.version>1.11.1019</aws.java.sdk.version>
     </properties>
 
