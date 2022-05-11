@@ -112,6 +112,10 @@ class Migration extends SparkListener {
 
     try {
 
+      if (migration.has("properties")) {
+        DataPull.setExternalSparkConf(sparkSession, migration.getJSONObject("properties"))
+      }
+
       var overrideSql = ""
       if (migration.has("sql")) {
 
