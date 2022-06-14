@@ -5,9 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.57] - 2022-06/13
+
+Update log4j version to avoid security vulnerabilities. 
+
+### Changed
+
+- core/pom.xml
+- functional-test/pom.xml
+
 ## [0.1.56] - 2022-04-29
 
-This is add a feature for adding spark session properties for a job.
+This is to add a feature for adding spark session properties for a job.
 
 ### Changed
 
