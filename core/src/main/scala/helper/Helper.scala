@@ -311,7 +311,7 @@ class Helper(appConfig: AppConfig) {
   def buildTeradataURI(server: String, database: String, port: Option[Int], isWindowsAuthenticated: Boolean, typeForTeradata: Option[String], addlJdbcOptions: JSONObject): String = {
     var URI: String = null
     if (addlJdbcOptions != null && addlJdbcOptions.has("logging_level"))
-      "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString + ",LOG=" + jsonObjectPropertiesToMap(addlJdbcOptions).get("logging_level")
+      "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString + ",LOG=" + jsonObjectPropertiesToMap(addlJdbcOptions).get("logging_level").get
     else
       "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
   }
