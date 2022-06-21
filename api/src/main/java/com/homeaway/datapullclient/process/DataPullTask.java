@@ -25,6 +25,7 @@ import com.homeaway.datapullclient.input.ClusterProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.sql.Array;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -101,7 +102,7 @@ public class DataPullTask implements Runnable {
         ListClustersResult listClustersResult = retryListClusters(emr, MAX_RETRY, listClustersRequest);
         while (true) {
             for (ClusterSummary cluster : listClustersResult.getClusters()) {
-                if (cluster.getName().toLowerCase().equals(this.taskId.toLowerCase())) {
+                if (cluster.getName().equalsIgnoreCase(this.taskId)) {
                     clusters.add(cluster);
                 }
             }
@@ -192,6 +193,11 @@ public class DataPullTask implements Runnable {
         }
     }
 
+    private List<String> arrayToList(Array args) {
+
+        return null;
+    }
+
     private List<String> prepareSparkSubmitParams(final String SparkSubmitParams) {
         final List<String> sparkSubmitParamsList = new ArrayList<>();
         String[] sparkSubmitParamsArray = null;
@@ -211,16 +217,25 @@ public class DataPullTask implements Runnable {
 
         HadoopJarStepConfig runExampleConfig = null;
 
+        ArrayList<String> sparkSubmitParamsList = new ArrayList<>();
         if (sparkSubmitParams != null && !sparkSubmitParams.isEmpty()) {
-            final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
-            runExampleConfig = new HadoopJarStepConfig()
-                    .withJar("command-runner.jar")
-                    .withArgs(sparkSubmitParamsList);
+            sparkSubmitParamsList = (ArrayList<String>) this.prepareSparkSubmitParams(sparkSubmitParams);
         } else {
-            runExampleConfig = new HadoopJarStepConfig()
-                    .withJar("command-runner.jar")
-                    .withArgs("spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
+            List<String> sparkBaseParams = new ArrayList<>();
+            sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath}));
+            sparkSubmitParamsList.addAll(sparkBaseParams);
         }
+
+        if (clusterProperties.getSpark_submit_arguments() != null) {
+            sparkSubmitParamsList.addAll(clusterProperties.getSpark_submit_arguments());
+        } else {
+            sparkSubmitParamsList.addAll(Arrays.asList(String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path)));
+        }
+
+        runExampleConfig = new HadoopJarStepConfig()
+                .withJar("command-runner.jar")
+                .withArgs(sparkSubmitParamsList);
+
         final StepConfig customExampleStep = new StepConfig()
                 .withName(this.taskId)
                 .withActionOnFailure("CONTINUE")
@@ -343,19 +358,26 @@ public class DataPullTask implements Runnable {
 
     private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
 
-        final List<String> sparkSubmitParamsList = this.prepareSparkSubmitParams(sparkSubmitParams);
-
         HadoopJarStepConfig runExampleConfig = null;
 
+        List<String> sparkSubmitParamsListOnExistingCluster = new ArrayList<>();
         if (sparkSubmitParams != null && !sparkSubmitParams.isEmpty()) {
-            runExampleConfig = new HadoopJarStepConfig()
-                    .withJar("command-runner.jar")
-                    .withArgs(sparkSubmitParamsList);
+            sparkSubmitParamsListOnExistingCluster = this.prepareSparkSubmitParams(sparkSubmitParams);
         } else {
-            runExampleConfig = new HadoopJarStepConfig()
-                    .withJar("command-runner.jar")
-                    .withArgs("spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath, String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
+            List<String> sparkBaseParams = new ArrayList<>();
+            sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath}));
+            sparkSubmitParamsListOnExistingCluster.addAll(sparkBaseParams);
         }
+
+        if (clusterProperties.getSpark_submit_arguments() != null) {
+            sparkSubmitParamsListOnExistingCluster.addAll(clusterProperties.getSpark_submit_arguments());
+        } else {
+            sparkSubmitParamsListOnExistingCluster.addAll(Arrays.asList(String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path)));
+        }
+
+        runExampleConfig = new HadoopJarStepConfig()
+                .withJar("command-runner.jar")
+                .withArgs(sparkSubmitParamsListOnExistingCluster);
 
         final StepConfig step = new StepConfig()
                 .withName(this.taskId)
