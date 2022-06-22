@@ -25,7 +25,7 @@ Fixed `"logging_level"` in `"jdbcoptions"`
 
 ## [0.1.57] - 2022-06/13
 
-Update log4j version to avoid security vulnerabilities.
+Update log4j version to avoid security vulnerabilities. 
 
 ### Changed
 
