@@ -207,7 +207,6 @@ public class DataPullTask implements Runnable {
             sparkSubmitParamsList.add("spark-submit");
 
             sparkSubmitParamsList.addAll(DataPullTask.toList(sparkSubmitParamsArray));
-            sparkSubmitParamsList.add(String.format(DataPullTask.JSON_WITH_INPUT_FILE_PATH, this.jsonS3Path));
         }
 
         return sparkSubmitParamsList;
