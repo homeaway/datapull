@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -115,6 +116,9 @@ public class ClusterProperties {
     @JsonProperty("forcerestart")
     private Boolean forceRestart = false;
 
+    @JsonAlias("spark_submit_arguments")
+    private List<String> spark_submit_arguments;
+
     private String env;
 
     @Override
@@ -145,6 +149,7 @@ public class ClusterProperties {
                 ", costcenter='" + costCenter + '\'' +
                 ", forcerestart='" + forceRestart + '\'' +
                 ", application='" + application + '\'' +
+                ", spark_submit_arguments='" + spark_submit_arguments + '\'' +
                 '}';
     }
 }
