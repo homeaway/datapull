@@ -147,7 +147,7 @@ public class ClusterProperties {
                 ", product='" + product + '\'' +
                 ", team='" + team + '\'' +
                 ", bootstrapactionstring='" + bootstrapactionstring + '\'' +
-                ", bootstrapaction_file_path='" + bootstrap_action_file_path + '\'' +
+                ", bootstrap_action_file_path='" + bootstrap_action_file_path + '\'' +
                 ", env='" + env + '\'' +
                 ", brand='" + brand + '\'' +
                 ", costcenter='" + costCenter + '\'' +
