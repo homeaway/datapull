@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.59] - 2022-06/16
+## [0.1.60] - 2022-06-24
+
+Adding functionality for adding custom bootstrap file while spinning up the EMR cluster.
+
+### Changed
+
+- api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- core/src/main/resources/Samples/Input_Json_Specification.json
+
+## [0.1.59] - 2022-06-16
 
 Adding functionality for sending custom arguments instead of default arguments through datapull API
 
@@ -15,7 +25,7 @@ Adding functionality for sending custom arguments instead of default arguments t
 - api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
 - core/src/main/resources/Samples/Input_Json_Specification.json
 
-## [0.1.58] - 2022-06/16
+## [0.1.58] - 2022-06-16
 
 Fixed `"logging_level"` in `"jdbcoptions"`
 
@@ -23,7 +33,7 @@ Fixed `"logging_level"` in `"jdbcoptions"`
 
 - core/src/main/scala/helper/Helper.scala
 
-## [0.1.57] - 2022-06/13
+## [0.1.57] - 2022-06-13
 
 Update log4j version to avoid security vulnerabilities. 
 

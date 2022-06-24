@@ -339,13 +339,17 @@ public class DataPullTask implements Runnable {
             request.withSecurityConfiguration(emrSecurityConfiguration);
         }
 
-        if (haveBootstrapAction) {
-            final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
+        final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
+        String bootstrapActionFilePathFromUser = Objects.toString(clusterProperties.getBootstrap_action_file_path(), "");
+        if (!bootstrapActionFilePathFromUser.isEmpty()) {
+            bsConfig.setName("Bootstrap action from file");
+            bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath(bootstrapActionFilePathFromUser));
+            request.withBootstrapActions(bsConfig);
+        } else if (haveBootstrapAction) {
             bsConfig.setName("bootstrapaction");
             bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath("s3://" + this.jksS3Path));
             request.withBootstrapActions(bsConfig);
         }
-
         return emr.runJobFlow(request);
     }
 

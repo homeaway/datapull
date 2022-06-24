@@ -633,6 +633,8 @@
     "spark_submit_arguments": [
       "start_date",
       "test"
-    ]
+    ],
+    "comment_bootstrap_action_file_path": "Optional, this is to add bootstrap action on emr cluster from a custom shell file path",
+    "bootstrap_action_file_path": "s3://<S3_BUCKET_NAME/PATH_TO_THE_FILE"
   }
 }
