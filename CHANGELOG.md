@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+
+## [0.1.61] - 2022-07-18
+
+Bumping emr release version for log4j vulnerability issue.
+
+### Changed
+
+- api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java
+
 ## [0.1.60] - 2022-06-24
 
 Adding functionality for adding custom bootstrap file while spinning up the EMR cluster.
