@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.62] - 2022-07-21
+
+Adding examples for SFTP in documentation. 
+
+### Added
+
+- core/src/main/resources/Samples/Input_Sample_s3_SFTP.json
+- docs/docs/sftp.md
 
 ## [0.1.61] - 2022-07-18
 
