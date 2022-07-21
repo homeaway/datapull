@@ -1,0 +1,80 @@
+Examples when SFTP is the destination platform.
+
+
+When authentication method for SFTP is username with a PEM key:
+```json
+{
+    "useremailaddress": "YOUR_ID@DOMAIN",
+    "migrations": [
+        {
+          "source": {
+            "platform": "s3",
+            "s3path": "BUCKET_NAME/FOLDER_PATH",
+            "fileformat": "csv",
+            "alias": "test", 
+            "enable_server_side_encryption": "true"
+          },
+
+          "destination": {
+            "platform": "sftp",
+            "host": "YOUR_SFTP_SERVER_IP/HOSTNAME",
+            "path": "SFTP_SERVER_PATH/FILE_NAME",
+            "login": "SFTP_USERNAME",
+            "pemfilepath": "/mnt/bootstrapfiles/<PEM_KEY_NAME>",
+            "jksfilepath": "s3://SOME_S3_PATH/<PEM_KEY_NAME>",
+            "fileformat": "csv",
+            "jksfiles":[
+                "s3://SOME_S3_PATH/<PEM_KEY_NAME> (same as \"jksfilepath\")"
+            ],
+            "sparkoptions": {
+                "pemPassphrase": "<PEM_KEY_PASSPHRASE_IF_PEM_KEY_IS_ENCRYPTED>"
+            }
+          }
+        }
+      ],
+    "cluster": {
+      "pipelinename": "ekg",
+      "awsenv": "dev",
+      "portfolio": "Data Engineering Services",
+      "product": "Data Engineering - COE",
+      "ec2instanceprofile": "Iam role",
+      "cronexpression":"21 * * * *"
+    }
+  }
+```
+
+When authentication method for SFTP is username with password:
+
+```json
+{
+    "useremailaddress": "YOUR_ID@DOMAIN",
+    "migrations": [
+        {
+          "source": {
+            "platform": "s3",
+            "s3path": "BUCKET_NAME/FOLDER_PATH",
+            "fileformat": "csv",
+            "alias": "test", 
+            "enable_server_side_encryption": "true"
+          },
+
+          "destination": {
+            "platform": "sftp",
+            "host": "YOUR_SFTP_SERVER_IP/HOSTNAME",
+            "path": "SFTP_SERVER_PATH/FILE_NAME",
+            "login": "SFTP_USERNAME",
+            "password": "SFTP_PASSWORD",
+            "fileformat": "csv"
+          }
+        }
+      ],
+    "cluster": {
+      "pipelinename": "ekg",
+      "awsenv": "dev",
+      "portfolio": "Data Engineering Services",
+      "product": "Data Engineering - COE",
+      "ec2instanceprofile": "Iam role",
+      "cronexpression":"21 * * * *"
+    }
+  }
+```
