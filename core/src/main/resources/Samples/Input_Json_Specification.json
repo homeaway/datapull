@@ -636,5 +636,10 @@
     ],
     "comment_bootstrap_action_file_path": "Optional, this is to add bootstrap action on emr cluster from a custom shell file path",
     "bootstrap_action_file_path": "s3://<S3_BUCKET_NAME/PATH_TO_THE_FILE"
-  }
+  },
+  "comment_bootstrap_action_arguments": "Optional, this can be used to pass job specific arguments to the custom bootstrap script file option `bootstrap_action_file_path`",
+  "bootstrap_action_arguments": [
+    "name_of_the_cluster",
+    "env"
+  ]
 }

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.63] - 2022-07-23
+
+Adding functionality for adding custom bootstrap file while spinning up the EMR cluster.
+
+### Changed
+
+- api/src/main/java/com/homeaway/datapullclient/input/ClusterProperties.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- core/src/main/resources/Samples/Input_Json_Specification.json
+
 ## [0.1.62] - 2022-07-21
 
 Adding examples for SFTP in documentation. 

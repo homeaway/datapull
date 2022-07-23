@@ -116,6 +116,9 @@ public class ClusterProperties {
     @JsonProperty("bootstrap_action_file_path")
     private String bootstrap_action_file_path;
 
+    @JsonAlias("bootstrap_action_arguments")
+    private List<String> bootstrap_action_arguments;
+
     @JsonProperty("forcerestart")
     private Boolean forceRestart = false;
 
@@ -151,6 +154,7 @@ public class ClusterProperties {
                 ", env='" + env + '\'' +
                 ", brand='" + brand + '\'' +
                 ", costcenter='" + costCenter + '\'' +
+                ", bootstrap_action_arguments='" + bootstrap_action_arguments + '\'' +
                 ", forcerestart='" + forceRestart + '\'' +
                 ", application='" + application + '\'' +
                 ", spark_submit_arguments='" + spark_submit_arguments + '\'' +
