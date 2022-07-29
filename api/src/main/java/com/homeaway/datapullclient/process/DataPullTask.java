@@ -340,14 +340,20 @@ public class DataPullTask implements Runnable {
         }
 
         final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
+        final ScriptBootstrapActionConfig sbsConfig = new ScriptBootstrapActionConfig();
         String bootstrapActionFilePathFromUser = Objects.toString(clusterProperties.getBootstrap_action_file_path(), "");
         if (!bootstrapActionFilePathFromUser.isEmpty()) {
             bsConfig.setName("Bootstrap action from file");
-            bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath(bootstrapActionFilePathFromUser));
+            sbsConfig.withPath(bootstrapActionFilePathFromUser);
+            if (clusterProperties.getBootstrap_action_arguments() != null) {
+                sbsConfig.setArgs(clusterProperties.getBootstrap_action_arguments());
+            }
+            bsConfig.setScriptBootstrapAction(sbsConfig);
             request.withBootstrapActions(bsConfig);
         } else if (haveBootstrapAction) {
             bsConfig.setName("bootstrapaction");
-            bsConfig.setScriptBootstrapAction(new ScriptBootstrapActionConfig().withPath("s3://" + this.jksS3Path));
+            sbsConfig.withPath("s3://" + this.jksS3Path);
+            bsConfig.setScriptBootstrapAction(sbsConfig);
             request.withBootstrapActions(bsConfig);
         }
         return emr.runJobFlow(request);
