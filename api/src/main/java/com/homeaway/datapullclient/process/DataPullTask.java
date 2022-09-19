@@ -307,6 +307,8 @@ public class DataPullTask implements Runnable {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         hiveProperties.putAll(this.clusterProperties.getHiveProperties());
 
+        Map<String, String> sparkEnvProperties = this.clusterProperties.getSparkEnvProperties();
+
         Configuration sparkHiveConfig = new Configuration()
                 .withClassification("spark-hive-site")
                 .withProperties(sparkHiveProperties);
@@ -314,6 +316,10 @@ public class DataPullTask implements Runnable {
         Configuration hiveConfig = new Configuration()
                 .withClassification("hive-site")
                 .withProperties(hiveProperties);
+
+        Configuration sparkEnvConfig = new Configuration()
+                .withClassification("spark-env")
+                .withProperties(sparkEnvProperties);
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
@@ -333,6 +339,10 @@ public class DataPullTask implements Runnable {
 
         if (!sparkHiveProperties.isEmpty()) {
             request.withConfigurations(sparkHiveConfig);
+        }
+
+        if (!sparkEnvProperties.isEmpty()) {
+            request.withConfigurations(sparkEnvConfig);
         }
 
         if (!emrSecurityConfiguration.isEmpty()) {
