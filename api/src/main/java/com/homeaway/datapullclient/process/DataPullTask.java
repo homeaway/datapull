@@ -307,7 +307,9 @@ public class DataPullTask implements Runnable {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         hiveProperties.putAll(this.clusterProperties.getHiveProperties());
 
+        Map<String, String> sparkDefaultsProperties = this.clusterProperties.getSparkDefaultsProperties();
         Map<String, String> sparkEnvProperties = this.clusterProperties.getSparkEnvProperties();
+        Map<String, String> sparkMetricsProperties = this.clusterProperties.getSparkMetricsProperties();
 
         Configuration sparkHiveConfig = new Configuration()
                 .withClassification("spark-hive-site")
@@ -317,9 +319,17 @@ public class DataPullTask implements Runnable {
                 .withClassification("hive-site")
                 .withProperties(hiveProperties);
 
+        Configuration sparkDefaultsConfig = new Configuration()
+                .withClassification("spark-defaults")
+                .withProperties(sparkDefaultsProperties);
+
         Configuration sparkEnvConfig = new Configuration()
                 .withClassification("spark-env")
                 .withProperties(sparkEnvProperties);
+
+        Configuration sparkMetricsConfig = new Configuration()
+                .withClassification("spark-metrics")
+                .withProperties(sparkMetricsProperties);
 
         final RunJobFlowRequest request = new RunJobFlowRequest()
                 .withName(this.taskId)
@@ -341,8 +351,16 @@ public class DataPullTask implements Runnable {
             request.withConfigurations(sparkHiveConfig);
         }
 
+        if (!sparkDefaultsProperties.isEmpty()) {
+            request.withConfigurations(sparkDefaultsConfig);
+        }
+
         if (!sparkEnvProperties.isEmpty()) {
             request.withConfigurations(sparkEnvConfig);
+        }
+
+        if (!sparkMetricsProperties.isEmpty()) {
+            request.withConfigurations(sparkMetricsConfig);
         }
 
         if (!emrSecurityConfiguration.isEmpty()) {
