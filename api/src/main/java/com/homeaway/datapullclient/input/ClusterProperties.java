@@ -86,8 +86,14 @@ public class ClusterProperties {
     @JsonProperty("spark_hive_properties")
     private Map<String, String> sparkHiveProperties = new HashMap<String, String>();
 
+    @JsonProperty("spark_defaults_properties")
+    private Map<String, String> sparkDefaultsProperties = new HashMap<String, String>();
+
     @JsonProperty("spark_env_properties")
     private Map<String, String> sparkEnvProperties = new HashMap<String, String>();
+
+    @JsonProperty("spark_metrics_properties")
+    private Map<String, String> sparkMetricsProperties = new HashMap<String, String>();
 
     @JsonAlias({"ComponentInfo", "component_info"})
     private String componentInfo;
