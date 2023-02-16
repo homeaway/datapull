@@ -343,6 +343,13 @@ public class DataPullTask implements Runnable {
                 .withTags(this.emrTags.values()).withConfigurations(new Configuration().withClassification("spark").withProperties(sparkProperties), myEmrfsConfig)
                 .withInstances(jobConfig);
 
+        if(!this.clusterProperties.getCoreSiteProperties().isEmpty()){
+            Configuration coreSiteConfig = new Configuration()
+                    .withClassification("core-site")
+                    .withProperties(this.clusterProperties.getCoreSiteProperties());
+            request.withConfigurations(coreSiteConfig);
+        }
+
         if (!hiveProperties.isEmpty()) {
             request.withConfigurations(hiveConfig);
         }

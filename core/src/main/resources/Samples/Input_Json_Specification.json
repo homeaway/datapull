@@ -79,6 +79,10 @@
         "coalescefilecount": null,
         "comment_enable_server_side_encryption": "Optional, to access the buckets which have server side encryption enabled with AES 256 to be set true. Default: false",
         "enable_server_side_encryption": "false",
+        "comment_is_kms_enabled": "Optional, this should be set to `true` if the bucket you are reading SSE-KMS enabled",
+        "is_kms_enabled": "false",
+        "comment_kms_key_arn": "Optional, this is a mandatory field if the is_kms_enabled filed is set to true",
+        "kms_key_arn": "arn:aws:kms:<region>:<account-id>:key/<key-id>",
         "comment_post_migrate_command": "This is to execute copy/delete operation after the desired migration to s3",
         "post_migrate_command": {
           "comment_operation": "This field will take options either copy/delete.",
@@ -626,6 +630,10 @@
     "emr_security_configuration": "",
     "comment_spark_submit_arguments": "Optional, This is to override the default arguments for the spark submit command and this will remove the default arguments of teh datapull",
     "comment_tags": "Optional, this is to add any additional tags for the emr cluster",
+    "comment_core_site_properties": "Optional, if the user wants to set some core-site.xml settings while spinning up the emr cluster",
+    "core_site_properties": {
+      "fs.s3.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem"
+    },
     "tags": {
       "Creator": "email@domain.com",
       "costCenter": "012535"

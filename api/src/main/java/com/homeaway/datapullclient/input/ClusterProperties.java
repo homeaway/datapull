@@ -83,6 +83,9 @@ public class ClusterProperties {
     @JsonProperty("hive_properties")
     private Map<String, String> hiveProperties = new HashMap<String, String>();
 
+    @JsonProperty("core_site_properties")
+    private Map<String, String> coreSiteProperties = new HashMap<String, String>();
+
     @JsonProperty("spark_hive_properties")
     private Map<String, String> sparkHiveProperties = new HashMap<String, String>();
 
