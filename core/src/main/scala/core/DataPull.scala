@@ -335,6 +335,7 @@ object DataPull {
     }
     if(sourceDestinationMap.contains("is_kms_enabled") && sourceDestinationMap("is_kms_enabled") == "true"){
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".serverSideEncryptionAlgorithm","SSE-KMS")
+      if(sourceDestinationMap.contains("kms_key_arn"))
       sparkSession.sparkContext.hadoopConfiguration.set("fs." + s3Prefix + ".serverSideEncryptionAlgorithm",sourceDestinationMap("kms_key_arn"))
     }
   }
