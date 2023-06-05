@@ -165,7 +165,6 @@ class Controller(appConfig: AppConfig, pipeline: String) {
         if (minexecutiontime != "" && maxexecutiontime != "") {
           elapsedtime = System.currentTimeMillis() - start_time_in_milli
           alerts.AlertLog(jobId, masterNode, ec2Role, portfolio, product, elapsedtime / 1000, minexecutiontime.toLong, maxexecutiontime.toLong, sparkSession, "Failed", reportEmailAddress, pipelineName, awsenv, appConfig.dataToolsEmailAddress)
-
           if (failureEmailAddress != "") {
             SendEmail(failureEmailAddress, updatedBodyHtml, applicationId, pipelineName, env, "Data Pull job failed for the Pipeline:" + awsenv + "- " + pipelineName + "-Pipeline (" + applicationId + ")", authenticatedUser)
           }
@@ -177,7 +176,6 @@ class Controller(appConfig: AppConfig, pipeline: String) {
         if (minexecutiontime != "" && maxexecutiontime != "") {
           //This will log in case of no exceptions with completed status.
           elapsedtime = System.currentTimeMillis() - start_time_in_milli
-
           alerts.AlertLog(jobId, masterNode, ec2Role, portfolio, product, elapsedtime / 1000, minexecutiontime.toLong, maxexecutiontime.toLong, sparkSession, "Completed", reportEmailAddress, pipelineName, awsenv, appConfig.dataToolsEmailAddress)
 
         }

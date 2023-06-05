@@ -236,17 +236,6 @@ object DataPull {
       reportEmailAddress = json.getString("useremailaddress")
     }
 
-    if (awsenv == "prod") {
-
-      if (isScheduled) {
-        if (failureEmailAddress != "") {
-          failureEmailAddress = failureEmailAddress + ";" + pagerdutyEmailAddress
-        }
-        else
-          failureEmailAddress = pagerdutyEmailAddress
-      }
-    }
-
     var migrations = new JSONArray()
     if (json.has("migrations")) {
       migrations = json.optJSONArray("migrations")
