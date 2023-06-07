@@ -259,7 +259,7 @@ object DataPull {
       parallelmigrations = json.getBoolean("parallelmigrations")
     }
     var controllerinstance = new Controller(config, pipelineName)
-    controllerinstance.performmigration(migrations, parallelmigrations, reportEmailAddress, verifymigration, reportCounts, config.no_of_retries.toInt, custom_retries, jobId, sparkSession, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, minexecutiontime, maxexecutiontime, start_time_in_milli, applicationId, pipelineName, awsenv, precisecounts, failureThreshold, failureEmailAddress, authenticatedUser)
+    controllerinstance.performmigration(migrations, parallelmigrations, reportEmailAddress, verifymigration, reportCounts, config.no_of_retries.toInt, custom_retries, jobId, sparkSession, masterNode, ec2Role, portfolio, product, jsonString, stepSubmissionTime, minexecutiontime, maxexecutiontime, start_time_in_milli, applicationId, pipelineName, awsenv, precisecounts, failureThreshold, authenticatedUser, failureEmailAddress)
   }
 
   def getFile(fileName: String, relativeToClass: Boolean = true): String = {
