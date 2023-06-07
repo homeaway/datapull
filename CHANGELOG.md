@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.66] - 2023-06-07
+
+Fixed bug of failureemailaddress not being passed in the correct argument order to performmigration
+Moved send email call for failureemailaddress outside of min/maxexecutiontime check
+
+### Changed
+
+- core/src/main/scala/core/Controller.scala
+- core/src/main/scala/core/DataPull.scala
+
+
 ## [0.1.65] - 2022-10-03
 
 ClusterProperties can now create EMR cluster configuration fields in the "spark-defaults" classification.
