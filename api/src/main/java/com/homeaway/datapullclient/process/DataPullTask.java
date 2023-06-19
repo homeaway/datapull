@@ -375,7 +375,7 @@ public class DataPullTask implements Runnable {
         if (!sparkMetricsProperties.isEmpty()) {
             request.withConfigurations(sparkMetricsConfig);
         }
-         if (!hdfsProperties.isEmpty()) {
+        if (!hdfsProperties.isEmpty()) {
             request.withConfigurations(hdfsConfig);
 
         if (!emrSecurityConfiguration.isEmpty()) {
