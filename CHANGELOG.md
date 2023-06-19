@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [0.1.67] - 2023-06-18
 
-Added config in below files as a part of EGDM-3058.
+Added functionally to configure hdfs-site.xml from the Input JSON.
 
 ### added
 
