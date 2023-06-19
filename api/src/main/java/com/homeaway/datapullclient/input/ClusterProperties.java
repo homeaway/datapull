@@ -95,6 +95,9 @@ public class ClusterProperties {
     @JsonProperty("spark_env_properties")
     private Map<String, String> sparkEnvProperties = new HashMap<String, String>();
 
+    @JsonProperty("hdfs_properties")
+    private Map<String, String> hdfsProperties = new HashMap<String, String>();
+
     @JsonProperty("spark_metrics_properties")
     private Map<String, String> sparkMetricsProperties = new HashMap<String, String>();
 
