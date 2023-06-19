@@ -307,6 +307,8 @@ public class DataPullTask implements Runnable {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         hiveProperties.putAll(this.clusterProperties.getHiveProperties());
 
+        Map<String, String> hdfsProperties = this.clusterProperties.getHdfsProperties();
+
         Map<String, String> sparkDefaultsProperties = this.clusterProperties.getSparkDefaultsProperties();
         Map<String, String> sparkEnvProperties = this.clusterProperties.getSparkEnvProperties();
         Map<String, String> sparkMetricsProperties = this.clusterProperties.getSparkMetricsProperties();
@@ -322,6 +324,10 @@ public class DataPullTask implements Runnable {
         Configuration sparkDefaultsConfig = new Configuration()
                 .withClassification("spark-defaults")
                 .withProperties(sparkDefaultsProperties);
+        
+        Configuration hdfsConfig = new Configuration()
+                .withClassification("hdfs-site")
+                .withProperties(hdfsProperties);
 
         Configuration sparkEnvConfig = new Configuration()
                 .withClassification("spark-env")
@@ -369,6 +375,8 @@ public class DataPullTask implements Runnable {
         if (!sparkMetricsProperties.isEmpty()) {
             request.withConfigurations(sparkMetricsConfig);
         }
+         if (!hdfsProperties.isEmpty()) {
+            request.withConfigurations(hdfsConfig);
 
         if (!emrSecurityConfiguration.isEmpty()) {
             request.withSecurityConfiguration(emrSecurityConfiguration);
