@@ -620,6 +620,21 @@
       "hive.optimize.sort.dynamic.partition": "false",
       "hive.metastore.filter.hook": ""
     },
+    "comment_hdfs_properties": "Optional, the EMR cluster will be spun up with user provided hdfs-site classification properties",
+    "hdfs_properties": {
+      "dfs.nameservices": "prodhdp-ha",
+      "dfs.ha.namenodes.prodhdp-ha": "nn1,nn2",
+      "dfs.namenode.rpc-address.prodhdp-ha.nn1": "namenode01:8020",
+      "dfs.namenode.rpc-address.prodhdp-ha.nn2": "namenode02:8020",
+      "dfs.namenode.http-address.prodhdp-ha.nn1": "namenode01:50070",
+      "dfs.namenode.http-address.prodhdp-ha.nn2": "namenode02:50070",
+      "dfs.namenode.heartbeat.recheck-interval": "3 seconds",
+      "dfs.replication": "3",
+      "dfs.namenode.checkpoint.dir": "C:/hadoop/data/namenode",
+      "dfs.datanode.data.dir": "C:/hadoop/data/datanode",
+      "dfs.stream-buffer-size": "4096",
+      "dfs.namenode.checkpoint.max-retries": "3"
+    },
     "comment_spark_hive_properties": "Optional, the EMR cluster will be spun up with user provided spark-hive-site classification properties",
     "spark_hive_properties": {
       "hive.metastore.uris": "thrift://your.apiary.address:9083"
