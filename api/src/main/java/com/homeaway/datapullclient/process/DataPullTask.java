@@ -377,7 +377,7 @@ public class DataPullTask implements Runnable {
         }
         if (!hdfsProperties.isEmpty()) {
             request.withConfigurations(hdfsConfig);
-
+        }
         if (!emrSecurityConfiguration.isEmpty()) {
             request.withSecurityConfiguration(emrSecurityConfiguration);
         }
