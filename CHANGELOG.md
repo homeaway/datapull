@@ -5,7 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.68] - 2023-06-07
+## [0.1.69] - 2023-06-22
+
+Fixed bug of updating the hdfs_properties map string in the datapulltask file.
+
+### Changed
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
+## [0.1.68] - 2023-06-21
 
 Fixed bug of missing bracket in the datapulltask file.
 
