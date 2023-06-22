@@ -307,7 +307,8 @@ public class DataPullTask implements Runnable {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         hiveProperties.putAll(this.clusterProperties.getHiveProperties());
 
-        Map<String, String> hdfsProperties = this.clusterProperties.getHdfsProperties();
+        Map<String, String> hdfsProperties = new HashMap<String, String>();
+        hdfsProperties.putAll(this.clusterProperties.getHdfsProperties());
 
         Map<String, String> sparkDefaultsProperties = this.clusterProperties.getSparkDefaultsProperties();
         Map<String, String> sparkEnvProperties = this.clusterProperties.getSparkEnvProperties();
