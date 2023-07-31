@@ -73,6 +73,8 @@
         "delimiter": "\t",
         "comment_mergeschema": "Optional, this is to merge different schemas when reading parquet files. the default value for this is false",
         "mergeschema": false,
+        "comment_rowfromjsonstring": "Optional, if we want to convert the josn string into json row before writing into the destination s3 bucket. the default value for this is false",
+        "rowfromjsonstring": "false",
         "comment_schema": "Optional, applies only to sources. If set, this explicitly sets the schema of the read files. If not set, the schema is inferred if possible",
         "schema": "`id` BIGINT,`name` STRING",
         "comment_coalescefilecount": "Optional, Specify the number of partitions, which determine the number of files in the destination folder. Applies only to destinations, not sources",
