@@ -18,6 +18,7 @@ package com.homeaway.datapullclient.api;
 
 import com.homeaway.datapullclient.data.ResponseEntity;
 import com.homeaway.datapullclient.data.SimpleResponseEntity;
+import com.homeaway.datapullclient.data.DeleteResponseEntity;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
@@ -54,7 +55,7 @@ public interface DataPullClientApi {
             "}";
 
     String SIMPLE_ENDPOINT_NOTES_TEXT_HTML = "Give the inputs of environment name and pipeline name";
-
+    String DELETE_CLUSTER_NOTES_TEXT_HTML = "Give the inputs of cluster_id";
     @ApiOperation(value = "Given a JSON input , this creates a Jenkins  pipline that can be scheduled to create an EMR cluster, run a DataPull step and terminates the cluster",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE, response = ResponseEntity.class
     , notes = NOTES_TEXT_HTML, nickname = "startDatapull")
@@ -79,4 +80,18 @@ public interface DataPullClientApi {
             @ApiImplicitParam(name = "pipelinename", value = "pipelinename", required = true, dataType = "String", paramType = "query")
     })
     SimpleResponseEntity startSimpleDataPull(@RequestParam("pipelinename") String pipelinename , @RequestParam("awsenv") String  awenv);
+
+    //Delete Cluster functionality implemented by @abalmiki
+    @ApiOperation(value = "Given cluster id this api delete the EMR cluster",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE, response = ResponseEntity.class
+            , notes = DELETE_CLUSTER_NOTES_TEXT_HTML, nickname = "delClusterDataPull")
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @RequestMapping(value = "/SimpleDataPullPipeline", method = POST, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "cluster_id", value = "cluster_id", required = true, dataType = "String", paramType = "query"),
+    })
+    DeleteResponseEntity delClusterDataPull(@RequestParam("cluster_id") String cluster_id);
+
+
+
 }
