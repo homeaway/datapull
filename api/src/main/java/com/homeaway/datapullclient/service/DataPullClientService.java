@@ -22,4 +22,6 @@ public interface DataPullClientService {
     void runDataPull(final String json) throws ProcessingException;
 
     void runSimpleDataPull(String awsenv, String pipelinename) throws ProcessingException;
+
+    void runDeleteDataPull(String cluster_id) throws ProcessingException;
 }

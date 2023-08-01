@@ -122,6 +122,16 @@ public class DataPullRequestProcessor implements DataPullClientService {
         //DO nothing
     }
 
+    @Override
+    public void runDeleteDataPull(String cluster_id) {
+        delCluster(cluster_id);
+    }
+
+    private void delCluster(String clusterId) {
+
+
+    }
+
     private void runDataPull(String json, boolean isStart, boolean validateJson) throws ProcessingException {
         String originalInputJson = json;
         json = extractUserJsonFromS3IfProvided(json, isStart);
