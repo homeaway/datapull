@@ -811,6 +811,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       val tmp_location = tmpFileLocation
       var df_temp = sparkSession.emptyDataFrame
       var df_big = sparkSession.emptyDataFrame
+      var part = 1
+      var tmp_location_local = tmp_location + "/partition=" + part + "/"
 
       import sparkSession.implicits._
       while (cur.hasNext()) {
@@ -818,12 +820,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         list += (doc.toJson)
         if (list.length >= 20000) {
           df_temp = list.toList.toDF("jsonfield")
-          df_temp.write.mode(SaveMode.Append).json(tmp_location)
+          df_temp.write.mode(SaveMode.Append).json(tmp_location_local)
           list.clear()
+          part += 1
+          tmp_location_local = tmp_location + "/partition=" + part + "/"
         }
       }
       df_temp = list.toList.toDF("jsonfield")
-      df_temp.write.mode(SaveMode.Append).json(tmp_location)
+      df_temp.write.mode(SaveMode.Append).json(tmp_location_local)
       list.clear()
       df_big = sparkSession.read.json(tmp_location).withColumnRenamed("value", "jsonfield")
       return df_big

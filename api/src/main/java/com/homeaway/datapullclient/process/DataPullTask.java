@@ -173,6 +173,7 @@ public class DataPullTask implements Runnable {
 
         } else {
             final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), haveBootstrapAction);
+            DataPullTask.log.info(result.toString());
         }
 
         DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
