@@ -55,7 +55,7 @@ public interface DataPullClientApi {
 
     String SIMPLE_ENDPOINT_NOTES_TEXT_HTML = "Give the inputs of environment name and pipeline name";
 
-    @ApiOperation(value = "Given a JSON input , this creates a Jenkins  pipline that can be scheduled to create an EMR cluster, run a DataPull step and terminates the cluster",
+    @ApiOperation(value = "Given a JSON input, creates an EMR cluster, run a DataPull step and terminates the cluster",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE, response = ResponseEntity.class
     , notes = NOTES_TEXT_HTML, nickname = "startDatapull")
     @ResponseStatus(value = HttpStatus.ACCEPTED)
