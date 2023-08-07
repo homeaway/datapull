@@ -22,6 +22,7 @@ import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.process.DataPullRequestProcessor;
 import com.homeaway.datapullclient.service.DataPullClientService;
 import com.homeaway.datapullclient.service.SimpleDataPullClientService;
+import com.homeaway.datapullclient.service.DelCLusterDataPullClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;

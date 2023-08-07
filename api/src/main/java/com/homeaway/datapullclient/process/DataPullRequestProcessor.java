@@ -122,6 +122,11 @@ public class DataPullRequestProcessor implements DataPullClientService {
         //DO nothing
     }
 
+    @Override
+    public void delClusterDataPull(String cluster_id) {
+        //DO nothing
+    }
+
     private void runDataPull(String json, boolean isStart, boolean validateJson) throws ProcessingException {
         String originalInputJson = json;
         json = extractUserJsonFromS3IfProvided(json, isStart);
