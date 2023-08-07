@@ -158,7 +158,7 @@ resource "aws_ecs_service" "datapull-web-api_service" {
 
 resource "aws_cloudwatch_log_group" "datapull_cloudwatch_log_group" {
   name = "/ecs/${var.docker_image_name}"
-  retention_in_days = 1
+  retention_in_days = 7
   tags =local.datapull_ecs_tags
 }
 
