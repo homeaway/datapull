@@ -403,7 +403,14 @@ class Migration extends SparkListener {
         ) {
           var region: String = ""
           if (datastore.has("tmpfilelocation")) {
-            tmp_file_location = datastore.get("tmpfilelocation").toString
+
+            val s3Uri = datastore.get("tmpfilelocation").toString
+            val strippedUri = s3Uri.stripPrefix("s3://")
+
+            println(s"URI without s3://: $strippedUri")
+
+            tmp_file_location = strippedUri
+
           } else {
             tmp_file_location = datastore.get("s3location").toString
           }
