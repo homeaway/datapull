@@ -245,42 +245,9 @@ public class DataPullTask implements Runnable {
         final Application hive = new Application().withName("Hive");
 
         final EMRProperties emrProperties = this.config.getEmrProperties();
-        final int instanceCount = emrProperties.getInstanceCount();
-        final String masterType = emrProperties.getMasterType();
         final DataPullProperties datapullProperties = this.config.getDataPullProperties();
 
-
-        final String applicationSubnet = Objects.toString(this.clusterProperties.getSubnetId(),datapullProperties.getApplicationSubnet1());
-
-        final int count = Integer.valueOf(Objects.toString(this.clusterProperties.getEmrInstanceCount(), Integer.toString(instanceCount)));
-        final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2KeyName(Objects.toString(this.clusterProperties.getEc2KeyName(), emrProperties.getEc2KeyName())) //passing invalid key will make the process terminate
-                //can be removed in case of default vpc
-                .withEc2SubnetId(applicationSubnet).withMasterInstanceType(Objects.toString(this.clusterProperties.getMasterInstanceType(), masterType))
-                .withInstanceCount(count)
-                .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString(this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
-
-        final String masterSG = emrProperties.getEmrSecurityGroupMaster();
-        final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
-        final String serviceAccesss = emrProperties.getEmrSecurityGroupServiceAccess();
-        final String masterSecurityGroup = Objects.toString(this.clusterProperties.getMasterSecurityGroup(), masterSG != null ? masterSG : "");
-        final String slaveSecurityGroup = Objects.toString(this.clusterProperties.getSlaveSecurityGroup(), slaveSG != null ? slaveSG : "");
-        final String serviceAccessSecurityGroup = Objects.toString(this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
-
-        if (!masterSecurityGroup.isEmpty()) {
-            jobConfig.withEmrManagedMasterSecurityGroup(masterSecurityGroup);
-        }
-        if (!slaveSecurityGroup.isEmpty()) {
-            jobConfig.withEmrManagedSlaveSecurityGroup(slaveSecurityGroup);
-        }
-        if (!serviceAccessSecurityGroup.isEmpty()) {
-            jobConfig.withServiceAccessSecurityGroup(serviceAccessSecurityGroup);
-        }
-        final String slaveType = emrProperties.getSlaveType();
-        if (count > 1) {
-            jobConfig.withSlaveInstanceType(Objects.toString(this.clusterProperties.getSlaveInstanceType(), slaveType));
-        }
-
+        final JobFlowInstancesConfig jobConfig = getJobFlowInstancesConfig(emrProperties,clusterProperties,datapullProperties);
         this.addTagsToEMRCluster();
 
         final Map<String, String> sparkProperties = new HashMap<>();
@@ -325,7 +292,7 @@ public class DataPullTask implements Runnable {
         Configuration sparkDefaultsConfig = new Configuration()
                 .withClassification("spark-defaults")
                 .withProperties(sparkDefaultsProperties);
-        
+
         Configuration hdfsConfig = new Configuration()
                 .withClassification("hdfs-site")
                 .withProperties(hdfsProperties);
@@ -401,6 +368,77 @@ public class DataPullTask implements Runnable {
             request.withBootstrapActions(bsConfig);
         }
         return emr.runJobFlow(request);
+    }
+
+    private JobFlowInstancesConfig getJobFlowInstancesConfig(EMRProperties emrProperties,
+                                                             ClusterProperties clusterProperties,
+                                                             DataPullProperties dataPullProperties) {
+
+        final int instanceCount = emrProperties.getInstanceCount();
+        final String masterType = emrProperties.getMasterType();
+        final String slaveType = emrProperties.getSlaveType();
+
+        final InstanceTypeConfig masterInstanceTypeConfig= new InstanceTypeConfig()
+                .withInstanceType(Objects.toString(this.clusterProperties.getMasterInstanceType(), masterType));
+
+        final InstanceFleetConfig masterInstanceFleetConfig= new InstanceFleetConfig()
+                .withInstanceFleetType(InstanceFleetType.MASTER)
+                .withInstanceTypeConfigs(masterInstanceTypeConfig)
+                .withTargetOnDemandCapacity(1);
+
+        final InstanceTypeConfig workerInstanceTypeConfig= new InstanceTypeConfig()
+                .withInstanceType(Objects.toString(this.clusterProperties.getSlaveInstanceType(), slaveType));
+
+        final int count = Integer.valueOf(Objects.toString(
+                this.clusterProperties.getEmrInstanceCount(), Integer.toString(instanceCount)));
+
+        final InstanceFleetConfig workerInstanceFleetConfig= new InstanceFleetConfig()
+                .withInstanceFleetType(InstanceFleetType.CORE)
+                .withInstanceTypeConfigs(workerInstanceTypeConfig)
+                .withTargetOnDemandCapacity(count);
+
+        List<String> subnetIds= new ArrayList<>();
+
+        subnetIds.addAll(toList(new String[]{dataPullProperties.getApplicationSubnet1(),
+                dataPullProperties.getApplicationSubnet2()}));
+
+        if(dataPullProperties.getApplicationSubnet3()!=null){
+            subnetIds.add(dataPullProperties.getApplicationSubnet3());
+        }
+
+        if(clusterProperties.getSubnetId()!=null){
+            subnetIds.add(clusterProperties.getSubnetId());
+        }
+
+        final String masterSG = emrProperties.getEmrSecurityGroupMaster();
+        final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
+        final String serviceAccesss = emrProperties.getEmrSecurityGroupServiceAccess();
+        final String masterSecurityGroup = Objects.toString(
+                this.clusterProperties.getMasterSecurityGroup(), masterSG != null ? masterSG : "");
+        final String slaveSecurityGroup = Objects.toString(
+                this.clusterProperties.getSlaveSecurityGroup(), slaveSG != null ? slaveSG : "");
+        final String serviceAccessSecurityGroup = Objects.toString(
+                this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
+
+        final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
+                .withEc2SubnetIds(subnetIds)
+                .withInstanceFleets(masterInstanceFleetConfig)
+                .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
+                        (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
+
+        if (!masterSecurityGroup.isEmpty()) {
+            jobConfig.withEmrManagedMasterSecurityGroup(masterSecurityGroup);
+        }
+        if (!slaveSecurityGroup.isEmpty()) {
+            jobConfig.withEmrManagedSlaveSecurityGroup(slaveSecurityGroup);
+        }
+        if (!serviceAccessSecurityGroup.isEmpty()) {
+            jobConfig.withServiceAccessSecurityGroup(serviceAccessSecurityGroup);
+        }
+        if (count> 1) {
+            jobConfig.withInstanceFleets(workerInstanceFleetConfig);
+        }
+        return jobConfig;
     }
 
     private void addTagsToEMRCluster() {
@@ -513,6 +551,7 @@ public class DataPullTask implements Runnable {
         });
         return this;
     }
+
 
     private ListStepsResult retryListSteps(final AmazonElasticMapReduce emr, final int MaxRetry, final ListStepsRequest listSteps) {
         ListStepsResult steps = null;

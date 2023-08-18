@@ -28,6 +28,7 @@ datapull:
     s3_bucket_name:
     application_subnet_1:
     application_subnet_2:
+    application_subnet_3:
     application_security_group:
     vpc_id:
     load_balancer_certificate_arn:

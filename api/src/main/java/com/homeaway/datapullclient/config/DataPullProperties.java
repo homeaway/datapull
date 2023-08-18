@@ -47,4 +47,7 @@ public class DataPullProperties {
     @Value("${application_subnet_2:}")
     private String applicationSubnet2;
 
+    @Value("${application_subnet_3:}")
+    private String applicationSubnet3;
+
 }
