@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [0.1.70] - 2023-09-11
-changed the default instance types to Graviton2 based ec2 instances for better performance with low cost 
+changed the default instance types to Graviton2-based ec2 instance(m6g.xlarge) for better performance with low-cost
+
+Changed
+api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java
+
 
 ## [0.1.69] - 2023-06-07
 we have added partitions for every batch we write to s3 to avoid file already existing errors. and added logging for run job flow request response.
