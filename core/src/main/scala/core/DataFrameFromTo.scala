@@ -1277,7 +1277,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         // create the statement, and run the command
         val statement = connection.createStatement()
 
-        if (colType.isDefined) {
+        if (colType != null) {
           resultSet=  statement.executeQuery(sql_command)
 
         }
