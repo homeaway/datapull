@@ -397,7 +397,7 @@ public class DataPullTask implements Runnable {
                 .withInstanceTypeConfigs(workerInstanceTypeConfig)
                 .withTargetOnDemandCapacity(count);
 
-        List<String> subnetIds= new ArrayList<>();
+        Set<String> subnetIds= new HashSet<>();
 
         subnetIds.addAll(toList(new String[]{dataPullProperties.getApplicationSubnet1(),
                 dataPullProperties.getApplicationSubnet2()}));
