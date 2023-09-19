@@ -48,10 +48,10 @@ public class EMRProperties {
     @Value("${instance_count:6}")
     private int instanceCount;
 
-    @Value("${master_type:m6g.xlarge}")
+    @Value("${master_type:m6g.large}")
     private String masterType;
 
-    @Value("${slave_type:m6g.xlarge}")
+    @Value("${slave_type:m6g.large}")
     private String slaveType;
 
     @Value("${service_role:emr_datapull_role}")
