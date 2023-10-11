@@ -445,6 +445,7 @@ public class DataPullTask implements Runnable {
         final EMRProperties emrProperties = this.config.getEmrProperties();
         final Map<String, String> tags = this.config.getEmrProperties().getTags();
         this.addTags(tags);
+        this.addTags(clusterProperties.getTags()); //added for giving precedence to user tags
     }
 
     private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
@@ -499,7 +500,8 @@ public class DataPullTask implements Runnable {
     }
 
     public DataPullTask addTag(final String tagName, final String value) {
-        if (tagName != null && value != null && !this.emrTags.containsKey(tagName)) {
+        // if (tagName != null && value != null && !this.emrTags.containsKey(tagName)) { //Removed 
+        if (tagName != null && value != null) { // added to override the existing tags 
             final Tag tag = new Tag();
             tag.setKey(tagName);
             tag.setValue(value.replaceAll("[^a-z@ A-Z0-9_.:/=+\\\\-]", ""));
