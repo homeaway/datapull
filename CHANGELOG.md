@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.72] - 2023-10-17
+Fixed bug for datapull subnet-id's issue (picking all default id's randomly)
+
 
 ## [0.1.71] - 2023-09-04
 Fixed bug for datapull api if the customer providers any duplicate subnet from the default subnets for the respective account.
