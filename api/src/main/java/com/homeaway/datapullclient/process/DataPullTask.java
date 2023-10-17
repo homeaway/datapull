@@ -444,7 +444,7 @@ public class DataPullTask implements Runnable {
     private void addTagsToEMRCluster() {
         final EMRProperties emrProperties = this.config.getEmrProperties();
         final Map<String, String> tags = this.config.getEmrProperties().getTags();
-        this.addTags(tags);
+        this.addTagsEMR(tags); //modified to restrict default EMR tags
         this.addTags(clusterProperties.getTags()); //added for giving precedence to user tags
     }
 
@@ -500,8 +500,7 @@ public class DataPullTask implements Runnable {
     }
 
     public DataPullTask addTag(final String tagName, final String value) {
-        // if (tagName != null && value != null && !this.emrTags.containsKey(tagName)) { //Removed 
-        if (tagName != null && value != null) { // added to override the existing tags 
+        if (tagName != null && value != null) { // modified to over-write the existing tags 
             final Tag tag = new Tag();
             tag.setKey(tagName);
             tag.setValue(value.replaceAll("[^a-z@ A-Z0-9_.:/=+\\\\-]", ""));
@@ -510,6 +509,20 @@ public class DataPullTask implements Runnable {
 
         return this;
     }
+
+    // New method for adding default EMR tags 
+
+    public DataPullTask addTagEMR(final String tagName, final String value) {
+      if (tagName != null && value != null && !this.emrTags.containsKey(tagName)) { 
+          final Tag tag = new Tag();
+          tag.setKey(tagName);
+          tag.setValue(value.replaceAll("[^a-z@ A-Z0-9_.:/=+\\\\-]", ""));
+          this.emrTags.put(tagName, tag);
+      }
+
+      return this;
+    }
+
 
     @Override
     public String toString() {
@@ -554,6 +567,14 @@ public class DataPullTask implements Runnable {
         return this;
     }
 
+   // New method for adding default EMR tags 
+    
+    public DataPullTask addTagsEMR(final Map<String, String> tags) {
+      tags.forEach((tagName, value) -> {
+          this.addTagEMR(tagName, value);
+          });
+      return this;
+    }
 
     private ListStepsResult retryListSteps(final AmazonElasticMapReduce emr, final int MaxRetry, final ListStepsRequest listSteps) {
         ListStepsResult steps = null;
