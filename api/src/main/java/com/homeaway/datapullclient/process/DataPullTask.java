@@ -409,6 +409,8 @@ public class DataPullTask implements Runnable {
         if(clusterProperties.getSubnetId()!=null){
             subnetIds.add(clusterProperties.getSubnetId());
         }
+        List<String> subnetIds1 = new ArrayList<>(subnetIds);
+        Collections.shuffle(subnetIds1, new Random());
 
         final String masterSG = emrProperties.getEmrSecurityGroupMaster();
         final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
@@ -421,7 +423,7 @@ public class DataPullTask implements Runnable {
                 this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
 
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2SubnetIds(subnetIds)
+                .withEc2SubnetIds(subnetIds1)
                 .withInstanceFleets(masterInstanceFleetConfig)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
                         (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
