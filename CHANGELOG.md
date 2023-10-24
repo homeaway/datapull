@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 Fixed bug for datapull subnet-id's issue (picking all default id's randomly)
 
 
+## [0.1.73] - 2023-10-17
+We have modified the code for providing precedence to user tag over the default tags while EMR cluster creation.
+
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
 ## [0.1.71] - 2023-09-04
 Fixed bug for datapull api if the customer providers any duplicate subnet from the default subnets for the respective account.
 
