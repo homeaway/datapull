@@ -5,6 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.73] - 2023-10-27
+Randomly selecting one subnet_id for all executions (subnet_issue_fix)
+
 ## [0.1.72] - 2023-10-17
 Fixed bug for datapull subnet-id's issue (picking all default id's randomly)
 
