@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.73] - 2023-10-27
 Randomly selecting one subnet_id to eliminate the load on any one subnet while submitting runjobflow requests. 
 
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
 ## [0.1.72] - 2023-10-17
 Fixed bug for datapull subnet-id's issue (picking all default id's randomly)
 
