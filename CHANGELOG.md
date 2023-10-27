@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 ## [0.1.73] - 2023-10-27
-Randomly selecting one subnet_id (subnetid_issue_fix)
+Randomly selecting one subnet_id to eliminate the load on any one subnet while submitting runjobflow requests. 
 
 ## [0.1.72] - 2023-10-17
 Fixed bug for datapull subnet-id's issue (picking all default id's randomly)
