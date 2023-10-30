@@ -17,6 +17,7 @@
 package com.homeaway.datapullclient.handlers;
 
 import com.homeaway.datapullclient.api.DataPullClientApi;
+import com.homeaway.datapullclient.data.DelClusterResponseEntity;
 import com.homeaway.datapullclient.data.ResponseEntity;
 import com.homeaway.datapullclient.data.SimpleResponseEntity;
 import com.homeaway.datapullclient.exception.InputException;
@@ -80,6 +81,26 @@ public class DataPullRequestHandler implements DataPullClientApi {
 
         if(log.isDebugEnabled())
             log.debug("startSimpleDataPull <- return");
+
+        return entity;
+    }
+
+    @Override
+    public DelClusterResponseEntity delClusterDataPull(String cluster_id) {
+        if (log.isDebugEnabled())
+            log.debug("delClusterResponseEntity -> data=" + cluster_id);
+        DelClusterResponseEntity entity = null;
+
+        try{
+            service.delClusterDataPull(cluster_id);
+            entity = new DelClusterResponseEntity(HttpStatus.ACCEPTED.value(), "Request Succesfully registered : "+cluster_id);
+        }
+        catch(ProcessingException e){
+            throw new InputException("DataPull application failed for data : "+cluster_id+" \n "+e.getMessage());
+        }
+
+        if(log.isDebugEnabled())
+            log.debug("delClusterDataPull <- return");
 
         return entity;
     }
