@@ -439,6 +439,11 @@ public class DataPullTask implements Runnable {
         if (!serviceAccessSecurityGroup.isEmpty()) {
             jobConfig.withServiceAccessSecurityGroup(serviceAccessSecurityGroup);
         }
+
+        if (!clusterProperties.getEc2KeyName().isEmpty()){
+            jobConfig.withEc2KeyName(clusterProperties.getEc2KeyName());
+        }
+
         if (count> 1) {
             jobConfig.withInstanceFleets(workerInstanceFleetConfig);
         }
