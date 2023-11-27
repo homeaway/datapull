@@ -5,10 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
-## [0.1.74] - 2023-11-22
+## [0.1.75] - 2023-11-22
 Adding the functionality to able the users to ssh into the ec2 boxes
 ### Changed
 api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
+## [0.1.74] - 2022-11-22
+
+This is to add a feature for users to give the partition columns while writing to a hive table.
+
+### Changed
+
+- core/src/main/resources/Samples/Input_Json_Specification.json
+- core/src/main/scala/core/DataPull.scala
+- core/src/main/scala/core/Migration.scala
 
 ## [0.1.73] - 2023-10-27
 Randomly selecting one subnet_id to eliminate the load on any one subnet while submitting runjobflow requests. 
