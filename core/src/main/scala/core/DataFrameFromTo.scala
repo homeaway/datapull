@@ -1224,7 +1224,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     sparkSession.sql(query)
   }
 
-  def dataFrameToHive(sparkSession: SparkSession, df: org.apache.spark.sql.DataFrame, table: String, database: String, format: String, saveMode: String, partitions: Boolean,partitionByFields: String): Unit = {
+  def dataFrameToHive(sparkSession: SparkSession, df: org.apache.spark.sql.DataFrame, table: String, database: String, format: String, saveMode: String, partitions: Boolean): Unit = {
     sparkSession.sql("use " + database)
 
     if (!partitions) {
@@ -1236,12 +1236,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       sparkSession.sqlContext.setConf("hive.exec.dynamic.partition", "true")
       sparkSession.sqlContext.setConf("hive.exec.dynamic.partition.mode", "nonstrict")
 
-      val partitionByFieldsArray = partitionByFields.split(",")
-
       df.write
         .format(format)
         .mode(saveMode)
-        .partitionBy(partitionByFieldsArray: _*)
         .insertInto(table)
     }
   }

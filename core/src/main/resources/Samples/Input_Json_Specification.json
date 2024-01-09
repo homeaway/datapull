@@ -275,9 +275,7 @@
         "comment_savemode": "Mandatory, specify how data will be saved to the destination table. If partitioned, enter true. Options include append, overwrite, ignore",
         "savemode": "append",
         "comment_partitions": "Mandatory, specify whether or not the destination table is partitioned. If partitioned, enter true. If not, enter false",
-        "partitions": false,
-        "comment_partitionbyfields": "Optional, this is to mention the partition columns while writing to a partitioned hive table",
-        "partitionbyfields": "field1, field2, field3"
+        "partitions": false
       },
       "source_kafka": {
         "platform": "kafka",

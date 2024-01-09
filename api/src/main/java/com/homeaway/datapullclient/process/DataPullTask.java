@@ -23,6 +23,7 @@ import com.homeaway.datapullclient.config.DataPullProperties;
 import com.homeaway.datapullclient.config.EMRProperties;
 import com.homeaway.datapullclient.input.ClusterProperties;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.sql.Array;
@@ -440,7 +441,7 @@ public class DataPullTask implements Runnable {
             jobConfig.withServiceAccessSecurityGroup(serviceAccessSecurityGroup);
         }
 
-        if (!clusterProperties.getEc2KeyName().isEmpty()){
+        if(!StringUtils.isBlank(clusterProperties.getEc2KeyName())){
             jobConfig.withEc2KeyName(clusterProperties.getEc2KeyName());
         }
 
