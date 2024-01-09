@@ -7,9 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 
 ## [0.1.76] - 2024-01-08
-Fixing the issue when the key is not provided by the user.
+Fixing the issue when the key is not provided by the user. and reverting chnages w.r.t insertinto hive table for partitioned table. 
 ### Changed
-api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- core/src/main/resources/Samples/Input_Json_Specification.json
+- core/src/main/scala/core/DataPull.scala
+- core/src/main/scala/core/Migration.scala
 
 ## [0.1.75] - 2023-11-22
 Adding the functionality to able the users to ssh into the ec2 boxes
