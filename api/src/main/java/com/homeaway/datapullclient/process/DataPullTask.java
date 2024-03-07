@@ -21,18 +21,31 @@ import com.amazonaws.services.elasticmapreduce.model.*;
 import com.homeaway.datapullclient.config.DataPullClientConfig;
 import com.homeaway.datapullclient.config.DataPullProperties;
 import com.homeaway.datapullclient.config.EMRProperties;
+import com.homeaway.datapullclient.config.SMTPProperties;
+import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.input.ClusterProperties;
+import com.homeaway.datapullclient.utils.EmailNotification;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.sql.Array;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class DataPullTask implements Runnable {
+
+
+
+    @Autowired
+    DataPullRequestProcessor dataPullRequestProcessor;
 
     //private Logger log = LoggerManag;
     private static final String MAIN_CLASS = "core.DataPull";
@@ -50,10 +63,37 @@ public class DataPullTask implements Runnable {
     @Autowired
     private DataPullClientConfig config;
 
+    private SMTPProperties smtpProperties;
+
     private static final String JSON_WITH_INPUT_FILE_PATH = "{\r\n  \"jsoninputfile\": {\r\n    \"s3path\": \"%s\"\r\n  }\r\n}";
     private final Map<String, Tag> emrTags = new HashMap<>();
     private ClusterProperties clusterProperties;
     private Boolean haveBootstrapAction;
+
+    private static final Logger logger = Logger.getLogger(DataPullTask.class.getName());
+    private Exception storedException;
+    String stackTrace =  null;
+
+    String jobFlowId = null;
+
+    String emailAddress = null;
+    String ClusterId = null;
+
+    enum emailStatusCode {
+        CLUSTER_CREATION_SUCCESS,
+        CLUSTER_CREATION_FAILED,
+        SPARK_EXEC_FAILED,
+        SPARK_EXEC_ON_EXISTING_CLUSTER,
+        INVALID_PARAMS,
+        RUN_ON_EXISTING_CLUSTER_FAILED
+    };
+
+    Boolean runSparkClusterFail,InvalidParamList,getJobFlowInstancesConfigFail,runTaskOnExistingClusterFail;
+
+    private ProcessingException processingException;
+
+
+    EmailNotification emailNotification ;
 
     public DataPullTask(final String taskId, final String s3File, final String jksFilePath) {
         s3FilePath = s3File;
@@ -77,20 +117,25 @@ public class DataPullTask implements Runnable {
 
     @Override
     public void run() {
-        this.runSparkCluster();
+        try {
+            this.runSparkCluster();
+        } catch (ProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    private void runSparkCluster() {
 
-        DataPullTask.log.info("Started cluster config taskId = " + this.taskId);
-
-        final AmazonElasticMapReduce emr = this.config.getEMRClient();
-        final int MAX_RETRY = 16;
-        final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
-        final String logFilePath = dataPullProperties.getLogFilePath();
-        final String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
-        final String logPath = logFilePath == null || logFilePath.equals("") ?
-                "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/logs/SparkLogs" : logFilePath;
+    private void runSparkCluster() throws ProcessingException {
+        try{
+            DataPullTask.log.info("Started cluster config taskId = " + this.taskId);
+            final AmazonElasticMapReduce emr = this.config.getEMRClient();
+            final int MAX_RETRY = 16;
+            final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
+            emailNotification = new EmailNotification(config);
+            final String logFilePath = dataPullProperties.getLogFilePath();
+            final String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
+            final String logPath = logFilePath == null || logFilePath.equals("") ?
+                    "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/logs/SparkLogs" : logFilePath;
 
         s3JarPath = s3JarPath == null || s3JarPath.equals("") ?
                 "s3://" + s3RepositoryBucketName + "/" + "datapull-opensource/jars/DataMigrationFramework-1.0-SNAPSHOT-jar-with-dependencies.jar" : s3JarPath;
@@ -172,26 +217,41 @@ public class DataPullTask implements Runnable {
                 DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
             }
 
-        } else {
-            final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), haveBootstrapAction);
-            DataPullTask.log.info(result.toString());
-        }
+            } else {
+                final RunJobFlowResult result = this.runTaskInNewCluster(emr, logPath, this.s3JarPath, Objects.toString(this.clusterProperties.getSparksubmitparams(), ""), haveBootstrapAction);
+                DataPullTask.log.info(result.toString());
+                String resultSet = result.toString();
+                int colonIndex = resultSet.indexOf(": ");
 
-        DataPullTask.log.info("Task " + this.taskId + " submitted to EMR cluster");
-
-        if (!reapClusters.isEmpty()) {
-            reapClusters.forEach(cluster -> {
-                String clusterIdToReap = cluster.getId();
-                String clusterNameToReap = cluster.getName();
-                //ensure we don't reap the cluster we just used
-                if (!clusters.isEmpty() && clusters.get(0).getId().equals(clusterIdToReap)) {
-                    DataPullTask.log.info("Cannot reap in-use cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
-                } else {
-                    DataPullTask.log.info("About to reap cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
-                    emr.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(Arrays.asList(clusterIdToReap)));
-                    DataPullTask.log.info("Reaped cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
+                if (colonIndex != -1) {
+                    // Extract the substring starting from the next character after the colon and space
+                    jobFlowId = resultSet.substring(colonIndex + 2);
+                    jobFlowId = jobFlowId.replace("}", "");
                 }
-            });
+                sendEmailNotification ();
+            }
+
+            if (!reapClusters.isEmpty()) {
+                reapClusters.forEach(cluster -> {
+                    String clusterIdToReap = cluster.getId();
+                    String clusterNameToReap = cluster.getName();
+                    //ensure we don't reap the cluster we just used
+                    if (!clusters.isEmpty() && clusters.get(0).getId().equals(clusterIdToReap)) {
+                        DataPullTask.log.info("Cannot reap in-use cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
+                    } else {
+                        DataPullTask.log.info("About to reap cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
+                        emr.terminateJobFlows(new TerminateJobFlowsRequest().withJobFlowIds(Arrays.asList(clusterIdToReap)));
+                        DataPullTask.log.info("Reaped cluster " + clusterNameToReap + " with Id " + clusterIdToReap);
+                    }
+                });
+            }
+        }catch (Exception e) {
+            storedException = e;
+            logger.severe("Error occurred: " + e.getMessage());
+            logger.severe("Full exception details: " + e);
+            stackTrace = getStackTraceAsString(e);
+            runSparkClusterFail = true;
+            sendEmailNotification ();
         }
     }
 
@@ -200,21 +260,32 @@ public class DataPullTask implements Runnable {
         return null;
     }
 
-    private List<String> prepareSparkSubmitParams(final String SparkSubmitParams) {
-        final List<String> sparkSubmitParamsList = new ArrayList<>();
-        String[] sparkSubmitParamsArray = null;
-        if (SparkSubmitParams != "") {
-            sparkSubmitParamsArray = SparkSubmitParams.split("\\s+");
 
-            sparkSubmitParamsList.add("spark-submit");
+    private List<String> prepareSparkSubmitParams(final String sparkSubmitParams) throws ProcessingException {
+        try {
+            final List<String> sparkSubmitParamsList = new ArrayList<>();
 
-            sparkSubmitParamsList.addAll(DataPullTask.toList(sparkSubmitParamsArray));
+            if (sparkSubmitParams != null && !sparkSubmitParams.isEmpty()) {
+                String[] sparkSubmitParamsArray = sparkSubmitParams.split("\\s+");
+                sparkSubmitParamsList.add("spark-submit");
+                sparkSubmitParamsList.addAll(DataPullTask.toList(sparkSubmitParamsArray));
+            }
+
+            return sparkSubmitParamsList;
+        } catch (Exception e) {
+            storedException = e;
+            logger.severe("Error occurred: " + e.getMessage());
+            stackTrace = getStackTraceAsString(e);
+            InvalidParamList = true;
+            sendEmailNotification ();
+            e.printStackTrace();
+            return Collections.emptyList(); // Return an empty list or handle the exception accordingly
         }
-
-        return sparkSubmitParamsList;
     }
 
-    private RunJobFlowResult runTaskInNewCluster(final AmazonElasticMapReduce emr, final String logPath, final String jarPath, final String sparkSubmitParams, final Boolean haveBootstrapAction) {
+
+    private RunJobFlowResult runTaskInNewCluster(final AmazonElasticMapReduce emr, final String logPath, final String jarPath, final String sparkSubmitParams, final Boolean haveBootstrapAction) throws ProcessingException {
+        try {
 
         HadoopJarStepConfig runExampleConfig = null;
 
@@ -351,29 +422,102 @@ public class DataPullTask implements Runnable {
             request.withSecurityConfiguration(emrSecurityConfiguration);
         }
 
-        final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
-        final ScriptBootstrapActionConfig sbsConfig = new ScriptBootstrapActionConfig();
-        String bootstrapActionFilePathFromUser = Objects.toString(clusterProperties.getBootstrap_action_file_path(), "");
-        if (!bootstrapActionFilePathFromUser.isEmpty()) {
-            bsConfig.setName("Bootstrap action from file");
-            sbsConfig.withPath(bootstrapActionFilePathFromUser);
-            if (clusterProperties.getBootstrap_action_arguments() != null) {
-                sbsConfig.setArgs(clusterProperties.getBootstrap_action_arguments());
+            final BootstrapActionConfig bsConfig = new BootstrapActionConfig();
+            final ScriptBootstrapActionConfig sbsConfig = new ScriptBootstrapActionConfig();
+            String bootstrapActionFilePathFromUser = Objects.toString(clusterProperties.getBootstrap_action_file_path(), "");
+            if (!bootstrapActionFilePathFromUser.isEmpty()) {
+                bsConfig.setName("Bootstrap action from file");
+                sbsConfig.withPath(bootstrapActionFilePathFromUser);
+                if (clusterProperties.getBootstrap_action_arguments() != null) {
+                    sbsConfig.setArgs(clusterProperties.getBootstrap_action_arguments());
+                }
+                bsConfig.setScriptBootstrapAction(sbsConfig);
+                request.withBootstrapActions(bsConfig);
+            } else if (haveBootstrapAction) {
+                bsConfig.setName("bootstrapaction");
+                sbsConfig.withPath("s3://" + this.jksS3Path);
+                bsConfig.setScriptBootstrapAction(sbsConfig);
+                request.withBootstrapActions(bsConfig);
             }
-            bsConfig.setScriptBootstrapAction(sbsConfig);
-            request.withBootstrapActions(bsConfig);
-        } else if (haveBootstrapAction) {
-            bsConfig.setName("bootstrapaction");
-            sbsConfig.withPath("s3://" + this.jksS3Path);
-            bsConfig.setScriptBootstrapAction(sbsConfig);
-            request.withBootstrapActions(bsConfig);
+            return emr.runJobFlow(request);
+
+        }catch (Exception e) {
+            storedException = e;
+            logger.severe("Error occurred: " + e.getMessage());
+            stackTrace = getStackTraceAsString(e);
+            jobFlowId = null;
+            throw new ProcessingException("Error in runTaskInNewCluster", e);
         }
-        return emr.runJobFlow(request);
     }
 
+
+    private void sendEmailNotification() throws ProcessingException {
+        String emailStatusCodeVal = null;
+        try {
+
+            if (jobFlowId != null) {
+                emailStatusCodeVal = emailStatusCode.CLUSTER_CREATION_SUCCESS.name();
+                emailAddress = dataPullRequestProcessor.successMailAddress();
+            } else if (ClusterId != null) {
+                emailStatusCodeVal = emailStatusCode.SPARK_EXEC_ON_EXISTING_CLUSTER.name();
+                emailAddress = dataPullRequestProcessor.successMailAddress();
+            } else {
+                if (jobFlowId == null) {
+                    emailStatusCodeVal = emailStatusCode.CLUSTER_CREATION_FAILED.name();
+                } else if (runSparkClusterFail == true) {
+                    emailStatusCodeVal = emailStatusCode.SPARK_EXEC_FAILED.name();
+                } else if (InvalidParamList == true) {
+                    emailStatusCodeVal = emailStatusCode.INVALID_PARAMS.name();
+                } else if (runTaskOnExistingClusterFail == true) {
+                    emailStatusCodeVal = emailStatusCode.RUN_ON_EXISTING_CLUSTER_FAILED.name();
+                }
+                emailAddress = dataPullRequestProcessor.failureMailAddress();
+            }
+
+            String[] emailAddressArray = null;
+            InternetAddress[] internetAddress = null;
+
+            if (emailAddress != null && !emailAddress.isEmpty()) {
+                emailAddressArray = emailAddress.split(",");
+            }
+
+            if (emailAddressArray != null && emailAddressArray.length > 0) {
+                // Create an array to store InternetAddress objects
+                internetAddress = new InternetAddress[emailAddressArray.length];
+                for (int i = 0; i < emailAddressArray.length; i++) {
+                    try {
+                        internetAddress[i] = new InternetAddress(emailAddressArray[i].trim());
+                    } catch (AddressException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+
+            String to = Arrays.stream(internetAddress)
+                    .map(InternetAddress::getAddress)
+                    .collect(Collectors.joining(", "));
+
+            emailNotification.sendEmail(emailStatusCodeVal,to, jobFlowId, this.taskId,stackTrace,ClusterId);
+
+        }
+        catch(Exception e) {
+            processingException = new ProcessingException("Error in sendEmailNotification: " + e.getMessage(), e);
+            DataPullTask.log.error("Error in sendEmailNotification: " + e.getMessage(), e);
+            throw processingException;
+        }
+    }
+
+    private String getStackTraceAsString(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        return sw.toString();
+    }
     private JobFlowInstancesConfig getJobFlowInstancesConfig(EMRProperties emrProperties,
                                                              ClusterProperties clusterProperties,
-                                                             DataPullProperties dataPullProperties) {
+                                                             DataPullProperties dataPullProperties) throws ProcessingException {
+
+        try {
 
         final int instanceCount = emrProperties.getInstanceCount();
         final String masterType = emrProperties.getMasterType();
@@ -445,10 +589,20 @@ public class DataPullTask implements Runnable {
             jobConfig.withEc2KeyName(clusterProperties.getEc2KeyName());
         }
 
-        if (count> 1) {
-            jobConfig.withInstanceFleets(workerInstanceFleetConfig);
+            if (count > 1) {
+                jobConfig.withInstanceFleets(workerInstanceFleetConfig);
+            }
+
+            return jobConfig;
         }
-        return jobConfig;
+        catch (Exception e) {
+            storedException = e;
+            logger.severe("Error occurred: " + e.getMessage());
+            stackTrace = getStackTraceAsString(e);
+            getJobFlowInstancesConfigFail = true;
+            sendEmailNotification ();
+            return null;
+        }
     }
 
     private void addTagsToEMRCluster() {
@@ -458,18 +612,21 @@ public class DataPullTask implements Runnable {
         this.addTags(clusterProperties.getTags()); //added for giving precedence to user tags
     }
 
-    private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
+    private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) throws ProcessingException {
+        try {
+            HadoopJarStepConfig runExampleConfig = null;
 
-        HadoopJarStepConfig runExampleConfig = null;
+            ClusterId = id;
 
-        List<String> sparkSubmitParamsListOnExistingCluster = new ArrayList<>();
-        if (sparkSubmitParams != null && !sparkSubmitParams.isEmpty()) {
-            sparkSubmitParamsListOnExistingCluster = this.prepareSparkSubmitParams(sparkSubmitParams);
-        } else {
-            List<String> sparkBaseParams = new ArrayList<>();
-            sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath}));
-            sparkSubmitParamsListOnExistingCluster.addAll(sparkBaseParams);
-        }
+            sendEmailNotification ();
+            List<String> sparkSubmitParamsListOnExistingCluster = new ArrayList<>();
+            if (sparkSubmitParams != null && !sparkSubmitParams.isEmpty()) {
+                sparkSubmitParamsListOnExistingCluster = this.prepareSparkSubmitParams(sparkSubmitParams);
+            } else {
+                List<String> sparkBaseParams = new ArrayList<>();
+                sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath}));
+                sparkSubmitParamsListOnExistingCluster.addAll(sparkBaseParams);
+            }
 
         if (clusterProperties.getSpark_submit_arguments() != null) {
             sparkSubmitParamsListOnExistingCluster.addAll(clusterProperties.getSpark_submit_arguments());
@@ -485,12 +642,20 @@ public class DataPullTask implements Runnable {
                 .withName(this.taskId)
                 .withHadoopJarStep(runExampleConfig).withActionOnFailure("CONTINUE");
 
-        final AddJobFlowStepsRequest req = new AddJobFlowStepsRequest();
-        req.withJobFlowId(id);
-        req.withSteps(step);
-        this.config.getEMRClient().addJobFlowSteps(req);
-        if (terminateClusterAfterExecution) {
-            this.addTerminateStep(id);
+            final AddJobFlowStepsRequest req = new AddJobFlowStepsRequest();
+            req.withJobFlowId(id);
+            req.withSteps(step);
+            this.config.getEMRClient().addJobFlowSteps(req);
+            if (terminateClusterAfterExecution) {
+                this.addTerminateStep(id);
+
+            }
+        }catch (Exception e) {
+            storedException = e;
+            logger.severe("Error occurred: " + e.getMessage());
+            stackTrace = getStackTraceAsString(e);
+            runTaskOnExistingClusterFail = true;
+            sendEmailNotification ();
         }
     }
 
@@ -630,4 +795,5 @@ public class DataPullTask implements Runnable {
 
         return listClustersResult;
     }
+
 }
