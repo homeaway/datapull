@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 
+## [0.1.77] - 2024-14-03
+Adding Email notification feature for the datapull jobs to display their cluster information.
+### Changed 
+     api/src/main/java/com/homeaway/datapullclient/config/DataPullClientConfig.java
+     api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+     api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
+### Added 
+     api/src/main/java/com/homeaway/datapullclient/config/SESProperties.java
+     api/src/main/java/com/homeaway/datapullclient/config/SESProperties.java
+     api/src/main/java/com/homeaway/datapullclient/utils/
+
 ## [0.1.76] - 2024-01-08
 Fixing the issue when the key is not provided by the user. and reverting chnages w.r.t insertinto hive table for partitioned table. 
 ### Changed
