@@ -34,6 +34,7 @@ import com.homeaway.datapullclient.input.Migration;
 import com.homeaway.datapullclient.input.Source;
 import com.homeaway.datapullclient.service.DataPullClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -83,6 +84,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private final Map<String, Future<?>> tasksMap = new ConcurrentHashMap<>();
 
     private final ThreadPoolTaskScheduler scheduler;
+
+    private String userEmail;
+    private String failureEmail;
 
     public DataPullRequestProcessor(){
         scheduler = new ThreadPoolTaskScheduler();
@@ -138,6 +142,23 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
             log.info("Running datapull for json : " + json + " cron expression = " + isStart + "env =" + env);
             final ObjectNode node = new ObjectMapper().readValue(json, ObjectNode.class);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            JsonNode jsonNode = objectMapper.readTree(json);
+            userEmail = null != jsonNode.get("useremailaddress") ?  jsonNode.get("useremailaddress").asText(): "";
+
+            JsonNode failureEmailNode = jsonNode.get("failureemailaddress");
+            if(StringUtils.isNotEmpty(userEmail)){
+                failureEmail = (failureEmailNode != null) ? userEmail.concat(",").concat(failureEmailNode.asText()): userEmail;
+
+            }else {
+                failureEmail = (failureEmailNode != null) ? (failureEmailNode.asText()): "";
+
+            }
+
+
+
             List<Map.Entry<String, JsonNode>> result = new LinkedList<Map.Entry<String, JsonNode>>();
             Iterator<Map.Entry<String, JsonNode>> nodes = node.fields();
             while(nodes.hasNext()){
@@ -196,6 +217,16 @@ public class DataPullRequestProcessor implements DataPullClientService {
         if (log.isDebugEnabled())
             log.debug("runDataPull <- return");
     }
+
+    public String successMailAddress() throws ProcessingException {
+        return userEmail;
+    }
+
+
+    public String failureMailAddress() throws ProcessingException {
+        return failureEmail;
+    }
+
 
     private StringBuilder createBootstrapString(Object[] paths, String bootstrapActionStringFromUser) throws ProcessingException {
 
