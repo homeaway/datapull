@@ -85,9 +85,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private final ThreadPoolTaskScheduler scheduler;
 
-    private String userEmail;
-    private String failureEmail;
+    HashMap<String,String> successEmails = new HashMap<>();
 
+    HashMap<String,String> failureEmails = new HashMap<>();
     public DataPullRequestProcessor(){
         scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(POOL_SIZE);
@@ -127,6 +127,10 @@ public class DataPullRequestProcessor implements DataPullClientService {
     }
 
     private void runDataPull(String json, boolean isStart, boolean validateJson) throws ProcessingException {
+
+        String userEmail;
+        String failureEmail;
+
         String originalInputJson = json;
         json = extractUserJsonFromS3IfProvided(json, isStart);
 
@@ -148,6 +152,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
             JsonNode jsonNode = objectMapper.readTree(json);
             userEmail = null != jsonNode.get("useremailaddress") ?  jsonNode.get("useremailaddress").asText(): "";
 
+            String taskId = jsonNode.get("cluster").get("awsenv").asText().concat("-emr-").concat(jsonNode.get("cluster").get("pipelinename").asText()).concat("-pipeline");
+            successEmails.put(taskId,userEmail);
+
             JsonNode failureEmailNode = jsonNode.get("failureemailaddress");
             if(StringUtils.isNotEmpty(userEmail)){
                 failureEmail = (failureEmailNode != null) ? userEmail.concat(",").concat(failureEmailNode.asText()): userEmail;
@@ -156,7 +163,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 failureEmail = (failureEmailNode != null) ? (failureEmailNode.asText()): "";
 
             }
-
+            failureEmails.put(taskId,failureEmail);
 
 
             List<Map.Entry<String, JsonNode>> result = new LinkedList<Map.Entry<String, JsonNode>>();
@@ -218,13 +225,13 @@ public class DataPullRequestProcessor implements DataPullClientService {
             log.debug("runDataPull <- return");
     }
 
-    public String successMailAddress() throws ProcessingException {
-        return userEmail;
+    public HashMap<String, String> successMailAddress() throws ProcessingException {
+        return successEmails;
     }
 
 
-    public String failureMailAddress() throws ProcessingException {
-        return failureEmail;
+    public HashMap<String, String> failureMailAddress() throws ProcessingException {
+        return failureEmails;
     }
 
 

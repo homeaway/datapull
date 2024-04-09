@@ -76,7 +76,6 @@ public class DataPullTask implements Runnable {
 
     String jobFlowId = null;
 
-    String emailAddress = null;
     String ClusterId = null;
 
     enum emailStatusCode {
@@ -453,14 +452,15 @@ public class DataPullTask implements Runnable {
 
     private void sendEmailNotification() throws ProcessingException {
         String emailStatusCodeVal = null;
+        String emailAddress = null;
         try {
 
             if (jobFlowId != null) {
                 emailStatusCodeVal = emailStatusCode.CLUSTER_CREATION_SUCCESS.name();
-                emailAddress = dataPullRequestProcessor.successMailAddress();
+                emailAddress = dataPullRequestProcessor.successMailAddress().get(taskId);
             } else if (ClusterId != null) {
                 emailStatusCodeVal = emailStatusCode.SPARK_EXEC_ON_EXISTING_CLUSTER.name();
-                emailAddress = dataPullRequestProcessor.successMailAddress();
+                emailAddress = dataPullRequestProcessor.successMailAddress().get(taskId);
             } else {
                 if (jobFlowId == null) {
                     emailStatusCodeVal = emailStatusCode.CLUSTER_CREATION_FAILED.name();
@@ -471,7 +471,7 @@ public class DataPullTask implements Runnable {
                 } else if (runTaskOnExistingClusterFail == true) {
                     emailStatusCodeVal = emailStatusCode.RUN_ON_EXISTING_CLUSTER_FAILED.name();
                 }
-                emailAddress = dataPullRequestProcessor.failureMailAddress();
+                emailAddress = dataPullRequestProcessor.failureMailAddress().get(taskId);
             }
 
             String[] emailAddressArray = null;
