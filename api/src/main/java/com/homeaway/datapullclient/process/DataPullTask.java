@@ -403,7 +403,7 @@ public class DataPullTask implements Runnable {
         subnetIds.addAll(toList(new String[]{dataPullProperties.getApplicationSubnet1(),
                 dataPullProperties.getApplicationSubnet2()}));
 
-        if(dataPullProperties.getApplicationSubnet3()!=null){
+        if(StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet3())) {
             subnetIds.add(dataPullProperties.getApplicationSubnet3());
         }
 
