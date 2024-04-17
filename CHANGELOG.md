@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 
+## [0.1.77] - 2024-04-17
+Implemented a new functionality to send email notifications regarding the initiation of EMR cluster spin-up during the start of datapull jobs, covering both success and failure scenarios.
+### Changed
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+- api/src/main/java/com/homeaway/datapullclient/config/DataPullClientConfig.java
+### Added
+- api/src/main/java/com/homeaway/datapullclient/config/SESProperties.java
+- api/src/main/java/com/homeaway/datapullclient/config/SMTPProperties.java
+- api/src/main/java/com/homeaway/datapullclient/utils/EmailNotification.java
+
 ## [0.1.76] - 2024-01-08
 Fixing the issue when the key is not provided by the user. and reverting chnages w.r.t insertinto hive table for partitioned table. 
 ### Changed
