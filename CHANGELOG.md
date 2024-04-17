@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.77] - 2024-04-10
+Fixing the null subnetId issue by adding  StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet3())
+### Changed
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
 
 ## [0.1.76] - 2024-01-08
 Fixing the issue when the key is not provided by the user. and reverting chnages w.r.t insertinto hive table for partitioned table. 
