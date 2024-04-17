@@ -16,6 +16,17 @@ Fixing the null subnetId issue by adding  StringUtils.isNotBlank(dataPullPropert
 - api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
 
 
+## [0.1.77] - 2024-04-17
+Implemented a new functionality to send email notifications regarding the initiation of EMR cluster spin-up during the start of datapull jobs, covering both success and failure scenarios.
+### Changed
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+- api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+- api/src/main/java/com/homeaway/datapullclient/config/DataPullClientConfig.java
+### Added
+- api/src/main/java/com/homeaway/datapullclient/config/SESProperties.java
+- api/src/main/java/com/homeaway/datapullclient/config/SMTPProperties.java
+- api/src/main/java/com/homeaway/datapullclient/utils/EmailNotification.java
+
 ## [0.1.76] - 2024-01-08
 Fixing the issue when the key is not provided by the user. and reverting chnages w.r.t insertinto hive table for partitioned table. 
 ### Changed
