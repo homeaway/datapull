@@ -179,7 +179,7 @@ exitAfterFailure
 ENV TZ=America/Los_Angeles
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-docker build -t "${docker_image_name}" .
+docker build --platform linux/amd64 -t "${docker_image_name}" .
 
 cd terraform/datapull_task
 
