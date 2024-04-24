@@ -24,10 +24,12 @@ import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuild
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.homeaway.datapullclient.process.DataPullTask;
+import com.homeaway.datapullclient.utils.EmailNotification;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
@@ -35,6 +37,10 @@ import org.springframework.core.env.Environment;
 @Data
 @Configuration("dataPullConfig")
 @PropertySources(@PropertySource("classpath:application.yml"))
+//
+//@SpringBootApplication
+//@ComponentScan("com.homeaway.datapullclient")
+
 public class DataPullClientConfig {
 
     @Autowired
@@ -71,6 +77,18 @@ public class DataPullClientConfig {
         return new EMRProperties();
     }
 
+
+    @Bean
+    public SMTPProperties getSMTPProperties(){
+        return new SMTPProperties();
+    }
+
+
+    @Bean
+    public SESProperties getSESProperties(){
+        return new SESProperties();
+    }
+
     @Bean
     public AmazonElasticMapReduce getEMRClient(){
         AWSCredentialsProvider credentialsProvider = new DefaultAWSCredentialsProviderChain();
@@ -79,4 +97,5 @@ public class DataPullClientConfig {
                 .withCredentials(credentialsProvider)
                 .build());
     }
+
 }

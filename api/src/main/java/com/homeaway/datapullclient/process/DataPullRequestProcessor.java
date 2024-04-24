@@ -34,6 +34,7 @@ import com.homeaway.datapullclient.input.Migration;
 import com.homeaway.datapullclient.input.Source;
 import com.homeaway.datapullclient.service.DataPullClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -84,6 +85,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private final ThreadPoolTaskScheduler scheduler;
 
+    HashMap<String,String> successEmails = new HashMap<>();
+
+    HashMap<String,String> failureEmails = new HashMap<>();
     public DataPullRequestProcessor(){
         scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(POOL_SIZE);
@@ -123,6 +127,10 @@ public class DataPullRequestProcessor implements DataPullClientService {
     }
 
     private void runDataPull(String json, boolean isStart, boolean validateJson) throws ProcessingException {
+
+        String userEmail;
+        String failureEmail;
+
         String originalInputJson = json;
         json = extractUserJsonFromS3IfProvided(json, isStart);
 
@@ -138,6 +146,26 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
             log.info("Running datapull for json : " + json + " cron expression = " + isStart + "env =" + env);
             final ObjectNode node = new ObjectMapper().readValue(json, ObjectNode.class);
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            JsonNode jsonNode = objectMapper.readTree(json);
+            userEmail = null != jsonNode.get("useremailaddress") ?  jsonNode.get("useremailaddress").asText(): "";
+
+            String taskId = jsonNode.get("cluster").get("awsenv").asText().concat("-emr-").concat(jsonNode.get("cluster").get("pipelinename").asText()).concat("-pipeline");
+            successEmails.put(taskId,userEmail);
+
+            JsonNode failureEmailNode = jsonNode.get("failureemailaddress");
+            if(StringUtils.isNotEmpty(userEmail)){
+                failureEmail = (failureEmailNode != null) ? userEmail.concat(",").concat(failureEmailNode.asText()): userEmail;
+
+            }else {
+                failureEmail = (failureEmailNode != null) ? (failureEmailNode.asText()): "";
+
+            }
+            failureEmails.put(taskId,failureEmail);
+
+
             List<Map.Entry<String, JsonNode>> result = new LinkedList<Map.Entry<String, JsonNode>>();
             Iterator<Map.Entry<String, JsonNode>> nodes = node.fields();
             while(nodes.hasNext()){
@@ -196,6 +224,16 @@ public class DataPullRequestProcessor implements DataPullClientService {
         if (log.isDebugEnabled())
             log.debug("runDataPull <- return");
     }
+
+    public HashMap<String, String> successMailAddress() throws ProcessingException {
+        return successEmails;
+    }
+
+
+    public HashMap<String, String> failureMailAddress() throws ProcessingException {
+        return failureEmails;
+    }
+
 
     private StringBuilder createBootstrapString(Object[] paths, String bootstrapActionStringFromUser) throws ProcessingException {
 
