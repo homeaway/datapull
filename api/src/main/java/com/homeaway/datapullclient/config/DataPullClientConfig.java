@@ -31,6 +31,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
+import java.util.List;
+
 @Slf4j
 @Data
 @Configuration("dataPullConfig")
@@ -48,8 +50,8 @@ public class DataPullClientConfig {
 
     @Bean
     @Scope("prototype")
-    public DataPullTask getTask(String taskId, String json, String jksFile) {
-        return new DataPullTask(taskId, json, jksFile);
+    public DataPullTask getTask(String taskId, String json, String jksFile, List<String> subnets) {
+        return new DataPullTask(taskId, json, jksFile,subnets);
     }
 
     @Bean

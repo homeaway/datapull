@@ -34,6 +34,7 @@ import com.homeaway.datapullclient.input.Migration;
 import com.homeaway.datapullclient.input.Source;
 import com.homeaway.datapullclient.service.DataPullClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -84,6 +85,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private final ThreadPoolTaskScheduler scheduler;
 
+    List<String> subnets = new ArrayList<>();
     public DataPullRequestProcessor(){
         scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(POOL_SIZE);
@@ -197,6 +199,35 @@ public class DataPullRequestProcessor implements DataPullClientService {
             log.debug("runDataPull <- return");
     }
 
+    List<String> rotateSubnets(){
+
+        if(subnets.isEmpty()){
+            subnets= getSubnet();
+        }else{
+            List<String> subnetIds_shuffled = new ArrayList<>(subnets);
+            Collections.rotate(subnetIds_shuffled, 1);
+            subnets.clear();
+            subnets.addAll(subnetIds_shuffled);
+        }
+        return subnets;
+    }
+    public List<String> getSubnet(){
+        final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
+
+        List<String> subnetIds = new ArrayList<>();
+
+        subnetIds.add(dataPullProperties.getApplicationSubnet1());
+
+        if (StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet2())) {
+            subnetIds.add(dataPullProperties.getApplicationSubnet2());
+        }
+
+        if (StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet3())) {
+            subnetIds.add(dataPullProperties.getApplicationSubnet3());
+        }
+        return  subnetIds;
+
+    }
     private StringBuilder createBootstrapString(Object[] paths, String bootstrapActionStringFromUser) throws ProcessingException {
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -258,7 +289,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private DataPullTask createDataPullTask(String fileS3Path, String jksFilePath, ClusterProperties properties, String jobName, String creator, String customJarFilePath,  Boolean haveBootstrapAction) {
         String creatorTag = String.join(" ", Arrays.asList(creator.split(",|;")));
-        DataPullTask task = config.getTask(jobName, fileS3Path, jksFilePath).withClusterProperties(properties).withCustomJar(customJarFilePath).haveBootstrapAction(haveBootstrapAction)
+        DataPullTask task = config.getTask(jobName, fileS3Path, jksFilePath,rotateSubnets()).withClusterProperties(properties).withCustomJar(customJarFilePath).haveBootstrapAction(haveBootstrapAction)
                 .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
                 .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull")
@@ -311,7 +342,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private void readExistingDataPullInputs() throws ProcessingException {
         List<String> files = getPendingTaskNames();
-        for(int i = 0; i < files.size(); i++){
+        for(int i = 0; i < files.size()-1311; i++){
             try {
                 readAndExcecuteInputJson(files.get(i));
             } catch (InvalidPointedJsonException e) {
