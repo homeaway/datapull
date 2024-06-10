@@ -55,11 +55,14 @@ public class DataPullTask implements Runnable {
     private ClusterProperties clusterProperties;
     private Boolean haveBootstrapAction;
 
-    public DataPullTask(final String taskId, final String s3File, final String jksFilePath) {
+    private final List<String> subnets ;
+
+    public DataPullTask(final String taskId, final String s3File, final String jksFilePath, final List<String> subnets) {
         s3FilePath = s3File;
         this.taskId = taskId;
         jsonS3Path = this.s3FilePath + ".json";
         jksS3Path = jksFilePath;
+        this.subnets = subnets;
     }
 
     public static List<String> toList(final String[] array) {
@@ -398,22 +401,7 @@ public class DataPullTask implements Runnable {
                 .withInstanceTypeConfigs(workerInstanceTypeConfig)
                 .withTargetOnDemandCapacity(count);
 
-        Set<String> subnetIds= new HashSet<>();
-
-        subnetIds.addAll(toList(new String[]{dataPullProperties.getApplicationSubnet1(),
-                dataPullProperties.getApplicationSubnet2()}));
-
-        if(StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet3())) {
-            subnetIds.add(dataPullProperties.getApplicationSubnet3());
-        }
-
-        if(clusterProperties.getSubnetId()!=null){
-            subnetIds.add(clusterProperties.getSubnetId());
-        }
-        List<String> subnetIds_shuffled = new ArrayList<>(subnetIds);
-        Collections.shuffle(subnetIds_shuffled, new Random());
-        
-        System.out.println("Printing random subnet : " + subnetIds_shuffled.get(0));
+        System.out.println("Printing random subnet : " + subnets);
 
         final String masterSG = emrProperties.getEmrSecurityGroupMaster();
         final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
@@ -425,8 +413,12 @@ public class DataPullTask implements Runnable {
         final String serviceAccessSecurityGroup = Objects.toString(
                 this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
 
+        if(StringUtils.isNotBlank(clusterProperties.getSubnetId())){
+            subnets.add(0,clusterProperties.getSubnetId());
+        }
+
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2SubnetIds(subnetIds_shuffled.get(0))
+                .withEc2SubnetIds(subnets)
                 .withInstanceFleets(masterInstanceFleetConfig)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
                         (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
