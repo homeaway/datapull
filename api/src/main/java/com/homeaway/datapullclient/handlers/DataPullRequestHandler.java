@@ -17,20 +17,17 @@
 package com.homeaway.datapullclient.handlers;
 
 import com.homeaway.datapullclient.api.DataPullClientApi;
+import com.homeaway.datapullclient.data.JobStatus;
 import com.homeaway.datapullclient.data.ResponseEntity;
 import com.homeaway.datapullclient.data.SimpleResponseEntity;
 import com.homeaway.datapullclient.exception.InputException;
 import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.service.DataPullClientService;
-import io.swagger.annotations.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.RequestEntity;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -82,6 +79,34 @@ public class DataPullRequestHandler implements DataPullClientApi {
             log.debug("startSimpleDataPull <- return");
 
         return entity;
+    }
+
+    @Override
+    public org.springframework.http.ResponseEntity<JobStatus> getDataPullPipelineStatus(String pipelinename) {
+        JobStatus jobStatus;
+        try {
+             jobStatus=service.getDataPullPipelineStatus(pipelinename);
+
+
+        } catch (ProcessingException   e) {
+            throw new RuntimeException(e);
+        }
+
+        return org.springframework.http.ResponseEntity.status(HttpStatus.OK).body(jobStatus);
+    }
+
+    @Override
+    public ResponseEntity terminateCluster(String pipelinename) {
+        String clusterId;
+        try {
+            clusterId=service.terminateCluster(pipelinename);
+
+
+        } catch (ProcessingException   e) {
+            throw new RuntimeException(e);
+        }
+
+        return new ResponseEntity(200,"Cluster terminated id : " +clusterId);
     }
 }
 

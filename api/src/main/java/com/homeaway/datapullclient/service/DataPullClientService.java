@@ -16,10 +16,16 @@
 
 package com.homeaway.datapullclient.service;
 
+import com.homeaway.datapullclient.data.JobStatus;
 import com.homeaway.datapullclient.exception.ProcessingException;
 
 public interface DataPullClientService {
     void runDataPull(final String json) throws ProcessingException;
 
     void runSimpleDataPull(String awsenv, String pipelinename) throws ProcessingException;
+
+    JobStatus getDataPullPipelineStatus(String pipelinename) throws ProcessingException;
+
+    String terminateCluster(String pipelinename) throws ProcessingException;
+
 }
