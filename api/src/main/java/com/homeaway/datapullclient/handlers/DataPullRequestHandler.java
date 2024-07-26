@@ -106,7 +106,7 @@ public class DataPullRequestHandler implements DataPullClientApi {
             throw new RuntimeException(e);
         }
 
-        return new ResponseEntity(200,"Cluster terminated id : " +clusterId);
+        return new ResponseEntity(200,"Cluster successfully terminated with cluster id : " +clusterId);
     }
 }
 
