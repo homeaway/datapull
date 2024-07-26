@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.sql.Array;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -373,7 +372,6 @@ public class DataPullTask implements Runnable {
         RunJobFlowResult result=emr.runJobFlow(request);
         ListStepsResult steps = emr.listSteps(new ListStepsRequest().withClusterId(result.getJobFlowId()));
         StepSummary step = steps.getSteps().get(0);
-        System.out.println("******* " +step.getId());
         ;
         DescribeStepRequest ds = new DescribeStepRequest();
         ds.withClusterId(result.getJobFlowId());
