@@ -425,6 +425,10 @@ public class DataPullTask implements Runnable {
             subnets.add(0,clusterProperties.getSubnetId());
         }
 
+        Set<String> subnets_deduped = new LinkedHashSet<>(subnets);
+        subnets.clear();
+        subnets.addAll(subnets_deduped);
+
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
                 .withEc2SubnetIds(subnets)
                 .withInstanceFleets(masterInstanceFleetConfig)
