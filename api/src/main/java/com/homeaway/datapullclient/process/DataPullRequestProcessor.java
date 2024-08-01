@@ -404,7 +404,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private void readExistingDataPullInputs() throws ProcessingException {
         List<String> files = getPendingTaskNames();
-        for(int i = 0; i < files.size()-1311; i++){
+        for(int i = 0; i < files.size(); i++){
             try {
                 readAndExcecuteInputJson(files.get(i));
             } catch (InvalidPointedJsonException e) {
