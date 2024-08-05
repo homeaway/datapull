@@ -21,6 +21,7 @@ import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
+import com.amazonaws.services.elasticmapreduce.model.DescribeStepRequest;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.homeaway.datapullclient.process.DataPullTask;
@@ -32,6 +33,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.core.env.Environment;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Data
@@ -50,8 +52,8 @@ public class DataPullClientConfig {
 
     @Bean
     @Scope("prototype")
-    public DataPullTask getTask(String taskId, String json, String jksFile, List<String> subnets) {
-        return new DataPullTask(taskId, json, jksFile,subnets);
+    public DataPullTask getTask(String taskId, String json, String jksFile, List<String> subnets, Map<String, List<DescribeStepRequest>> stepPipelineMap) {
+        return new DataPullTask(taskId, json, jksFile, subnets, stepPipelineMap);
     }
 
     @Bean
