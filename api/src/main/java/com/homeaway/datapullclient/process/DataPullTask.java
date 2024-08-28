@@ -22,16 +22,17 @@ import com.homeaway.datapullclient.config.DataPullClientConfig;
 import com.homeaway.datapullclient.config.DataPullProperties;
 import com.homeaway.datapullclient.config.EMRProperties;
 import com.homeaway.datapullclient.input.ClusterProperties;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.sql.Array;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 @Slf4j
+@Data
 public class DataPullTask implements Runnable {
 
     //private Logger log = LoggerManag;
@@ -55,11 +56,16 @@ public class DataPullTask implements Runnable {
     private ClusterProperties clusterProperties;
     private Boolean haveBootstrapAction;
 
-    public DataPullTask(final String taskId, final String s3File, final String jksFilePath) {
+    private final List<String> subnets ;
+    private final Map<String,List<DescribeStepRequest>> stepPipelineMap;
+
+    public DataPullTask(final String taskId, final String s3File, final String jksFilePath, final List<String> subnets, final Map<String,List<DescribeStepRequest>> stepPipelineMap) {
         s3FilePath = s3File;
         this.taskId = taskId;
         jsonS3Path = this.s3FilePath + ".json";
         jksS3Path = jksFilePath;
+        this.subnets = subnets;
+        this.stepPipelineMap =stepPipelineMap;
     }
 
     public static List<String> toList(final String[] array) {
@@ -193,11 +199,6 @@ public class DataPullTask implements Runnable {
                 }
             });
         }
-    }
-
-    private List<String> arrayToList(Array args) {
-
-        return null;
     }
 
     private List<String> prepareSparkSubmitParams(final String SparkSubmitParams) {
@@ -368,7 +369,17 @@ public class DataPullTask implements Runnable {
             bsConfig.setScriptBootstrapAction(sbsConfig);
             request.withBootstrapActions(bsConfig);
         }
-        return emr.runJobFlow(request);
+        RunJobFlowResult result=emr.runJobFlow(request);
+        ListStepsResult steps = emr.listSteps(new ListStepsRequest().withClusterId(result.getJobFlowId()));
+        StepSummary step = steps.getSteps().get(0);
+        ;
+        DescribeStepRequest ds = new DescribeStepRequest();
+        ds.withClusterId(result.getJobFlowId());
+        ds.withStepId(step.getId());
+        List<DescribeStepRequest> dsList = new ArrayList<>();
+        dsList.add(ds);
+        stepPipelineMap.put(taskId,dsList);
+        return result;
     }
 
     private JobFlowInstancesConfig getJobFlowInstancesConfig(EMRProperties emrProperties,
@@ -398,22 +409,7 @@ public class DataPullTask implements Runnable {
                 .withInstanceTypeConfigs(workerInstanceTypeConfig)
                 .withTargetOnDemandCapacity(count);
 
-        Set<String> subnetIds= new HashSet<>();
-
-        subnetIds.addAll(toList(new String[]{dataPullProperties.getApplicationSubnet1(),
-                dataPullProperties.getApplicationSubnet2()}));
-
-        if(StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet3())) {
-            subnetIds.add(dataPullProperties.getApplicationSubnet3());
-        }
-
-        if(clusterProperties.getSubnetId()!=null){
-            subnetIds.add(clusterProperties.getSubnetId());
-        }
-        List<String> subnetIds_shuffled = new ArrayList<>(subnetIds);
-        Collections.shuffle(subnetIds_shuffled, new Random());
-        
-        System.out.println("Printing random subnet : " + subnetIds_shuffled.get(0));
+        System.out.println("Printing random subnet : " + subnets);
 
         final String masterSG = emrProperties.getEmrSecurityGroupMaster();
         final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
@@ -425,8 +421,16 @@ public class DataPullTask implements Runnable {
         final String serviceAccessSecurityGroup = Objects.toString(
                 this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
 
+        if(StringUtils.isNotBlank(clusterProperties.getSubnetId())){
+            subnets.add(0,clusterProperties.getSubnetId());
+        }
+
+        Set<String> subnets_deduped = new LinkedHashSet<>(subnets);
+        subnets.clear();
+        subnets.addAll(subnets_deduped);
+
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2SubnetIds(subnetIds_shuffled.get(0))
+                .withEc2SubnetIds(subnets)
                 .withInstanceFleets(masterInstanceFleetConfig)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
                         (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
@@ -488,10 +492,16 @@ public class DataPullTask implements Runnable {
         final AddJobFlowStepsRequest req = new AddJobFlowStepsRequest();
         req.withJobFlowId(id);
         req.withSteps(step);
-        this.config.getEMRClient().addJobFlowSteps(req);
+        AddJobFlowStepsResult result= this.config.getEMRClient().addJobFlowSteps(req);
         if (terminateClusterAfterExecution) {
             this.addTerminateStep(id);
         }
+        DescribeStepRequest ds = new DescribeStepRequest();
+        ds.withClusterId(id);
+        ds.withStepId(result.getStepIds().get(0));
+        List<DescribeStepRequest> dsList = new ArrayList<>();
+        dsList.add(ds);
+        stepPipelineMap.put(taskId,dsList);
     }
 
     private void addTerminateStep(final String clusterId) {

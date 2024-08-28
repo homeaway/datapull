@@ -16,6 +16,7 @@
 
 package com.homeaway.datapullclient.api;
 
+import com.homeaway.datapullclient.data.JobStatus;
 import com.homeaway.datapullclient.data.ResponseEntity;
 import com.homeaway.datapullclient.data.SimpleResponseEntity;
 import io.swagger.annotations.ApiImplicitParam;
@@ -79,4 +80,21 @@ public interface DataPullClientApi {
             @ApiImplicitParam(name = "pipelinename", value = "pipelinename", required = true, dataType = "String", paramType = "query")
     })
     SimpleResponseEntity startSimpleDataPull(@RequestParam("pipelinename") String pipelinename , @RequestParam("awsenv") String  awenv);
+
+
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @ApiOperation(value = "DataPull Pipeline Status", response = ResponseEntity.class, produces = "application/json" , nickname = "healthCheck")
+    @RequestMapping(value="/DataPullPipelineStatus", method = GET, produces = "application/json")
+    @ApiImplicitParams({@ApiImplicitParam(name = "pipelinename", value = "Example egdp-test-emr-pipelineName-pipeline", required = true, dataType = "String", paramType = "query")
+    })
+    org.springframework.http.ResponseEntity<JobStatus> getDataPullPipelineStatus(@RequestParam("pipelinename") String pipelinename);
+
+    @ResponseStatus(value = HttpStatus.ACCEPTED)
+    @ApiOperation(value = "Terminate cluster", response = ResponseEntity.class, produces = "application/json" , nickname = "terminate")
+    @RequestMapping(value="/TerminateCluster", method = POST,  consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiImplicitParams({@ApiImplicitParam(name = "pipelinename", value = "Example egdp-test-emr-pipelineName-pipeline" +
+            "where xyz is pipeline", required = true, dataType = "String", paramType = "query")
+    })
+    ResponseEntity terminateCluster(@RequestParam("pipelinename") String pipelinename);
+
 }

@@ -16,6 +16,8 @@
 
 package com.homeaway.datapullclient.process;
 
+import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
+import com.amazonaws.services.elasticmapreduce.model.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,6 +28,8 @@ import com.homeaway.datapullclient.config.DataPullContext;
 import com.homeaway.datapullclient.config.DataPullContextHolder;
 import com.homeaway.datapullclient.config.DataPullProperties;
 import com.homeaway.datapullclient.config.EMRProperties;
+import com.homeaway.datapullclient.data.ClusterStepCollection;
+import com.homeaway.datapullclient.data.JobStatus;
 import com.homeaway.datapullclient.exception.InvalidPointedJsonException;
 import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.input.ClusterProperties;
@@ -34,6 +38,7 @@ import com.homeaway.datapullclient.input.Migration;
 import com.homeaway.datapullclient.input.Source;
 import com.homeaway.datapullclient.service.DataPullClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.everit.json.schema.Schema;
 import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -82,8 +87,11 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private final Map<String, Future<?>> tasksMap = new ConcurrentHashMap<>();
 
+    private final Map<String, List<DescribeStepRequest>> stepPipelineMap = new HashMap<>();
+
     private final ThreadPoolTaskScheduler scheduler;
 
+    List<String> subnets = new ArrayList<>();
     public DataPullRequestProcessor(){
         scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(POOL_SIZE);
@@ -93,6 +101,10 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     @PostConstruct
     public void runHistoricalTasksAndReadSchemaJson() throws ProcessingException {
+        ClusterStepCollection cl = new ClusterStepCollection();
+        final AmazonElasticMapReduce emr = this.config.getEMRClient();
+        stepPipelineMap.putAll(cl.getClusterResult(emr,3));
+
         readExistingDataPullInputs();
         try{
             ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -101,6 +113,10 @@ public class DataPullRequestProcessor implements DataPullClientService {
             JSONObject jsonSchema = new JSONObject(
                     new JSONTokener(resources[0].getInputStream()));
             inputJsonSchema = SchemaLoader.load(jsonSchema);
+
+
+
+
         } catch (IOException e) {
             throw new ProcessingException("Unable to create JSON validator", e);
         }
@@ -120,6 +136,50 @@ public class DataPullRequestProcessor implements DataPullClientService {
     @Override
     public void runSimpleDataPull(String awsenv, String pipelinename) {
         //DO nothing
+    }
+
+    @Override
+    public JobStatus getDataPullPipelineStatus(String pipelineName) throws ProcessingException {
+
+        List<DescribeStepRequest> dsList = stepPipelineMap.get(pipelineName);
+        Map<String, String> jobStatusMap = new HashMap<>();
+        Map<String, String> clusterStatusMap = new HashMap<>();
+
+        if(dsList ==null || dsList.isEmpty()){
+
+            throw new ProcessingException("Pipeline doesn't exist");
+        }
+        for(DescribeStepRequest ds :dsList) {
+            DescribeStepResult res = this.config.getEMRClient().describeStep(ds);
+            DescribeClusterRequest describeClusterRequest = new DescribeClusterRequest();
+            describeClusterRequest.withClusterId(ds.getClusterId());
+            String clusterStatus = this.config.getEMRClient().describeCluster(describeClusterRequest).getCluster().getStatus().getState();
+            String stepStatus = res.getStep().getStatus().getState();
+            jobStatusMap.put(ds.getStepId(), stepStatus);
+            clusterStatusMap.put(ds.getClusterId(), clusterStatus);
+
+        }
+        JobStatus jobStatus = new JobStatus();
+        jobStatus.setClusterStatus(clusterStatusMap);
+        jobStatus.setJobStatus(jobStatusMap);
+        return jobStatus;
+    }
+    @Override
+    public String terminateCluster(String pipelineName) throws ProcessingException {
+
+        List<DescribeStepRequest> dsList = stepPipelineMap.get(pipelineName);
+        String cluserId = null;
+        if(dsList ==null || dsList.isEmpty()){
+            throw new ProcessingException("Pipeline doesn't exist");
+        }
+        for(DescribeStepRequest ds :dsList) {
+            TerminateJobFlowsRequest terminateJobFlowsRequest = new TerminateJobFlowsRequest();
+            cluserId =ds.getClusterId();
+            terminateJobFlowsRequest.withJobFlowIds(cluserId);
+            this.config.getEMRClient().terminateJobFlows(terminateJobFlowsRequest);
+        }
+
+        return cluserId;
     }
 
     private void runDataPull(String json, boolean isStart, boolean validateJson) throws ProcessingException {
@@ -197,6 +257,39 @@ public class DataPullRequestProcessor implements DataPullClientService {
             log.debug("runDataPull <- return");
     }
 
+    List<String> rotateSubnets(){
+
+        if(subnets.isEmpty()){
+            subnets= getSubnet();
+        }else{
+            List<String> subnetIds_shuffled = new ArrayList<>(subnets);
+            Collections.rotate(subnetIds_shuffled, 1);
+            subnets.clear();
+            subnets.addAll(subnetIds_shuffled);
+        }
+        return subnets;
+    }
+
+   Map<String,List<DescribeStepRequest>> getStepForPipeline(){
+       return stepPipelineMap;
+    }
+    public List<String> getSubnet(){
+        final DataPullProperties dataPullProperties = this.config.getDataPullProperties();
+
+        List<String> subnetIds = new ArrayList<>();
+
+        subnetIds.add(dataPullProperties.getApplicationSubnet1());
+
+        if (StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet2())) {
+            subnetIds.add(dataPullProperties.getApplicationSubnet2());
+        }
+
+        if (StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet3())) {
+            subnetIds.add(dataPullProperties.getApplicationSubnet3());
+        }
+        return  subnetIds;
+
+    }
     private StringBuilder createBootstrapString(Object[] paths, String bootstrapActionStringFromUser) throws ProcessingException {
 
         StringBuilder stringBuilder = new StringBuilder();
@@ -258,7 +351,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private DataPullTask createDataPullTask(String fileS3Path, String jksFilePath, ClusterProperties properties, String jobName, String creator, String customJarFilePath,  Boolean haveBootstrapAction) {
         String creatorTag = String.join(" ", Arrays.asList(creator.split(",|;")));
-        DataPullTask task = config.getTask(jobName, fileS3Path, jksFilePath).withClusterProperties(properties).withCustomJar(customJarFilePath).haveBootstrapAction(haveBootstrapAction)
+        DataPullTask task = config.getTask(jobName, fileS3Path, jksFilePath,rotateSubnets(),getStepForPipeline()).withClusterProperties(properties).withCustomJar(customJarFilePath).haveBootstrapAction(haveBootstrapAction)
                 .addTag("Creator", creatorTag).addTag("Env", Objects.toString(properties.getAwsEnv(), env)).addTag("Name", jobName)
                 .addTag("AssetProtectionLevel", "99").addTag("ComponentInfo", properties.getComponentInfo())
                 .addTag("Portfolio", properties.getPortfolio()).addTag("Product", properties.getProduct()).addTag("Team", properties.getTeam()).addTag("tool", "datapull")
