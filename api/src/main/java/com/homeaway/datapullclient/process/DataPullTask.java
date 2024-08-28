@@ -411,6 +411,8 @@ public class DataPullTask implements Runnable {
 
         System.out.println("Printing random subnet : " + subnets);
 
+        System.out.println("Printing selected subnet-ID for EMR cluster creation : " +  subnets.get(0));
+
         final String masterSG = emrProperties.getEmrSecurityGroupMaster();
         final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
         final String serviceAccesss = emrProperties.getEmrSecurityGroupServiceAccess();
@@ -430,7 +432,7 @@ public class DataPullTask implements Runnable {
         subnets.addAll(subnets_deduped);
 
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2SubnetIds(subnets)
+                .withEc2SubnetIds(subnets.get(0)) 
                 .withInstanceFleets(masterInstanceFleetConfig)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
                         (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));

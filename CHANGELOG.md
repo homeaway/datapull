@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.80] - 2024-08-28
+Modified code to pick only the first subnet ID from the subnet-list and mandated EMR version to 5.36.2
+### Changed
+-DatapullTask.java,EMRProperties.java
+
 ## [0.1.79] - 2024-06-07
 Added code to rotate subnet.
 ### Changed
