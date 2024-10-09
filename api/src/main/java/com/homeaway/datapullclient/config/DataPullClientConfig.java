@@ -52,8 +52,8 @@ public class DataPullClientConfig {
 
     @Bean
     @Scope("prototype")
-    public DataPullTask getTask(String taskId, String json, String jksFile, List<String> subnets, Map<String, List<DescribeStepRequest>> stepPipelineMap) {
-        return new DataPullTask(taskId, json, jksFile, subnets, stepPipelineMap);
+    public DataPullTask getTask(String taskId, String creator, String json, String jksFile, List<String> subnets, Map<String, List<DescribeStepRequest>> stepPipelineMap) {
+        return new DataPullTask(taskId, creator, json, jksFile, subnets, stepPipelineMap);
     }
 
     @Bean
