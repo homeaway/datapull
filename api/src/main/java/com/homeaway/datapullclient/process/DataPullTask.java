@@ -455,7 +455,6 @@ public class DataPullTask implements Runnable {
                     case "RUNNING":
                         DataPullTask.log.info("Cluster {} is ready.", clusterId);
                         return true;
-                    case "TERMINATING":
                     case "TERMINATED_WITH_ERRORS":
                     case "TERMINATED":
                         String reason = status.getStateChangeReason().getMessage();
