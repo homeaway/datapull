@@ -768,13 +768,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     } catch {
       case e: Throwable => e.printStackTrace
         throw (e)
-    } finally {
-      if (connection != null) {
-        if (!connection.isClosed()) {
-          connection.close()
-        }
-      }
-    }
+    } 
   }
 
   def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, tmpFileLocation: String, sampleSize: String, sslEnabled: String): org.apache.spark.sql.DataFrame = {
