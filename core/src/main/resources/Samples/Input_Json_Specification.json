@@ -187,6 +187,8 @@
       "source_rdbms": {
         "comment_platform": "other supported rdbms platforms are mssql, mysql, postgres. These sources have the same object structure as mssql shown below",
         "platform": "mssql",
+        "comment_url: "Jdbc url",
+        "url": "<database url>",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
         "awsenv": "dev",
         "comment_server": "This element accepts both IPs and CNAMEs e.g. mydbserver.domain.internal. CNAMEs are required if Vault integration is used to fetch the credentials",
@@ -403,6 +405,8 @@
       },
       "source_influxdb": {
         "platform": "influxdb",
+        "comment_url: "Jdbc url",
+        "url": "<database url>",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
         "awsenv": "dev",
         "clustername": "localhost",
@@ -417,6 +421,8 @@
       },
       "destination_influxDB": {
         "platform": "influxdb",
+        "comment_url: "Jdbc url",
+        "url": "<database url>",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
         "awsenv": "dev",
         "comment_cluster": "This element accepts both IPs and Consul DNS names. Consul DNS names are required if Vault integration is used to fetch the credentials",
