@@ -768,13 +768,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     } catch {
       case e: Throwable => e.printStackTrace
         throw (e)
-    } finally {
-      if (connection != null) {
-        if (!connection.isClosed()) {
-          connection.close()
-        }
-      }
-    }
+    } 
   }
 
   def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, tmpFileLocation: String, sampleSize: String, sslEnabled: String): org.apache.spark.sql.DataFrame = {
@@ -1120,11 +1114,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def rdbmsToDataFrame(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: Boolean, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String]): org.apache.spark.sql.DataFrame = {
+  def rdbmsToDataFrame(platform: String, url:String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: Boolean, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String]): org.apache.spark.sql.DataFrame = {
     val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled, addlJdbcOptions: JSONObject)
     val driver: String = configMap("driver")
-    val url: String = configMap("url")
-
+    val db_url: String = Option(url).filter(_.nonEmpty).getOrElse(configMap("url"))
     val consul = new Consul(server, appConfig)
     var clusterName = server
     if (consul.IsConsulDNSName()) {
@@ -1148,7 +1141,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     //logic
     if (primarykey.isEmpty()) {
-      jdbcOptions = jdbcOptions ++ Map("url" -> url,
+      jdbcOptions = jdbcOptions ++ Map("url" -> db_url,
         "user" -> vaultLogin,
         "password" -> vaultPassword,
         "driver" -> driver,
@@ -1165,7 +1158,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       connectionProperties.setProperty("driver", driver)
 
 
-      val df = sparkSession.read.options(jdbcOptions).jdbc(url = url,
+      val df = sparkSession.read.options(jdbcOptions).jdbc(url = db_url,
 
         table = table,
         columnName = primarykey,
@@ -1178,10 +1171,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def dataFrameToRdbms(platform: String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: Boolean = false, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String] = None): Unit = {
+  def dataFrameToRdbms(platform: String, url:String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, df: org.apache.spark.sql.DataFrame, vaultEnv: String, secretStore: String, sslEnabled: Boolean = false, port: String, addlJdbcOptions: JSONObject, savemode: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String] = None): Unit = {
     val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled, addlJdbcOptions: JSONObject)
     val driver: String = configMap("driver")
-    val url: String = configMap("url")
+    val db_url: String = Option(url).filter(_.nonEmpty).getOrElse(configMap("url"))
 
     val consul = new Consul(server, appConfig)
     var clusterName = server
@@ -1217,7 +1210,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     if (platform == "teradata") {
       df_temp = df.coalesce(1)
     }
-    df_temp.write.mode(savemode).options(jdbcOptions).jdbc(url, table, connectionProperties)
+    df_temp.write.mode(savemode).options(jdbcOptions).jdbc(db_url, table, connectionProperties)
   }
 
   def hiveToDataFrame(sparkSession: org.apache.spark.sql.SparkSession, query: String): org.apache.spark.sql.DataFrame = {
@@ -1243,14 +1236,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def rdbmsRunCommand(platform: String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], colType: Option[String]): ResultSet = {
+  def rdbmsRunCommand(platform: String, url:String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], colType: Option[String]): ResultSet = {
 
     var resultSet:ResultSet = null
     if (sql_command != "") {
 
       val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled, null)
       val driver: String = configMap("driver")
-      val url: String = configMap("url")
+      val db_url: String = Option(url).filter(_.nonEmpty).getOrElse(configMap("url"))
 
       val consul = new Consul(server, appConfig)
       var clusterName = server
@@ -1272,7 +1265,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       try {
         // make the connection
         Class.forName(driver)
-        connection = DriverManager.getConnection(url, vaultLogin, vaultPassword)
+        connection = DriverManager.getConnection(db_url, vaultLogin, vaultPassword)
 
         // create the statement, and run the command
         val statement = connection.createStatement()

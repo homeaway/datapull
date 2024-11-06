@@ -189,9 +189,7 @@ docker run --rm -v "${HOME}/.aws":"/root/.aws" amazon/aws-cli --profile ${AWS_PR
 #
 echo "creating repo =>"
 #
-
-tag_string="[  {    \"Key\": \"Application\",    \"Value\": \"${tag_application}\"  }, {    \"Key\": \"Brand\",    \"Value\": \"${tag_brand}\"  }, {    \"Key\": \"Team\",    \"Value\": \"${tag_team}\"  }, {    \"Key\": \"AssetProtectionLevel\",    \"Value\": \"${tag_asset_protection_level}\"  }, {    \"Key\": \"ComponentInfo\",    \"Value\": \"${tag_component_info}\"  }, {    \"Key\": \"CostCenter\",    \"Value\": \"${tag_cost_center}\"  }  ]"
-docker run --rm -v "${HOME}/.aws":"/root/.aws" amazon/aws-cli --profile ${AWS_PROFILE} ecr create-repository --repository-name "$docker_image_name" --tags "${tag_string}"
+docker run --rm -v "${HOME}/.aws":"/root/.aws" amazon/aws-cli --profile ${AWS_PROFILE} ecr create-repository --repository-name "$docker_image_name"
 #
 #
 echo "login into repo =>"
