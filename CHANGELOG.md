@@ -5,8 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+## [0.1.81] - 2024-11-05
+Taking the URI from the user for all the RDBMS
+### Changed
+-DataFrameFromTo.scala
+
 ## [0.1.81] - 2024-10-17
-Fixing the bug respect to connection being closed before rs.
+Fixing the bug with respect to the connection being closed before rs.
 ### Changed
 -DataFrameFromTo.scala
 
