@@ -266,7 +266,13 @@
       "source_hive": {
         "platform": "hive",
         "comment_query": "Mandatory , the provided query will be executed as sql in Spark Session",
-        "query": "select * from db.table"
+        "query": "select * from db.table",
+        "comment_properties": "this to set additional configs for spark session config i.e. spark.conf",
+        "properties": {
+        "fs.s3.enableServerSideEncryption": "true",
+        "fs.s3.serverSideEncryptionAlgorithm": "AES256",
+        "fs.s3.connection.ssl.enabled": "true"
+      }
       },
       "destination_hive": {
         "platform": "hive",
@@ -277,7 +283,13 @@
         "comment_savemode": "Mandatory, specify how data will be saved to the destination table. If partitioned, enter true. Options include append, overwrite, ignore",
         "savemode": "append",
         "comment_partitions": "Mandatory, specify whether or not the destination table is partitioned. If partitioned, enter true. If not, enter false",
-        "partitions": false
+        "partitions": false,
+        "comment_properties": "this to set additional configs for spark session config i.e. spark.conf",
+        "properties": {
+        "fs.s3.enableServerSideEncryption": "true",
+        "fs.s3.serverSideEncryptionAlgorithm": "AES256",
+        "fs.s3.connection.ssl.enabled": "true"
+      }
       },
       "source_kafka": {
         "platform": "kafka",
