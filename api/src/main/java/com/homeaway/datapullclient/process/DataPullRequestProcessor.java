@@ -257,15 +257,12 @@ public class DataPullRequestProcessor implements DataPullClientService {
             log.debug("runDataPull <- return");
     }
 
-    List<String> rotateSubnets(){
-
-        if(subnets.isEmpty()){
-            subnets= getSubnet();
-        }else{
-            List<String> subnetIds_shuffled = new ArrayList<>(subnets);
-            Collections.rotate(subnetIds_shuffled, 1);
-            subnets.clear();
-            subnets.addAll(subnetIds_shuffled);
+    List<String> rotateSubnets() {
+        if (subnets.isEmpty()) {
+            subnets = getSubnet();
+        } else {
+            String first = subnets.remove(0);
+            subnets.add(first);
         }
         return subnets;
     }
