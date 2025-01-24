@@ -1117,7 +1117,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
   def rdbmsToDataFrame(platform: String, url:String, awsEnv: String, server: String, database: String, table: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, primarykey: String, lowerbound: String, upperbound: String, numofpartitions: String, vaultEnv: String, secretStore: String, sslEnabled: Boolean, port: String, addlJdbcOptions: JSONObject, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String]): org.apache.spark.sql.DataFrame = {
     val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled, addlJdbcOptions: JSONObject)
     val driver: String = configMap("driver")
-    val db_url: String = Option(url).filter(_.nonEmpty).getOrElse(configMap("url"))
+    val db_url: String = Option(url).filter(_.nonEmpty).getOrElse(configMap.getOrElse("url", ""))
     val consul = new Consul(server, appConfig)
     var clusterName = server
     if (consul.IsConsulDNSName()) {
