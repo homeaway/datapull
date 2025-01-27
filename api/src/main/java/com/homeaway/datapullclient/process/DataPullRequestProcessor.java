@@ -49,6 +49,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.CronTrigger;
 import org.springframework.stereotype.Service;
@@ -57,6 +58,7 @@ import javax.annotation.PostConstruct;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -83,6 +85,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private String env;
 
     private static final String DATAPULL_HISTORY_FOLDER = "datapull-opensource/history";
+    private static final String DATAPULL_NON_SCHEDULED_FOLDER = "datapull-opensource/non-scheduled";
     private static final String BOOTSTRAP_FOLDER = "datapull-opensource/bootstrapfiles";
 
     private final Map<String, Future<?>> tasksMap = new ConcurrentHashMap<>();
@@ -255,6 +258,66 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
         if (log.isDebugEnabled())
             log.debug("runDataPull <- return");
+    }
+
+    /*
+     Move files from the history folder to the non-scheduled folder if their JSON content lacks a cron expression.
+     */
+    @Scheduled(cron = "0 0 0 1/5 * ?")
+    private void moveNonScheduledJobs() {
+        log.info("Moving non-scheduled jobs");
+        DataPullProperties dataPullProperties = config.getDataPullProperties();
+        String applicationHistoryFolder = dataPullProperties.getApplicationHistoryFolder();
+        String s3RepositoryBucketName = dataPullProperties.getS3BucketName();
+
+        AmazonS3 s3Client = config.getS3Client();
+        String applicationHistoryFolderPath = applicationHistoryFolder == null || applicationHistoryFolder.isEmpty()
+                ? DATAPULL_HISTORY_FOLDER
+                : applicationHistoryFolder;
+
+        if (!applicationHistoryFolderPath.endsWith("/")) {
+            applicationHistoryFolderPath += "/";
+        }
+        try {
+
+            ListObjectsV2Request request = new ListObjectsV2Request()
+                    .withBucketName(s3RepositoryBucketName)
+                    .withPrefix(applicationHistoryFolderPath);
+            ListObjectsV2Result result;
+            do {
+                result = s3Client.listObjectsV2(request);
+
+                for (S3ObjectSummary summary : result.getObjectSummaries()) {
+                    String key = summary.getKey();
+
+                    // Skip folders
+                    if (key.endsWith("/")) {
+                        continue;
+                    }
+
+                    S3Object s3Object = s3Client.getObject(s3RepositoryBucketName, key);
+                    InputStream inputStream = s3Object.getObjectContent();
+                    ObjectMapper objectMapper = new ObjectMapper();
+                    // Parse JSON
+                    JsonNode rootNode = objectMapper.readTree(inputStream);
+
+                    if (!rootNode.path("cluster").has("cronexpression")) {
+                        // Move to non-scheduled folder
+                        String newKey = DATAPULL_NON_SCHEDULED_FOLDER + key.substring(DATAPULL_HISTORY_FOLDER.length());
+                        s3Client.copyObject(s3RepositoryBucketName, key, s3RepositoryBucketName, newKey);
+                        s3Client.deleteObject(s3RepositoryBucketName, key);
+                        log.info("Moved {} to {}", key, newKey);
+                    } else {
+                        log.debug("Skipped {} (has scheduled job)", key);
+                    }
+                }
+                // Prepare for the next batch of results, if any
+                request.setContinuationToken(result.getNextContinuationToken());
+            } while (result.isTruncated());
+        }
+        catch (Exception e) {
+            log.error("Error processing files: " + e.getMessage());
+        }
     }
 
     List<String> rotateSubnets(){
