@@ -32,10 +32,12 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Arrays;
 
 @SpringBootApplication
+@EnableScheduling
 @ComponentScan(basePackages = "com.homeaway.datapullclient")
 @Slf4j
 public class DatapullclientApplication{
