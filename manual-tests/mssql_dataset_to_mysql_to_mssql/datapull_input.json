@@ -5,6 +5,7 @@
       "sources": [
         {
           "platform": "mssql",
+          "url": "<database url>",
           "server": "mssql",
           "database": "master",
           "login": "sa",
@@ -30,6 +31,7 @@
       ],
       "destination": {
         "platform": "mysql",
+        "url": "<database url>",
         "server": "mysql",
         "database": "mysqldb",
         "login": "root",
@@ -52,6 +54,7 @@
       "sources": [
         {
           "platform": "mysql",
+          "url": "<database url>",
           "server": "mysql",
           "database": "mysqldb",
           "login": "root",
@@ -71,6 +74,7 @@
       ],
       "destination": {
         "platform": "mssql",
+        "url": "<database url>",
         "server": "mssql",
         "database": "mssqldb",
         "login": "sa",

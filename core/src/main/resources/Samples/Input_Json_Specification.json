@@ -187,6 +187,8 @@
       "source_rdbms": {
         "comment_platform": "other supported rdbms platforms are mssql, mysql, postgres. These sources have the same object structure as mssql shown below",
         "platform": "mssql",
+        "comment_url: "Optional, This is to enable the user to add their own JDBC URI with all the custom and mandatory connection configuration",
+        "url": "jdbc:sqlserver://IP:Port;databaseName=dbname;encrypt=false;trustServerCertificate=true",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
         "awsenv": "dev",
         "comment_server": "This element accepts both IPs and CNAMEs e.g. mydbserver.domain.internal. CNAMEs are required if Vault integration is used to fetch the credentials",
@@ -264,7 +266,13 @@
       "source_hive": {
         "platform": "hive",
         "comment_query": "Mandatory , the provided query will be executed as sql in Spark Session",
-        "query": "select * from db.table"
+        "query": "select * from db.table",
+        "comment_properties": "this to set additional configs for spark session config i.e. spark.conf",
+        "properties": {
+        "fs.s3.enableServerSideEncryption": "true",
+        "fs.s3.serverSideEncryptionAlgorithm": "AES256",
+        "fs.s3.connection.ssl.enabled": "true"
+      }
       },
       "destination_hive": {
         "platform": "hive",
@@ -275,7 +283,13 @@
         "comment_savemode": "Mandatory, specify how data will be saved to the destination table. If partitioned, enter true. Options include append, overwrite, ignore",
         "savemode": "append",
         "comment_partitions": "Mandatory, specify whether or not the destination table is partitioned. If partitioned, enter true. If not, enter false",
-        "partitions": false
+        "partitions": false,
+        "comment_properties": "this to set additional configs for spark session config i.e. spark.conf",
+        "properties": {
+        "fs.s3.enableServerSideEncryption": "true",
+        "fs.s3.serverSideEncryptionAlgorithm": "AES256",
+        "fs.s3.connection.ssl.enabled": "true"
+      }
       },
       "source_kafka": {
         "platform": "kafka",
@@ -403,6 +417,8 @@
       },
       "source_influxdb": {
         "platform": "influxdb",
+        "comment_url: "Jdbc url",
+        "url": "<database url>",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
         "awsenv": "dev",
         "clustername": "localhost",
@@ -417,6 +433,8 @@
       },
       "destination_influxDB": {
         "platform": "influxdb",
+        "comment_url: "Jdbc url",
+        "url": "<database url>",
         "comment_awsenv": "optional. Possible values are dev/test/stage/prod. Required if Vault integration is used to fetch the credentials",
         "awsenv": "dev",
         "comment_cluster": "This element accepts both IPs and Consul DNS names. Consul DNS names are required if Vault integration is used to fetch the credentials",
