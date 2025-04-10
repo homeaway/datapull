@@ -413,6 +413,9 @@ public class DataPullTask implements Runnable {
 
         System.out.println("Printing selected subnet-ID for EMR cluster creation : " +  subnets.get(0));
 
+        // Bala - newly added variable orignal_subnets
+        LinkedHashSet<String> orignal_subnets  = new LinkedHashSet<>(subnets);
+
         final String masterSG = emrProperties.getEmrSecurityGroupMaster();
         final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
         final String serviceAccesss = emrProperties.getEmrSecurityGroupServiceAccess();
@@ -428,8 +431,20 @@ public class DataPullTask implements Runnable {
         }
 
         Set<String> subnets_deduped = new LinkedHashSet<>(subnets);
+
+        // Bala - newly added logic to address null and invalid subnets
+        LinkedHashSet<String> filteredSubnets = new LinkedHashSet<>();
+        for (String item : subnets_deduped) {
+            if (orignal_subnets.contains(item)) {
+                filteredSubnets.add(item);
+            }
+        }
+
         subnets.clear();
-        subnets.addAll(subnets_deduped);
+        // subnets.addAll(subnets_deduped);
+
+        // Bala - replaced subnets_deduped with filteredSubnets
+        subnets.addAll(filteredSubnets);
 
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
                 .withEc2SubnetIds(subnets.get(0)) 
