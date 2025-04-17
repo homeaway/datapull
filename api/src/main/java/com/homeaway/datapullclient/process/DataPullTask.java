@@ -413,9 +413,6 @@ public class DataPullTask implements Runnable {
 
         System.out.println("Printing selected subnet-ID for EMR cluster creation : " +  subnets.get(0));
 
-        // Bala - newly added variable orignal_subnets
-        LinkedHashSet<String> orignal_subnets  = new LinkedHashSet<>(subnets);
-
         final String masterSG = emrProperties.getEmrSecurityGroupMaster();
         final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
         final String serviceAccesss = emrProperties.getEmrSecurityGroupServiceAccess();
@@ -430,24 +427,31 @@ public class DataPullTask implements Runnable {
             subnets.add(0,clusterProperties.getSubnetId());
         }
 
-        Set<String> subnets_deduped = new LinkedHashSet<>(subnets);
+//      Introducing below logic to address null and invalid subnet issue
+        String getSubnetId = clusterProperties.getSubnetId();
+        String finalSubnetId;
 
-        // Bala - newly added logic to address null and invalid subnets
-        LinkedHashSet<String> filteredSubnets = new LinkedHashSet<>();
-        for (String item : subnets_deduped) {
-            if (orignal_subnets.contains(item)) {
-                filteredSubnets.add(item);
+
+        if (StringUtils.isNotBlank(getSubnetId) && getSubnetId.startsWith("subnet-")) {
+            finalSubnetId = getSubnetId;
+            System.out.println("Subnet '" + finalSubnetId + "' provided by the user will be used for EMR cluster creation.");
+        } else {
+            if (StringUtils.isNotBlank(getSubnetId)) {
+                System.out.println("The user provided an invalid value '" + getSubnetId + "' for subnet. Hence, default subnet pool will be used for EMR creation.");
+            } else {
+                System.out.println("The user either provided a NULL value for the subnet or did not specify subnet in the payload. Hence, the default subnet pool will be used for EMR creation.");
             }
+
+            Set<String> subnetsDeduped = new LinkedHashSet<>(subnets);
+            subnets.clear();
+            subnets.addAll(subnetsDeduped);
+
+            finalSubnetId = subnets.get(0);
+            System.out.println("EMR cluster will be created using a subnet from the default subnet pool: " + finalSubnetId);
         }
 
-        subnets.clear();
-        // subnets.addAll(subnets_deduped);
-
-        // Bala - replaced subnets_deduped with filteredSubnets
-        subnets.addAll(filteredSubnets);
-
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2SubnetIds(subnets.get(0)) 
+                .withEc2SubnetIds(finalSubnetId)
                 .withInstanceFleets(masterInstanceFleetConfig)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
                         (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
