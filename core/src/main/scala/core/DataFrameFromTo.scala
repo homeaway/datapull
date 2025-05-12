@@ -1213,7 +1213,38 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     df_temp.write.mode(savemode).options(jdbcOptions).jdbc(db_url, table, connectionProperties)
   }
 
-  def hiveToDataFrame(sparkSession: org.apache.spark.sql.SparkSession, query: String): org.apache.spark.sql.DataFrame = {
+  def hiveToDataFrame(sparkSession: SparkSession, query: String, properties: Option[JSONObject] = None): DataFrame = {
+
+    println("Properties Passed:" + properties)
+
+    val defaultConfigs = Map(
+      "spark.sql.hive.caseSensitiveInferenceMode" -> "INFER_ONLY",
+      "spark.sql.hive.metastore.version" -> "1.2.1",
+      "spark.sql.hive.metastore.jars" -> "builtin"
+    )
+    val parsedProperties = properties.map { jsonObj =>
+      import scala.collection.JavaConverters._
+      val propertyMap = scala.collection.mutable.Map[String, String]()
+      val iter = jsonObj.keys()
+
+      while (iter.hasNext) {
+        val key = iter.next().toString
+        propertyMap(key) = jsonObj.getString(key)
+      }
+      propertyMap.toMap
+    }.getOrElse(Map.empty[String, String])
+
+    val finalConfigs = defaultConfigs ++ parsedProperties
+
+    finalConfigs.foreach { case (key, value) =>
+      sparkSession.sqlContext.setConf(key, value)
+    }
+
+    println("Configurations applied:")
+    finalConfigs.foreach { case (key, value) =>
+      println(s"$key -> ${sparkSession.sqlContext.getConf(key)}")
+    }
+
     sparkSession.sql(query)
   }
 

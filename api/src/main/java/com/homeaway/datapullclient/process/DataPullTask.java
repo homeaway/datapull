@@ -427,12 +427,31 @@ public class DataPullTask implements Runnable {
             subnets.add(0,clusterProperties.getSubnetId());
         }
 
-        Set<String> subnets_deduped = new LinkedHashSet<>(subnets);
-        subnets.clear();
-        subnets.addAll(subnets_deduped);
+//      Introducing below logic to address null and invalid subnet issue
+        String getSubnetId = clusterProperties.getSubnetId();
+        String finalSubnetId;
+
+
+        if (StringUtils.isNotBlank(getSubnetId) && getSubnetId.startsWith("subnet-")) {
+            finalSubnetId = getSubnetId;
+            System.out.println("Subnet '" + finalSubnetId + "' provided by the user will be used for EMR cluster creation.");
+        } else {
+            if (StringUtils.isNotBlank(getSubnetId)) {
+                System.out.println("The user provided an invalid value '" + getSubnetId + "' for subnet. Hence, default subnet pool will be used for EMR creation.");
+            } else {
+                System.out.println("The user either provided a NULL value for the subnet or did not specify subnet in the payload. Hence, the default subnet pool will be used for EMR creation.");
+            }
+
+            Set<String> subnetsDeduped = new LinkedHashSet<>(subnets);
+            subnets.clear();
+            subnets.addAll(subnetsDeduped);
+
+            finalSubnetId = subnets.get(0);
+            System.out.println("EMR cluster will be created using a subnet from the default subnet pool: " + finalSubnetId);
+        }
 
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2SubnetIds(subnets.get(0)) 
+                .withEc2SubnetIds(finalSubnetId)
                 .withInstanceFleets(masterInstanceFleetConfig)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
                         (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
@@ -642,4 +661,5 @@ public class DataPullTask implements Runnable {
 
         return listClustersResult;
     }
+
 }
