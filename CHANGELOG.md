@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 
+## [0.1.86] - 2025-09-11
+Setting default application tag 'datapullemr' when application tags are missing from the input JSON
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+
 ## [0.1.85] - 2025-04-10
 Addressing NULL and invalid subnet issue
 ### Changed
