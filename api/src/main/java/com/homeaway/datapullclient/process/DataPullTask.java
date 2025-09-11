@@ -481,6 +481,11 @@ public class DataPullTask implements Runnable {
         final Map<String, String> tags = this.config.getEmrProperties().getTags();
         this.addTagsEMR(tags); //modified to restrict default EMR tags
         this.addTags(clusterProperties.getTags()); //added for giving precedence to user tags
+        String applicationTagValue = "datapullemr"; // Default value
+        String userApplicationValue = clusterProperties.getTags().get("Application");
+        if (userApplicationValue == null || userApplicationValue.trim().isEmpty()) {
+            this.addTag("Application", applicationTagValue);
+        }
     }
 
     private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
