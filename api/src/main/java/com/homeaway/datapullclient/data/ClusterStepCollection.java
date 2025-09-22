@@ -18,7 +18,8 @@ public class ClusterStepCollection {
 
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DATE, -2);
-        listClustersRequest.setCreatedBefore(cal.getTime());
+        listClustersRequest.setCreatedAfter(cal.getTime());
+
         listClustersRequest.setClusterStates(Arrays.asList(ClusterState.RUNNING.toString(), ClusterState.WAITING.toString(), ClusterState.STARTING.toString()));
         while (true) {
             for (ClusterSummary cluster : listClustersResult.getClusters()) {
