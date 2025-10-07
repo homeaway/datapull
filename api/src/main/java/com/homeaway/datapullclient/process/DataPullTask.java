@@ -478,13 +478,12 @@ public class DataPullTask implements Runnable {
 
     private void addTagsToEMRCluster() {
         final EMRProperties emrProperties = this.config.getEmrProperties();
-        final Map<String, String> tags = this.config.getEmrProperties().getTags();
-        this.addTagsEMR(tags); //modified to restrict default EMR tags
-        this.addTags(clusterProperties.getTags()); //added for giving precedence to user tags
-        String applicationTagValue = "datapullemr"; // Default value
-        String userApplicationValue = clusterProperties.getTags().get("Application");
-        if (userApplicationValue == null || userApplicationValue.trim().isEmpty()) {
-            this.addTag("Application", applicationTagValue);
+        final Map<String, String> tags = emrProperties.getTags();
+        this.addTagsEMR(tags);
+        this.addTags(clusterProperties.getTags());
+        if (!this.emrTags.containsKey("Application")) {
+            String defaultApplicationTagValue = "datapullemr";
+            this.addTag("Application", defaultApplicationTagValue);
         }
     }
 
@@ -608,10 +607,15 @@ public class DataPullTask implements Runnable {
 
     public DataPullTask addTags(final Map<String, String> tags) {
         tags.forEach((tagName, value) -> {
-            this.addTag(tagName, value);
+            if ("application".equalsIgnoreCase(tagName)) {
+                this.addTag("Application", value);
+            } else {
+                this.addTag(tagName, value);
+            }
         });
         return this;
     }
+
 
    // New method for adding default EMR tags 
     
