@@ -360,11 +360,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
                 .addTag("Application", properties.getApplication())
                 .addTag("CostCenter", properties.getCostCenter());
 
-        String applicationTagValue = "datapullemr"; // Default value
         if (properties.getTags() != null && !properties.getTags().isEmpty()) {
             task.addTags(properties.getTags());
-        }else{
-            task.addTag("Application", applicationTagValue);
         }
 
         return task;
