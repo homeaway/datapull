@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
+
+## [0.1.89] - 2026-02-09
+Addressing credentials plain text display issue
+### Changed
+core/src/main/scala/core/Helper.scala
+
+## [0.1.88] - 2025-10-06
+Addressing addition of duplicate application tags
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+api/src/main/java/com/homeaway/datapullclient/data/ClusterStepCollection.java
+
+## [0.1.87] - 2025-09-22
+Addressing listCluster concurrency issue by changing HashMap to ConcurrentHashMap 
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+api/src/main/java/com/homeaway/datapullclient/data/ClusterStepCollection.java
+
+## [0.1.86] - 2025-09-11
+Setting default application tag 'datapullemr' when application tags are missing from the input JSON
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+
+## [0.1.85] - 2025-04-10
+Addressing NULL and invalid subnet issue
+### Changed
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+
+## [0.1.84] - 2025-02-19
+Taking hive input config from user to override default values
+### Changed
+-core/src/main/scala/core/Migration.scala
+-core/src/main/scala/core/DataFrameFromTo.scala
+
+## [0.1.83] - 2025-01-24
+fix java.util.NoSuchElementException: key not found: url
+### Changed
+-core/src/main/scala/core/DataFrameFromTo.scala
+
+## [0.1.82] - 2024-11-06
+Upgrading the emr label to fix some vulnerabilities. 
+### Changed
+-api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java
+
+## [0.1.81] - 2024-11-05
+Taking the URI from the user for all the RDBMS
+### Changed
+-DataFrameFromTo.scala
+
+## [0.1.81] - 2024-10-17
+Fixing the bug with respect to the connection being closed before rs.
+### Changed
+-DataFrameFromTo.scala
+
 ## [0.1.80] - 2024-08-28
 Modified code to pick only the first subnet ID from the subnet-list and mandated EMR version to 5.36.2
 ### Changed

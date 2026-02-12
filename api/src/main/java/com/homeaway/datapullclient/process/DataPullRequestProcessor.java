@@ -87,7 +87,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
     private final Map<String, Future<?>> tasksMap = new ConcurrentHashMap<>();
 
-    private final Map<String, List<DescribeStepRequest>> stepPipelineMap = new HashMap<>();
+    private final Map<String, List<DescribeStepRequest>> stepPipelineMap = new ConcurrentHashMap<>();
+
 
     private final ThreadPoolTaskScheduler scheduler;
 

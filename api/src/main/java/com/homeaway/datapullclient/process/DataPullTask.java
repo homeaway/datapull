@@ -527,12 +527,31 @@ public class DataPullTask implements Runnable {
             subnets.add(0,clusterProperties.getSubnetId());
         }
 
-        Set<String> subnets_deduped = new LinkedHashSet<>(subnets);
-        subnets.clear();
-        subnets.addAll(subnets_deduped);
+//      Introducing below logic to address null and invalid subnet issue
+        String getSubnetId = clusterProperties.getSubnetId();
+        String finalSubnetId;
+
+
+        if (StringUtils.isNotBlank(getSubnetId) && getSubnetId.startsWith("subnet-")) {
+            finalSubnetId = getSubnetId;
+            System.out.println("Subnet '" + finalSubnetId + "' provided by the user will be used for EMR cluster creation.");
+        } else {
+            if (StringUtils.isNotBlank(getSubnetId)) {
+                System.out.println("The user provided an invalid value '" + getSubnetId + "' for subnet. Hence, default subnet pool will be used for EMR creation.");
+            } else {
+                System.out.println("The user either provided a NULL value for the subnet or did not specify subnet in the payload. Hence, the default subnet pool will be used for EMR creation.");
+            }
+
+            Set<String> subnetsDeduped = new LinkedHashSet<>(subnets);
+            subnets.clear();
+            subnets.addAll(subnetsDeduped);
+
+            finalSubnetId = subnets.get(0);
+            System.out.println("EMR cluster will be created using a subnet from the default subnet pool: " + finalSubnetId);
+        }
 
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
-                .withEc2SubnetIds(subnets.get(0)) 
+                .withEc2SubnetIds(finalSubnetId)
                 .withInstanceFleets(masterInstanceFleetConfig)
                 .withKeepJobFlowAliveWhenNoSteps(!Boolean.valueOf(Objects.toString
                         (this.clusterProperties.getTerminateClusterAfterExecution(), "true")));
@@ -559,9 +578,13 @@ public class DataPullTask implements Runnable {
 
     private void addTagsToEMRCluster() {
         final EMRProperties emrProperties = this.config.getEmrProperties();
-        final Map<String, String> tags = this.config.getEmrProperties().getTags();
-        this.addTagsEMR(tags); //modified to restrict default EMR tags
-        this.addTags(clusterProperties.getTags()); //added for giving precedence to user tags
+        final Map<String, String> tags = emrProperties.getTags();
+        this.addTagsEMR(tags);
+        this.addTags(clusterProperties.getTags());
+        if (!this.emrTags.containsKey("Application")) {
+            String defaultApplicationTagValue = "datapullemr";
+            this.addTag("Application", defaultApplicationTagValue);
+        }
     }
 
     private void runTaskOnExistingCluster(final String id, final String jarPath, final boolean terminateClusterAfterExecution, final String sparkSubmitParams) {
@@ -684,10 +707,15 @@ public class DataPullTask implements Runnable {
 
     public DataPullTask addTags(final Map<String, String> tags) {
         tags.forEach((tagName, value) -> {
-            this.addTag(tagName, value);
+            if ("application".equalsIgnoreCase(tagName)) {
+                this.addTag("Application", value);
+            } else {
+                this.addTag(tagName, value);
+            }
         });
         return this;
     }
+
 
    // New method for adding default EMR tags 
     
@@ -742,4 +770,5 @@ public class DataPullTask implements Runnable {
 
         return listClustersResult;
     }
+
 }

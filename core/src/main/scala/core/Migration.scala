@@ -210,6 +210,7 @@ class Migration extends SparkListener {
       else if (destinationMap("platform") == "mssql" || destinationMap("platform") == "mysql" || destinationMap("platform") == "postgres" || destinationMap("platform") == "oracle" || destinationMap("platform") == "teradata") {
         dataframeFromTo.dataFrameToRdbms(
           platform = destinationMap("platform"),
+          url = destinationMap("url"),
           awsEnv = destinationMap("awsenv"),
           server = destinationMap("server"),
           database = destinationMap("database"),
@@ -516,6 +517,7 @@ class Migration extends SparkListener {
       val sqlQuery = mssqlPlatformQueryFromS3File(sparkSession, platformObject)
       dataframeFromTo.rdbmsToDataFrame(
         platform = platform,
+        url = propertiesMap("url"),
         awsEnv = propertiesMap("awsenv"),
         server = propertiesMap("server"),
         database = propertiesMap("database"),
@@ -613,7 +615,13 @@ class Migration extends SparkListener {
       )
     }
     else if (platform == "hive") {
-      dataframeFromTo.hiveToDataFrame(sparkSession, propertiesMap("query"))
+      val properties = if (platformObject.has("properties")) {
+        Option(platformObject.getJSONObject("properties"))
+      } else {
+        None
+      }
+
+      dataframeFromTo.hiveToDataFrame(sparkSession = sparkSession, query = propertiesMap("query"), properties = properties)
     } else if (platform == "mongodb") {
       dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", secretStoreDefaultValue), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("tmpfilelocation", null), propertiesMap.getOrElse("samplesize", null), propertiesMap.getOrElse("sslenabled", "false"))
     }
@@ -786,6 +794,7 @@ class Migration extends SparkListener {
         if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
           dataframeFromTo.rdbmsRunCommand(
             platform = platform,
+            url = propertiesMap("url"),
             awsEnv = propertiesMap("awsenv"),
             server = propertiesMap("server"),
             port = propertiesMap.getOrElse("port", null),
