@@ -511,13 +511,12 @@ class Migration extends SparkListener {
     val platform = propertiesMap("platform")
     val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
 
-
     if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
 
       val sqlQuery = mssqlPlatformQueryFromS3File(sparkSession, platformObject)
       dataframeFromTo.rdbmsToDataFrame(
         platform = platform,
-        url = propertiesMap.getOrElse("url", ""),
+        url = propertiesMap("url"),
         awsEnv = propertiesMap("awsenv"),
         server = propertiesMap("server"),
         database = propertiesMap("database"),
