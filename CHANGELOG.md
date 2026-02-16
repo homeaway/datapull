@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 
+## [0.1.90] - 2026-02-16
+Addressing "key not found: url" Exception
+### Changed
+core/src/main/scala/core/Migration.scala
+
 ## [0.1.89] - 2026-02-09
 Addressing credentials plain text display issue
 ### Changed
