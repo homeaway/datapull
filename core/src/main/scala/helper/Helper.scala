@@ -379,11 +379,9 @@ class Helper(appConfig: AppConfig) {
 
   def ReplaceInlineExpressions(platformObject: JSONObject, optionalJsonPropertiesList:List[String]): JSONObject ={
     val RegexForJDBCInlineExpr = """inlineexprforjdbc\{\{(.*?)}}""".r
-    println(platformObject)
     val returnVal=  RegexForJDBCInlineExpr.replaceAllIn(platformObject.toString, _ match { case RegexForJDBCInlineExpr(inlineExprr) => println(inlineExprr);
       val inlineexprforjdbcasJson=  new JSONObject(new JSONObject("{\"data\": \"{" + inlineExprr + "}\"}").getString("data"))
       val propertiesMap = jsonObjectPropertiesToMap(jsonObject = platformObject ) ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList, platformObject)
-      println(propertiesMap)
       val dataframeFromTo = new DataFrameFromTo(appConfig, "test")
       val colType=  jsonObjectPropertiesToMap(inlineexprforjdbcasJson).get("coltype")
       val rs=  dataframeFromTo.rdbmsRunCommand(
@@ -420,10 +418,8 @@ class Helper(appConfig: AppConfig) {
           returnString= String.valueOf(rs.getInt(1))
         }
       }
-      println(returnString)
       returnString
     })
-    println(returnVal)
     new JSONObject(returnVal)
   }
 
