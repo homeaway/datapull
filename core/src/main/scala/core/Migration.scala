@@ -517,7 +517,7 @@ class Migration extends SparkListener {
       val sqlQuery = mssqlPlatformQueryFromS3File(sparkSession, platformObject)
       dataframeFromTo.rdbmsToDataFrame(
         platform = platform,
-        url = propertiesMap("url"),
+        url = propertiesMap.getOrElse("url", ""),
         awsEnv = propertiesMap("awsenv"),
         server = propertiesMap("server"),
         database = propertiesMap("database"),
