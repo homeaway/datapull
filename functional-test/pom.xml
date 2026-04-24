@@ -144,7 +144,7 @@
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
-            <version>1.1.0</version>
+            <version>3.9.2</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/kafka-avro-confluent/kafka-avro-confluent -->
         <dependency>
