@@ -33,9 +33,11 @@ import com.homeaway.datapullclient.data.JobStatus;
 import com.homeaway.datapullclient.exception.InvalidPointedJsonException;
 import com.homeaway.datapullclient.exception.ProcessingException;
 import com.homeaway.datapullclient.input.ClusterProperties;
+import com.homeaway.datapullclient.input.Destination;
 import com.homeaway.datapullclient.input.JsonInputFile;
 import com.homeaway.datapullclient.input.Migration;
 import com.homeaway.datapullclient.input.Source;
+import com.homeaway.datapullclient.input.SparkOptions;
 import com.homeaway.datapullclient.service.DataPullClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -75,6 +77,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
     private static final int POOL_SIZE = 10;
     private static final String EMR = "emr";
     private static final String CREATOR = "useremailaddress";
+
     private Schema inputJsonSchema;
     @Autowired
     private DataPullClientConfig config;
@@ -233,6 +236,10 @@ public class DataPullRequestProcessor implements DataPullClientService {
             String filePath = applicationHistoryFolderPath + "/" + jobName;
             String bootstrapFile = jobName + ".sh";
             String jksFilePath = bootstrapFilePath + "/" + bootstrapFile;
+            if (!findCassandraSSLHost(myObjects).isEmpty()) {
+                injectCassandraSSLConfig(reader, myObjects);
+            }
+
             String bootstrapActionStringFromUser = Objects.toString(reader.getBootstrapactionstring(), "");
             String defaultBootstrapString= emrProperties.getDefaultBootstrapString();
             Boolean haveBootstrapAction = createBootstrapScript(myObjects, bootstrapFile, bootstrapFilePath, bootstrapActionStringFromUser, defaultBootstrapString);
@@ -241,6 +248,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
             if(!isStart) {
                 json = originalInputJson.equals(json) ? json : originalInputJson;
+                json = normalizeSparkConfig(json);
                 saveConfig(applicationHistoryFolderPath, jobName + ".json", json);
             }
             if (!isStart && tasksMap.containsKey(jobName))
@@ -258,7 +266,7 @@ public class DataPullRequestProcessor implements DataPullClientService {
             log.debug("runDataPull <- return");
     }
 
-    List<String> rotateSubnets(){
+    synchronized List<String> rotateSubnets(){
 
         if(subnets.isEmpty()){
             subnets= getSubnet();
@@ -268,7 +276,8 @@ public class DataPullRequestProcessor implements DataPullClientService {
             subnets.clear();
             subnets.addAll(subnetIds_shuffled);
         }
-        return subnets;
+        subnets.removeIf(s -> StringUtils.isBlank(s));
+        return new ArrayList<>(subnets);
     }
 
    Map<String,List<DescribeStepRequest>> getStepForPipeline(){
@@ -279,7 +288,9 @@ public class DataPullRequestProcessor implements DataPullClientService {
 
         List<String> subnetIds = new ArrayList<>();
 
-        subnetIds.add(dataPullProperties.getApplicationSubnet1());
+        if (StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet1())) {
+            subnetIds.add(dataPullProperties.getApplicationSubnet1());
+        }
 
         if (StringUtils.isNotBlank(dataPullProperties.getApplicationSubnet2())) {
             subnetIds.add(dataPullProperties.getApplicationSubnet2());
@@ -382,6 +393,189 @@ public class DataPullRequestProcessor implements DataPullClientService {
         Future<?> task = tasksMap.get(taskName);
         task.cancel(false);
         tasksMap.remove(taskName);
+    }
+
+    private String normalizeSparkConfig(String json) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            ObjectNode root = (ObjectNode) mapper.readTree(json);
+
+            // Normalize sparksubmitparams inside cluster node
+            JsonNode clusterNode = root.get("cluster");
+            if (clusterNode != null && clusterNode.has("sparksubmitparams")) {
+                String params = clusterNode.get("sparksubmitparams").asText();
+
+                // Fix 1: _2.11 -> _2.12:3.5.0
+                params = params.replaceAll("_2\\.11:[^,\"\\s]+", "_2.12:3.5.0");
+
+                // Fix 2: inject INT96 rebase confs if writeLegacyFormat=true and not already present
+                if (params.contains("spark.sql.parquet.writeLegacyFormat=true")
+                        && !params.contains("spark.sql.parquet.int96RebaseModeInWrite")) {
+                    String rebaseConfs = " --conf spark.sql.parquet.int96RebaseModeInWrite=LEGACY"
+                            + " --conf spark.sql.parquet.int96RebaseModeInRead=LEGACY";
+                    int classIdx = params.indexOf(" --class ");
+                    params = classIdx >= 0
+                            ? params.substring(0, classIdx) + rebaseConfs + params.substring(classIdx)
+                            : params + rebaseConfs;
+                }
+
+                ((ObjectNode) clusterNode).put("sparksubmitparams", params);
+            }
+
+            // Fix 3: inject spark_defaults_properties for Spark 3.x compatibility
+            if (clusterNode != null) {
+                ObjectNode cluster = (ObjectNode) clusterNode;
+                ObjectNode sparkDefaults = cluster.has("spark_defaults_properties")
+                        ? (ObjectNode) cluster.get("spark_defaults_properties")
+                        : mapper.createObjectNode();
+
+                if (!sparkDefaults.has("spark.sql.parquet.datetimeRebaseModeInWrite"))
+                    sparkDefaults.put("spark.sql.parquet.datetimeRebaseModeInWrite", "LEGACY");
+                if (!sparkDefaults.has("spark.sql.parquet.datetimeRebaseModeInRead"))
+                    sparkDefaults.put("spark.sql.parquet.datetimeRebaseModeInRead", "LEGACY");
+                if (!sparkDefaults.has("spark.sql.legacy.timeParserPolicy"))
+                    sparkDefaults.put("spark.sql.legacy.timeParserPolicy", "LEGACY");
+                if (!sparkDefaults.has("spark.sql.storeAssignmentPolicy"))
+                    sparkDefaults.put("spark.sql.storeAssignmentPolicy", "LEGACY");
+
+                // Fix 4: detect writeLegacyFormat=true inside migration.properties (not in
+                // sparksubmitparams) and inject INT96 rebase into spark_defaults_properties.
+                // Fix 2 above handles the sparksubmitparams case; this covers the remaining
+                // pipelines (e.g. bexbbd TD2SYNC LZ2STG/STG2SYNC) that set writeLegacyFormat
+                // only as a per-migration Spark session property.
+                if (!sparkDefaults.has("spark.sql.parquet.int96RebaseModeInWrite")) {
+                    JsonNode migrations = root.get("migrations");
+                    if (migrations != null && migrations.isArray()) {
+                        for (JsonNode mig : migrations) {
+                            JsonNode props = mig.get("properties");
+                            if (props != null
+                                    && "true".equals(props.path("spark.sql.parquet.writeLegacyFormat").asText(null))) {
+                                sparkDefaults.put("spark.sql.parquet.int96RebaseModeInWrite", "LEGACY");
+                                sparkDefaults.put("spark.sql.parquet.int96RebaseModeInRead", "LEGACY");
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                cluster.set("spark_defaults_properties", sparkDefaults);
+            }
+
+            return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(root);
+        } catch (Exception e) {
+            log.warn("normalizeSparkConfig: could not normalize json, using original. Error: {}", e.getMessage());
+            return json;
+        }
+    }
+
+    /**
+     * Returns the host of the first Cassandra node that has SSL enabled, or empty string if none.
+     * An empty result means no SSL injection is needed.
+     */
+    private String findCassandraSSLHost(Migration[] migrations) {
+        for (Migration migration : migrations) {
+            if (migration.getSources() != null) {
+                for (Source source : migration.getSources()) {
+                    if (isCassandraWithSSL(source) && source.getCluster() != null) return source.getCluster();
+                }
+            }
+            if (isCassandraWithSSL(migration.getSource()) && migration.getSource().getCluster() != null)
+                return migration.getSource().getCluster();
+            if (isCassandraWithSSL(migration.getDestination()) && migration.getDestination().getCluster() != null)
+                return migration.getDestination().getCluster();
+        }
+        return "";
+    }
+
+    private boolean isCassandraWithSSL(Object node) {
+        if (node instanceof Source) {
+            Source s = (Source) node;
+            return "cassandra".equalsIgnoreCase(s.getPlatform())
+                    && s.getSparkoptions() != null
+                    && "true".equalsIgnoreCase(s.getSparkoptions().getSslEnabled());
+        }
+        if (node instanceof Destination) {
+            Destination d = (Destination) node;
+            return "cassandra".equalsIgnoreCase(d.getPlatform())
+                    && d.getSparkoptions() != null
+                    && "true".equalsIgnoreCase(d.getSparkoptions().getSslEnabled());
+        }
+        return false;
+    }
+
+    private boolean hasCassandraCustomTrustStore(Migration[] migrations) {
+        for (Migration migration : migrations) {
+            if (migration.getSources() != null) {
+                for (Source source : migration.getSources()) {
+                    if (source.getSparkoptions() != null
+                            && source.getSparkoptions().getTrustStorePath() != null
+                            && !source.getSparkoptions().getTrustStorePath().isEmpty())
+                        return true;
+                }
+            }
+            if (migration.getSource() != null
+                    && migration.getSource().getSparkoptions() != null
+                    && migration.getSource().getSparkoptions().getTrustStorePath() != null
+                    && !migration.getSource().getSparkoptions().getTrustStorePath().isEmpty())
+                return true;
+            if (migration.getDestination() != null
+                    && migration.getDestination().getSparkoptions() != null
+                    && migration.getDestination().getSparkoptions().getTrustStorePath() != null
+                    && !migration.getDestination().getSparkoptions().getTrustStorePath().isEmpty())
+                return true;
+        }
+        return false;
+    }
+
+    private void injectCassandraSSLConfig(ClusterProperties clusterProperties, Migration[] migrations) {
+        String cassandraHost = findCassandraSSLHost(migrations);
+        if (cassandraHost == null || cassandraHost.isEmpty()) return;
+
+        // Scoped to this method — only relevant when user sets ssl.enabled=true for a Cassandra source/destination
+        final String jksPath      = "/mnt/bootstrapfiles/scylla-truststore.jks";
+        final String jksPassword  = "changeit";
+        final String algorithms   = "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256";
+
+        // Pipeline already manages SSL via its own sparkoptions (trustStore.path + jksfiles).
+        // Skip ALL auto-injection: the cluster-level sparkDefaults must not set trustStore.path to
+        // scylla-truststore.jks, as that would override the pipeline's client-server.jks at the Spark
+        // config level and cause TLS handshake failure (scylla-truststore.jks is never created).
+        if (hasCassandraCustomTrustStore(migrations)) {
+            log.info("Skipping auto SSL injection for host {} — pipeline provides its own truststore", cassandraHost);
+            return;
+        }
+
+        String sslBootstrap =
+            "sudo bash -c 'echo \"jdk.tls.client.protocols=TLSv1.2\" >> /usr/lib/jvm/jre-17/conf/security/java.security'"
+            + " && sudo bash -c 'echo \"jdk.security.allowNonCaAnchor=true\" >> /usr/lib/jvm/jre-17/conf/security/java.security'"
+            + " && sudo bash -c 'echo \"export JAVA_TOOL_OPTIONS=-Djdk.tls.client.protocols=TLSv1.2 -Djdk.security.allowNonCaAnchor=true\" >> /etc/spark/conf/spark-env.sh'"
+            + " && mkdir -p /mnt/bootstrapfiles"
+            // Bound the connect so an unreachable host fails fast instead of hanging the bootstrap.
+            // (No pipefail: openssl s_client can exit non-zero even on a successful handshake when the
+            // peer closes the connection, which would false-fail a working host. A connect failure is
+            // still caught because openssl x509 then gets empty input and exits non-zero, and the
+            // test -s check below verifies a non-empty cert was actually written.)
+            // openssl stderr goes to a log file (visible in EMR bootstrap logs) instead of being discarded.
+            + " && timeout 45 bash -c 'echo | openssl s_client -connect " + cassandraHost + ":9042 -tls1_2 2>/tmp/scylla-openssl.err | openssl x509 > /tmp/scylla-server.pem'"
+            // Fail clearly if no (non-empty) cert was written before attempting the keytool import.
+            + " && test -s /tmp/scylla-server.pem"
+            + " && keytool -importcert -noprompt -keystore " + jksPath
+            + " -storetype JKS -storepass " + jksPassword
+            + " -alias scylla-server -file /tmp/scylla-server.pem"
+            + " && echo 'Bootstrap: created JKS truststore with Cassandra/ScyllaDB server cert'";
+
+        String existingBootstrap = Objects.toString(clusterProperties.getBootstrapactionstring(), "");
+        clusterProperties.setBootstrapactionstring(
+                existingBootstrap.isEmpty() ? sslBootstrap : existingBootstrap + " && " + sslBootstrap);
+
+        Map<String, String> sparkDefaults = clusterProperties.getSparkDefaultsProperties();
+        sparkDefaults.putIfAbsent("spark.cassandra.connection.ssl.enabled",            "true");
+        sparkDefaults.putIfAbsent("spark.cassandra.connection.ssl.trustStore.path",    jksPath);
+        sparkDefaults.putIfAbsent("spark.cassandra.connection.ssl.trustStore.password",jksPassword);
+        sparkDefaults.putIfAbsent("spark.cassandra.connection.ssl.clientAuth.enabled", "false");
+        sparkDefaults.putIfAbsent("spark.cassandra.connection.ssl.enabledAlgorithms",  algorithms);
+
+        log.info("Auto-injected Cassandra SSL bootstrap and spark_defaults for host: {}", cassandraHost);
     }
 
     private void saveConfig(String path, String fileName, String json) throws ProcessingException {

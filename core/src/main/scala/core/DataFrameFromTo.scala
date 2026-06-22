@@ -30,11 +30,11 @@ import com.amazonaws.services.s3.{AmazonS3, AmazonS3ClientBuilder}
 import com.datastax.spark.connector.cql.CassandraConnector
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.mongodb.client.{MongoCollection, MongoCursor, MongoDatabase}
-import com.mongodb.spark.MongoSpark
-import com.mongodb.spark.config.{ReadConfig, WriteConfig}
-import com.mongodb.spark.sql.toSparkSessionFunctions
-import com.mongodb.{MongoClient, MongoClientURI}
+import org.apache.spark.sql.functions.{col, monotonically_increasing_id}
+import org.apache.spark.sql.types.IntegerType
+import org.apache.spark.sql.Encoders
+
+import scala.collection.mutable
 import config.AppConfig
 import core.DataPull.jsonObjectPropertiesToMap
 import helper._
@@ -101,14 +101,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         "fileType" -> fileFormat
       )
     }
-    if (fileFormat == "csv") {
+    if (fileFormat.equalsIgnoreCase("csv")) {
       sparkOptions = sparkOptions ++ Map(
         "delimiter" -> delimiter,
         "mode" -> "DROPMALFORMED",
         "header" -> "true",
         "charset" -> charset
       )
-    } else if (fileFormat == "parquet") {
+    } else if (fileFormat.equalsIgnoreCase("parquet")) {
       sparkOptions = sparkOptions ++ Map(
         "mergeSchema" -> mergeSchema.toString.toLowerCase
       )
@@ -119,10 +119,16 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
     if (isSFTP) {
-      createOrReplaceTempViewOnDF(sparkSession.read
-        .format("com.springml.spark.sftp")
-        .options(sparkOptions)
-        .load(filePath))
+      val localTmpDir = System.getProperty("java.io.tmpdir") + "/datapull-sftp-" + UUID.randomUUID()
+      new java.io.File(localTmpDir).mkdirs()
+      val port = sparkOptions.getOrElse("port", "22").toInt
+      // SFTPClient(identity, passPhrase, username, password, host, port, runCrypto, secretKey)
+      val sftpClient = if (pemFilePath != "")
+        new com.springml.sftp.client.SFTPClient(pemFilePath, null, vaultLogin, null, host, port, false, null)
+      else
+        new com.springml.sftp.client.SFTPClient(null, null, vaultLogin, vaultPassword, host, port, false, null)
+      val localFile = sftpClient.copy(filePath, localTmpDir)
+      createOrReplaceTempViewOnDF(sparkSession.read.options(sparkOptions - "host" - "username" - "password" - "pem" - "fileType" - "port").format(fileFormat).load(localFile))
     }
     else {
       if (isStream) {
@@ -207,6 +213,14 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
   }
 
+  private def hasEmptyOrNestedEmptySchema(schema: org.apache.spark.sql.types.StructType): Boolean = {
+    if (schema.fields.isEmpty) return true
+    schema.fields.exists {
+      case org.apache.spark.sql.types.StructField(_, s: org.apache.spark.sql.types.StructType, _, _) => hasEmptyOrNestedEmptySchema(s)
+      case _ => false
+    }
+  }
+
   def dataFrameToFile(filePath: String, fileFormat: String, groupByFields: String, s3SaveMode: String, df: org.apache.spark.sql.DataFrame, isS3: Boolean, secretstore: String, sparkSession: SparkSession, coalescefilecount: String, isSFTP: Boolean, login: String, host: String, password: String, pemFilePath: String, awsEnv: String, vaultEnv: String, rowFromJsonString: Boolean, filePrefix: Option[String] = None, addlSparkOptions: Option[JSONObject] = None): Unit = {
 
     if (filePath == null && fileFormat == null && groupByFields == null && s3SaveMode == null && login == null && SparkSession == null) {
@@ -215,6 +229,13 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     if (filePath.isEmpty() && fileFormat.isEmpty() && groupByFields.isEmpty() && s3SaveMode.isEmpty() && login.isEmpty() && sparkSession == null) {
       throw new Exception("Platform cannot have empty values")
+    }
+
+    // Spark 3.5 rejects writing a DataFrame with an empty or nested-empty schema.
+    // Spark 2.x silently wrote an empty file. Guard here to preserve the old behaviour.
+    if (hasEmptyOrNestedEmptySchema(df.schema)) {
+      println(s"Warning: DataFrame has empty or nested-empty schema, skipping write to $filePath")
+      return
     }
 
     //if password isn't set, attempt to get from Vault
@@ -232,7 +253,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     var dft = sparkSession.emptyDataFrame
 
     if (coalescefilecount == null) {
-      if (fileFormat == "csv") {
+      if (fileFormat.equalsIgnoreCase("csv")) {
         dft = df.coalesce(1)
       }
       else {
@@ -258,19 +279,18 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     var sparkOptions: Map[String, String] = Map.empty[String, String]
 
     if (isSFTP) {
-      sparkOptions = sparkOptions ++ Map(
-        "host" -> host,
-        "username" -> login,
-        (if (pemFilePath == "") "password" else "pem") -> (if (pemFilePath == "") password else pemFilePath),
-        "fileType" -> fileFormat
-      )
-      if (!addlSparkOptions.isEmpty) {
-        sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions.get)
-      }
-      df.write.
-        format("com.springml.spark.sftp").
-        options(sparkOptions).
-        save(filePath)
+      val writeOptions = if (!addlSparkOptions.isEmpty) jsonObjectPropertiesToMap(addlSparkOptions.get) else Map.empty[String, String]
+      val port = writeOptions.getOrElse("port", "22").toInt
+      val localTmpDir = System.getProperty("java.io.tmpdir") + "/datapull-sftp-" + UUID.randomUUID()
+      new java.io.File(localTmpDir).mkdirs()
+      val localOutPath = localTmpDir + "/" + new java.io.File(filePath).getName
+      df.write.format(fileFormat).options(writeOptions - "port").save(localOutPath)
+      // SFTPClient(identity, passPhrase, username, password, host, port, runCrypto, secretKey)
+      val sftpClient = if (pemFilePath != "")
+        new com.springml.sftp.client.SFTPClient(pemFilePath, null, login, null, host, port, false, null)
+      else
+        new com.springml.sftp.client.SFTPClient(null, null, login, password, host, port, false, null)
+      sftpClient.copyToFTP(localOutPath, filePath)
 
     } else if (rowFromJsonString) {
 
@@ -320,23 +340,18 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         if (groupByFields != "") {
           dfWriter = dfWriter.partitionBy(groupByFieldsArray: _*)
         }
-        if (fileFormat == "json") {
-          dfWriter.json(s"$filePrefixString$filePath")
-        } else if (fileFormat == "csv") {
-          dfWriter.csv(s"$filePrefixString$filePath")
-        } else if (fileFormat == "avro") {
-          dfWriter.save(s"$filePrefixString$filePath")
-        } else if (fileFormat == "orc") {
-          dfWriter.orc(s"$filePrefixString$filePath")
-        } else if (fileFormat == "sequencefile") {
+        val normalizedFormat = fileFormat.toLowerCase
+        if (normalizedFormat == "json" | normalizedFormat == "csv" | normalizedFormat == "avro"
+          | normalizedFormat == "orc" | normalizedFormat == "parquet") {
+          dfWriter.format(normalizedFormat).option("path",s"$filePrefixString$filePath").save()
+        } else if (normalizedFormat == "sequencefile") {
           dft.toJSON.rdd.zipWithIndex.map { case (v, i) => (i, v) }.saveAsSequenceFile(s"$filePrefixString$filePath", Some(classOf[org.apache.hadoop.io.compress.DefaultCodec]))
-        } else if (fileFormat == "sequencefilesnappy") {
+        } else if (normalizedFormat == "sequencefilesnappy") {
           dft.toJSON.rdd.zipWithIndex.map { case (v, i) => (i, v) }.saveAsSequenceFile(s"$filePrefixString$filePath", Some(classOf[org.apache.hadoop.io.compress.SnappyCodec]))
-        } else if (fileFormat == "sequencefiledeflate") {
+        } else if (normalizedFormat == "sequencefiledeflate") {
           dft.toJSON.rdd.zipWithIndex.map { case (v, i) => (i, v) }.saveAsSequenceFile(s"$filePrefixString$filePath", Some(classOf[org.apache.hadoop.io.compress.DeflateCodec]))
         } else {
-          //parquet
-          dfWriter.parquet(s"$filePrefixString$filePath")
+          throw new UnsupportedOperationException(s"Unsupported file format: $fileFormat")
         }
       }
     }
@@ -493,6 +508,17 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
     }
 
+    if (sparkOptions.getOrElse("spark.cassandra.connection.ssl.enabled", "false") == "true") {
+      // Java 17 disables TLSv1/1.1 and enforces CA flag on trust anchors; set at runtime
+      // to cover executor JVMs not patched via bootstrap
+      java.security.Security.setProperty("jdk.tls.client.protocols", "TLSv1.2")
+      java.security.Security.setProperty("jdk.security.allowNonCaAnchor", "true")
+      if (!sparkOptions.contains("spark.cassandra.connection.ssl.enabledAlgorithms")) {
+        sparkOptions = sparkOptions ++ Map("spark.cassandra.connection.ssl.enabledAlgorithms" ->
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")
+      }
+    }
+
     val df = sparkSession
       .read.format("org.apache.spark.sql.cassandra")
       .options(sparkOptions)
@@ -529,6 +555,15 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
     }
 
+    if (sparkOptions.getOrElse("spark.cassandra.connection.ssl.enabled", "false") == "true") {
+      java.security.Security.setProperty("jdk.tls.client.protocols", "TLSv1.2")
+      java.security.Security.setProperty("jdk.security.allowNonCaAnchor", "true")
+      if (!sparkOptions.contains("spark.cassandra.connection.ssl.enabledAlgorithms")) {
+        sparkOptions = sparkOptions ++ Map("spark.cassandra.connection.ssl.enabledAlgorithms" ->
+          "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")
+      }
+    }
+
     df.write
       .format("org.apache.spark.sql.cassandra")
       .mode(SaveMode.Append)
@@ -556,8 +591,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       vaultPassword = vaultCreds("password")
     }
 
+    val esWritePort = if (port == 9300) 9200 else port
     var esOptions = Map("es.nodes" -> clusterNodes,
-      "es.port" -> port.toString,
+      "es.port" -> esWritePort.toString,
       "es.clustername" -> clusterName,
       "es.net.http.auth.user" -> vaultLogin,
       "es.net.http.auth.pass" -> vaultPassword,
@@ -599,8 +635,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       vaultPassword = vaultCreds("password")
     }
 
+    val esReadPort = if (port == 9300) 9200 else port
     var esOptions = Map("es.nodes" -> clusterNodes,
-      "es.port" -> port.toString,
+      "es.port" -> esReadPort.toString,
       "es.index.auto.create" -> "true",
       "es.nodes.wan.only" -> "true",
       "es.clustername" -> clusterName,
@@ -768,10 +805,16 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     } catch {
       case e: Throwable => e.printStackTrace
         throw (e)
-    } 
+    } finally {
+      if (connection != null) {
+        if (!connection.isClosed) {
+          connection.close()
+        }
+      }
+    }
   }
 
-  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, tmpFileLocation: String, sampleSize: String, sslEnabled: String): org.apache.spark.sql.DataFrame = {
+  def mongodbToDataFrame(awsEnv: String, cluster: String, overrideconnector: String, database: String, authenticationDatabase: String, collection: String, login: String, password: String, sparkSession: org.apache.spark.sql.SparkSession, vaultEnv: String, addlSparkOptions: JSONObject, secretStore: String, authenticationEnabled: String, tmpFileLocation: String, sampleSize: String, sslEnabled: String, replicaset: String = null, readPreference: String = null): org.apache.spark.sql.DataFrame = {
     val consul = new Consul(cluster, appConfig)
     var clusterName = cluster
     var clusterNodes = cluster
@@ -794,47 +837,67 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
         vaultPassword = vaultCreds("password")
       }
     }
-    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled.toBoolean, sslEnabled)
+    // Backward-compat guard: replica-set topology mode is only needed when readPreference routing is
+    // requested. Several existing pipelines carry a `replicaset` value that is a cluster/Consul name,
+    // NOT a real replica-set name; honoring it unconditionally would force replica-set mode and break
+    // their connection (setName mismatch). So only pass replicaSet into the URI when readPreference is
+    // explicitly set. With no readpreference, behavior is identical to before (single-host mode).
+    val effectiveReplicaSet = if (readPreference != null && !readPreference.isEmpty) replicaset else null
+    uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, effectiveReplicaSet, authenticationDatabase, database, collection, authenticationEnabled.toBoolean, sslEnabled, readPreference)
     if (overrideconnector.toBoolean) {
-      var mongoClient: MongoClient = new MongoClient(new MongoClientURI(uri))
-      var mdatabase: MongoDatabase = mongoClient.getDatabase("" + database);
-      var col: MongoCollection[Document] = mdatabase.getCollection(collection);
-      var cur: MongoCursor[Document] = col.find().iterator()
-      var doc: org.bson.Document = null
-      val list = new ListBuffer[String]()
-      val tmp_location = tmpFileLocation
-      var df_temp = sparkSession.emptyDataFrame
-      var df_big = sparkSession.emptyDataFrame
-      var part = 1
-      var tmp_location_local = tmp_location + "/partition=" + part + "/"
+      // MongoDB Read using MongoDB Spark Connector
+      val readConfig = Map(
+          "spark.mongodb.read.connection.uri" -> uri,
+          "database" -> database,
+          "collection" -> collection
+      )
+      val dfMongo = sparkSession.read.format("mongodb").options(readConfig).load()
 
-      import sparkSession.implicits._
-      while (cur.hasNext()) {
-        doc = cur.next();
-        list += (doc.toJson)
-        if (list.length >= 20000) {
-          df_temp = list.toList.toDF("jsonfield")
-          df_temp.write.mode(SaveMode.Append).json(tmp_location_local)
-          list.clear()
-          part += 1
-          tmp_location_local = tmp_location + "/partition=" + part + "/"
-        }
-      }
-      df_temp = list.toList.toDF("jsonfield")
-      df_temp.write.mode(SaveMode.Append).json(tmp_location_local)
-      list.clear()
-      df_big = sparkSession.read.json(tmp_location).withColumnRenamed("value", "jsonfield")
-      return df_big
-    }
-    else {
-      var sparkOptions = Map("uri" -> uri)
+      // Convert each row to a whole-document JSON string (matching old behavior)
+      import org.apache.spark.sql.functions.{struct, to_json}
+      val dfAsJson = dfMongo.withColumn("jsonfield", to_json(struct(dfMongo.columns.map(col): _*)))
+        .select("jsonfield")
+
+      // Write to temporary JSON files with 20K-row partitioning
+      val tmpLocation = if (tmpFileLocation.startsWith("s3://") || tmpFileLocation.startsWith("s3a://")) tmpFileLocation else "s3a://" + tmpFileLocation
+      val partitionedDF = dfAsJson.withColumn("partition", (monotonically_increasing_id() / 20000).cast(IntegerType))
+
+      partitionedDF.write
+        .mode(SaveMode.Overwrite)
+        .partitionBy("partition")
+        .json(tmpLocation)
+
+      // Read back the data
+      val dfBig = sparkSession.read
+        .json(tmpLocation)
+        .select("jsonfield")
+
+      dfBig
+
+    } else {
+      // Additional Spark MongoDB options
+      var sparkOptions = Map(
+        "spark.mongodb.read.connection.uri" -> uri,
+        "database" -> database,
+        "collection" -> collection,
+        // mongo-spark-connector 10.x (Spark 3.x) changed schema inference: without sampling it
+        // returns empty StructType for complex/nested fields. Force document sampling to match
+        // the old connector behaviour and produce a proper schema.
+        "spark.mongodb.read.inferSchema.sampleSize" -> "1000"
+      )
       if (addlSparkOptions != null) {
         sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
       }
       if (sampleSize != null) {
-        sparkOptions = sparkOptions ++ Map("spark.mongodb.input.sample.sampleSize" -> sampleSize, "sampleSize" -> sampleSize)
+        sparkOptions = sparkOptions ++ Map(
+          "sampleSize" -> sampleSize,
+          "spark.mongodb.input.sample.sampleSize" -> sampleSize,
+          "spark.mongodb.read.inferSchema.sampleSize" -> sampleSize
+        )
       }
-      val df = sparkSession.loadFromMongoDB(ReadConfig(sparkOptions))
+
+      // Load data directly from MongoDB
+      val df = sparkSession.read.format("mongodb").options(sparkOptions).load()
       return df
     }
   }
@@ -863,7 +926,7 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
     uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, replicaset, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled)
 
-    var sparkOptions = Map("uri" -> uri, "replaceDocument" -> replaceDocuments.toString, "ordered" -> ordered.toString)
+    var sparkOptions = Map("spark.mongodb.write.connection.uri" -> uri, "replaceDocument" -> replaceDocuments.toString, "ordered" -> ordered.toString)
     if (maxBatchSize != null)
       sparkOptions = sparkOptions ++ Map("maxBatchSize" -> maxBatchSize)
 
@@ -871,18 +934,28 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions)
     }
 
-    val writeConfig = WriteConfig(sparkOptions)
+    val writeConfig = sparkOptions
+
     if (documentfromjsonfield.toBoolean) {
+      // Parse JSON strings from the specified field into a proper DataFrame with schema
+      // The MongoDB Spark Connector v10.x expects a DataFrame with typed columns, not Kryo-encoded BSON
+      val jsonRDD = df.select(jsonfield).rdd.map(row => row.getString(0))
+      val parsedDF = sparkSession.read.json(sparkSession.createDataset(jsonRDD)(Encoders.STRING))
 
-      import com.mongodb.spark._
-      import org.bson.Document
-      import sparkSession.implicits._
-      val rdd = df.select(jsonfield).map(r => r.getString(0)).rdd
-      rdd.map(Document.parse).saveToMongoDB(writeConfig)
-    }
-    else {
-      MongoSpark.save(df, writeConfig)
+      // Write the parsed DataFrame to MongoDB
+      parsedDF.write
+        .format("mongodb")
+        .options(writeConfig)
+        .mode("append")
+        .save()
 
+    } else {
+      // Save the DataFrame directly to MongoDB
+      df.write
+        .format("mongodb")
+        .options(writeConfig)
+        .mode("append")
+        .save()
     }
   }
 
@@ -911,8 +984,11 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
 
 
-    val uri = new MongoClientURI(helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled))
-    val mongoClient = new MongoClient(uri)
+    import com.mongodb.client.{MongoClient, MongoClients, MongoDatabase}
+    import org.bson.Document
+
+    val uri = helper.buildMongoURI(vaultLogin, vaultPassword, cluster, null, authenticationDatabase, database, collection, authenticationEnabled, sslEnabled)
+    val mongoClient: MongoClient = MongoClients.create(uri)
     val data = mongoClient.getDatabase(database)
 
     val response = data.runCommand(org.bson.Document.parse(runCommand))
@@ -1074,7 +1150,10 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
 
     var sparkOptions: Map[String, String] = helper.buildSecureKafkaProperties(keyStorePath = keyStorePath, trustStorePath = trustStorePath, keyStorePassword = keyStorePassword, trustStorePassword = trustStorePassword, keyPassword = keyPassword)
 
-    sparkOptions = sparkOptions ++ Map("kafka.bootstrap.servers" -> kafkaBroker, "topic" -> topic, "includeHeaders" -> (!headerField.isEmpty).toString)
+    // Spark 3.5 KafkaWriter.validateQuery() requires topic as a UTF8String Literal, not a plain
+    // String option. Passing "topic" in options causes IllegalArgumentException in Spark 3.5.
+    // Fix: remove "topic" from options and inject it as a literal column in the DataFrame instead.
+    sparkOptions = sparkOptions ++ Map("kafka.bootstrap.servers" -> kafkaBroker, "includeHeaders" -> (!headerField.isEmpty).toString)
 
     if (!addlSparkOptions.isEmpty) {
       sparkOptions = sparkOptions ++ jsonObjectPropertiesToMap(addlSparkOptions.get)
@@ -1097,6 +1176,8 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     if (!headerField.isEmpty) {
       columnsToSelect = columnsToSelect ++ Seq(df.col(headerField.get) as 'header)
     }
+    // Add topic as a literal column so Spark 3.5 KafkaWriter resolves it as UTF8String
+    columnsToSelect = columnsToSelect ++ Seq(org.apache.spark.sql.functions.lit(topic) as 'topic)
 
     dfavro = df.select(columnsToSelect: _*)
     dfavro.printSchema()
@@ -1218,9 +1299,9 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     println("Properties Passed:" + properties)
 
     val defaultConfigs = Map(
-      "spark.sql.hive.caseSensitiveInferenceMode" -> "INFER_ONLY",
-      "spark.sql.hive.metastore.version" -> "1.2.1",
-      "spark.sql.hive.metastore.jars" -> "builtin"
+      "spark.sql.hive.caseSensitiveInferenceMode" -> "NEVER_INFER"
+      // spark.sql.hive.metastore.jars is a static config in Spark 3.5 — cannot be set post-session.
+      // It is already set to "builtin" during SparkSession.builder in DataPull.scala.
     )
     val parsedProperties = properties.map { jsonObj =>
       import scala.collection.JavaConverters._
@@ -1267,61 +1348,65 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
     }
   }
 
-  def rdbmsRunCommand(platform: String, url:String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], colType: Option[String]): ResultSet = {
+  def rdbmsRunCommand(platform: String, url:String, awsEnv: String, server: String, port: String, sslEnabled: Boolean, database: String, sql_command: String, login: String, password: String, vaultEnv: String, secretStore: String, isWindowsAuthenticated: Boolean, domainName: String, typeForTeradata: Option[String], colType: Option[String]): Option[String] = {
 
-    var resultSet:ResultSet = null
-    if (sql_command != "") {
+    if (sql_command == "") return None
 
-      val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled, null)
-      val driver: String = configMap("driver")
-      val db_url: String = Option(url).filter(_.nonEmpty).getOrElse(configMap("url"))
+    val configMap = helper.buildRdbmsURI(platform, server, port, database, isWindowsAuthenticated, domainName, typeForTeradata, sslEnabled, null)
+    val driver: String = configMap("driver")
+    val db_url: String = Option(url).filter(_.nonEmpty).getOrElse(configMap.getOrElse("url", ""))
 
-      val consul = new Consul(server, appConfig)
-      var clusterName = server
-      if (consul.IsConsulDNSName()) {
-        clusterName = consul.serviceName
-      }
-      //if password isn't set, attempt to get from Vault
-      var vaultPassword = password
-      var vaultLogin = login
-      if (vaultPassword == "") {
-        val secretService = new SecretService(secretStore, appConfig)
-        val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
-        vaultLogin = vaultCreds("username")
-        vaultPassword = vaultCreds("password")
-      }
-      //logic
-      var connection: Connection = null
-
-      try {
-        // make the connection
-        Class.forName(driver)
-        connection = DriverManager.getConnection(db_url, vaultLogin, vaultPassword)
-
-        // create the statement, and run the command
-        val statement = connection.createStatement()
-
-        if (colType.isDefined) {
-          resultSet=  statement.executeQuery(sql_command)
-
-        }
-        else {
-          statement.execute(sql_command)
-          null
-        }
-
-      } catch {
-        case e: Throwable => e.printStackTrace
-          throw (e)
-      } finally {
-        if (connection != null) {
-          if (!connection.isClosed()) {
-            connection.close()
-          }
-        }
-      }
+    val consul = new Consul(server, appConfig)
+    var clusterName = server
+    if (consul.IsConsulDNSName()) {
+      clusterName = consul.serviceName
     }
-    resultSet
+    //if password isn't set, attempt to get from Vault
+    var vaultPassword = password
+    var vaultLogin = login
+    if (vaultPassword == "") {
+      val secretService = new SecretService(secretStore, appConfig)
+      val vaultCreds = secretService.getSecret(awsEnv, clusterName, login, vaultEnv)
+      vaultLogin = vaultCreds("username")
+      vaultPassword = vaultCreds("password")
+    }
+    //logic
+    var connection: Connection = null
+
+    try {
+      Class.forName(driver)
+      connection = DriverManager.getConnection(db_url, vaultLogin, vaultPassword)
+      val statement = connection.createStatement()
+
+      if (colType.isDefined) {
+        val rs = statement.executeQuery(sql_command)
+        try {
+          if (rs.next()) {
+            Some(colType.toString match {
+              case "Some(int)"    => String.valueOf(rs.getInt(1))
+              case "Some(string)" => rs.getString(1)
+              case "Some(float)"  => String.valueOf(rs.getFloat(1))
+              case "Some(date)"   => String.valueOf(rs.getDate(1))
+              case "Some(long)"   => String.valueOf(rs.getLong(1))
+              case _              => String.valueOf(rs.getInt(1))
+            })
+          } else None
+        } finally {
+          rs.close()
+          statement.close()
+        }
+      } else {
+        statement.execute(sql_command)
+        statement.close()
+        None
+      }
+
+    } catch {
+      case e: Throwable => e.printStackTrace; throw e
+    } finally {
+      if (connection != null && !connection.isClosed())
+        connection.close()
+    }
   }
 
   def dataFrameToCloudWatch(groupName: String, streamName: String, region: String, accessKey: String, secretKey: String, timeStampColumn: String, timestampFormat: String, df: org.apache.spark.sql.DataFrame, sparkSession: SparkSession): Unit = {
@@ -1455,5 +1540,101 @@ class DataFrameFromTo(appConfig: AppConfig, pipeline: String) extends Serializab
       .save()
 
   }
+
+  import scala.jdk.CollectionConverters._
+
+  def jsonObjectToMap(jsonObject: JSONObject): Map[String, String] = {
+    jsonObject.keys.asScala.map(key => key.toString -> jsonObject.getString(key.toString)).toMap
+  }
+
+  def dataFrameToIceberg(sparkSession: SparkSession, df: org.apache.spark.sql.DataFrame,
+                         table: String, database: String, saveMode: String, isMergeInto: Boolean,
+                         mergeIntoSQL: String, sparkoptions: Option[JSONObject]): Unit = {
+
+    IcebergUtils.configureIcebergCatalog(sparkSession)
+
+    sparkSession.sql("use " + database)
+
+    /*
+    allow to insert the data to target table only if these conditions met
+    case-1: source dataframe columns <= target dataframe columns
+    case-2: source dataframe columns and datatypes == target dataframe columns and datatypes
+     */
+    val targetDf = sparkSession.sql(s"SELECT * FROM $table limit 100")
+    val srcDf = df
+    validateIcebergSchema(srcDf, targetDf)
+
+    if (isMergeInto) {
+      //validating MergeIntoQuery
+      if (mergeIntoSQL.trim.toLowerCase.startsWith("merge into")) {
+        //get the source table from User given SQL string
+        val srcTable = mergeIntoSQL.split(" ").take(6).last
+
+        df.createOrReplaceTempView(srcTable)
+        sparkSession.sql(mergeIntoSQL)
+      }else {
+        throw new IllegalArgumentException("Validation Error: mergeinto sql query is not valid, should start with 'MERGE INTO'. Expected format: " +
+          "MERGE INTO <target-table> target USING <source-table> source ON target.<key> = source.<key> WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *")
+      }
+    } else{
+      var extraConfigOptions= Map.empty[String, String]
+      sparkoptions match {
+        case Some(jsonObj) if jsonObj != null =>
+          extraConfigOptions = jsonObjectPropertiesToMap(sparkoptions.get)
+        case _ =>
+          extraConfigOptions = extraConfigOptions ++ Map("overwrite-mode" -> "dynamic")
+      }
+
+      if (saveMode.toLowerCase == "overwrite") {
+        df.write
+          .format("iceberg")
+          .options(extraConfigOptions)
+          .mode(saveMode)
+          .insertInto(table)
+      } else {
+        df.write
+          .format("iceberg")
+          .mode(saveMode)
+          .insertInto(table)
+      }
+    }
+  }
+
+  import scala.collection.mutable.Map
+
+  def icebergToDataFrame(sparkSession: org.apache.spark.sql.SparkSession,
+                         query: String): org.apache.spark.sql.DataFrame = {
+    IcebergUtils.configureIcebergCatalog(sparkSession)
+
+    sparkSession.sql(query)
+  }
+
+  import org.apache.spark.sql.types._
+
+  def validateIcebergSchema(srcDf: org.apache.spark.sql.DataFrame, tgtDf: org.apache.spark.sql.DataFrame): Unit = {
+
+    val srcSchema = srcDf.schema
+    val tgtSchema = tgtDf.schema
+
+    val srcFields = srcSchema.fields.map(f => f.name.toLowerCase -> f.dataType).toMap
+    val tgtFields = tgtSchema.fields.map(f => f.name.toLowerCase -> f.dataType).toMap
+
+    // Check if src has more columns than tgt (which is not allowed)
+    if (srcFields.size > tgtFields.size) {
+      throw new IllegalArgumentException("Source DataFrame has more columns than target DataFrame")
+    }
+
+    // Check if all src columns exist in tgt and types match
+    srcFields.foreach { case (srcCol, srcType) =>
+      tgtFields.get(srcCol) match {
+        case Some(tgtType) if tgtType == srcType => // All good
+        case Some(tgtType) =>
+          throw new IllegalArgumentException(s"Data type mismatch for column '$srcCol'. Src: $srcType, Tgt: $tgtType")
+        case None =>
+          throw new IllegalArgumentException(s"Column '$srcCol' is missing in target schema")
+      }
+    }
+  }
+
 }
 

@@ -291,6 +291,26 @@
         "fs.s3.connection.ssl.enabled": "true"
       }
       },
+      "source_iceberg": {
+        "platform": "iceberg",
+        "comment_query": "Mandatory, the provided query will be executed as sql in Spark Session to read from Iceberg table",
+        "query": "select * from catalog.db.table"
+      },
+      "destination_iceberg": {
+        "platform": "iceberg",
+        "comment_table": "Mandatory, the fully qualified Iceberg table name",
+        "table": "catalog.db.table",
+        "comment_database": "Mandatory, the database/namespace of the Iceberg table",
+        "database": "catalog.db",
+        "comment_savemode": "Optional, defaults to append. Options: append, overwrite",
+        "savemode": "append",
+        "comment_ismergeinto": "Optional, defaults to false. Set to true to use MERGE INTO SQL",
+        "ismergeinto": "false",
+        "comment_mergeintosql": "Optional, required when ismergeinto is true. Must start with 'MERGE INTO'",
+        "mergeintosql": "MERGE INTO catalog.db.target target USING source_view source ON target.id = source.id WHEN MATCHED THEN UPDATE SET * WHEN NOT MATCHED THEN INSERT *",
+        "comment_sparkoptions": "Optional, additional spark options as key:value pairs. e.g. overwrite-mode:dynamic",
+        "sparkoptions": "overwrite-mode:dynamic"
+      },
       "source_kafka": {
         "platform": "kafka",
         "comment_bootstrapservers": "comma-separated list of bootstrap servers for the kafka cluster",

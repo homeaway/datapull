@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
+
+
 @Slf4j
 @Data
 public class DataPullTask implements Runnable {
@@ -205,7 +207,27 @@ public class DataPullTask implements Runnable {
         final List<String> sparkSubmitParamsList = new ArrayList<>();
         String[] sparkSubmitParamsArray = null;
         if (SparkSubmitParams != "") {
-            sparkSubmitParamsArray = SparkSubmitParams.split("\\s+");
+            // Fix 1: Upgrade Scala 2.11 packages to 2.12 for Spark 3.5 compatibility
+            String normalizedParams = SparkSubmitParams.replaceAll("_2\\.11:[^,\\s]+", "_2.12:3.5.0");
+
+            // Fix 2: If writeLegacyFormat=true is present (INT96 timestamps), inject rebase modes
+            // to prevent SparkUpgradeException on Spark 3.2+. Only inject if not already set.
+            // Must insert before --class so the flags are not passed as app args to main().
+            if (normalizedParams.contains("spark.sql.parquet.writeLegacyFormat=true")
+                    && !normalizedParams.contains("spark.sql.parquet.int96RebaseModeInWrite")) {
+                String rebaseConfs = " --conf spark.sql.parquet.int96RebaseModeInWrite=LEGACY"
+                        + " --conf spark.sql.parquet.int96RebaseModeInRead=LEGACY";
+                int classIdx = normalizedParams.indexOf(" --class ");
+                if (classIdx >= 0) {
+                    normalizedParams = normalizedParams.substring(0, classIdx)
+                            + rebaseConfs
+                            + normalizedParams.substring(classIdx);
+                } else {
+                    normalizedParams = normalizedParams + rebaseConfs;
+                }
+            }
+
+            sparkSubmitParamsArray = normalizedParams.split("\\s+");
 
             sparkSubmitParamsList.add("spark-submit");
 
@@ -224,7 +246,7 @@ public class DataPullTask implements Runnable {
             sparkSubmitParamsList = (ArrayList<String>) this.prepareSparkSubmitParams(sparkSubmitParams);
         } else {
             List<String> sparkBaseParams = new ArrayList<>();
-            sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath}));
+            sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.driver.defaultJavaOptions=-Djdk.tls.client.protocols=TLSv1.2", "--conf", "spark.executor.defaultJavaOptions=-Djdk.tls.client.protocols=TLSv1.2", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.spark:spark-avro_2.12:3.5.0", "--class", DataPullTask.MAIN_CLASS, jarPath}));
             sparkSubmitParamsList.addAll(sparkBaseParams);
         }
 
@@ -279,7 +301,26 @@ public class DataPullTask implements Runnable {
 
         Map<String, String> hdfsProperties = this.clusterProperties.getHdfsProperties();
 
-        Map<String, String> sparkDefaultsProperties = this.clusterProperties.getSparkDefaultsProperties();
+        // Safety defaults for Spark 3.x compatibility.
+        // Pipeline-level spark_defaults_properties override these if explicitly set.
+        Map<String, String> sparkDefaultsProperties = new HashMap<>();
+        sparkDefaultsProperties.put("spark.sql.parquet.datetimeRebaseModeInWrite", "LEGACY");
+        sparkDefaultsProperties.put("spark.sql.parquet.datetimeRebaseModeInRead", "LEGACY");
+        // Spark 3.x changed timeParserPolicy default to CORRECTED: to_date(col) without a format
+        // string silently returns NULL for non-standard date formats. LEGACY restores Spark 2.x
+        // lenient parsing so existing sql.query expressions continue to produce correct results.
+        sparkDefaultsProperties.put("spark.sql.legacy.timeParserPolicy", "LEGACY");
+        // Spark 3.x changed storeAssignmentPolicy default from LEGACY to ANSI: implicit type casts
+        // on Hive writes (e.g. INT -> BIGINT) that worked in Spark 2.x now throw AnalysisException.
+        sparkDefaultsProperties.put("spark.sql.storeAssignmentPolicy", "LEGACY");
+        // Spark 3.x savemode=overwrite with partitionBy defaults to STATIC (replaces entire table).
+        // DYNAMIC restores Spark 2.x behaviour: only partitions present in the DataFrame are replaced.
+        sparkDefaultsProperties.put("spark.sql.sources.partitionOverwriteMode", "DYNAMIC");
+        // Spark 3.x switched default ORC writer from Hive ORC to Native ORC. Hive/Presto consumers
+        // expect Hive-compatible ORC files; native ORC may cause schema mismatch on reads.
+        sparkDefaultsProperties.put("spark.sql.orc.impl", "hive");
+        sparkDefaultsProperties.put("spark.sql.orc.enableVectorizedReader", "false");
+        sparkDefaultsProperties.putAll(this.clusterProperties.getSparkDefaultsProperties());
         Map<String, String> sparkEnvProperties = this.clusterProperties.getSparkEnvProperties();
         Map<String, String> sparkMetricsProperties = this.clusterProperties.getSparkMetricsProperties();
 
@@ -409,9 +450,9 @@ public class DataPullTask implements Runnable {
                 .withInstanceTypeConfigs(workerInstanceTypeConfig)
                 .withTargetOnDemandCapacity(count);
 
-        System.out.println("Printing random subnet : " + subnets);
+        log.info("Printing random subnet : {}", subnets);
 
-        System.out.println("Printing selected subnet-ID for EMR cluster creation : " +  subnets.get(0));
+        log.info("Printing selected subnet-ID for EMR cluster creation : {}", subnets.isEmpty() ? "N/A" : subnets.get(0));
 
         final String masterSG = emrProperties.getEmrSecurityGroupMaster();
         final String slaveSG = emrProperties.getEmrSecurityGroupSlave();
@@ -423,10 +464,6 @@ public class DataPullTask implements Runnable {
         final String serviceAccessSecurityGroup = Objects.toString(
                 this.clusterProperties.getServiceAccessSecurityGroup(), serviceAccesss != null ? serviceAccesss : "");
 
-        if(StringUtils.isNotBlank(clusterProperties.getSubnetId())){
-            subnets.add(0,clusterProperties.getSubnetId());
-        }
-
 //      Introducing below logic to address null and invalid subnet issue
         String getSubnetId = clusterProperties.getSubnetId();
         String finalSubnetId;
@@ -434,20 +471,20 @@ public class DataPullTask implements Runnable {
 
         if (StringUtils.isNotBlank(getSubnetId) && getSubnetId.startsWith("subnet-")) {
             finalSubnetId = getSubnetId;
-            System.out.println("Subnet '" + finalSubnetId + "' provided by the user will be used for EMR cluster creation.");
+            log.info("Subnet '{}' provided by the user will be used for EMR cluster creation.", finalSubnetId);
         } else {
             if (StringUtils.isNotBlank(getSubnetId)) {
-                System.out.println("The user provided an invalid value '" + getSubnetId + "' for subnet. Hence, default subnet pool will be used for EMR creation.");
+                log.warn("The user provided an invalid value '{}' for subnet. Hence, default subnet pool will be used for EMR creation.", getSubnetId);
             } else {
-                System.out.println("The user either provided a NULL value for the subnet or did not specify subnet in the payload. Hence, the default subnet pool will be used for EMR creation.");
+                log.info("The user either provided a NULL value for the subnet or did not specify subnet in the payload. Hence, the default subnet pool will be used for EMR creation.");
             }
 
-            Set<String> subnetsDeduped = new LinkedHashSet<>(subnets);
-            subnets.clear();
-            subnets.addAll(subnetsDeduped);
+            if (subnets.isEmpty()) {
+                throw new IllegalStateException("No valid subnets available in the default subnet pool. Please configure at least one application_subnet property.");
+            }
 
             finalSubnetId = subnets.get(0);
-            System.out.println("EMR cluster will be created using a subnet from the default subnet pool: " + finalSubnetId);
+            log.info("EMR cluster will be created using a subnet from the default subnet pool: {}", finalSubnetId);
         }
 
         final JobFlowInstancesConfig jobConfig = new JobFlowInstancesConfig()
@@ -496,7 +533,7 @@ public class DataPullTask implements Runnable {
             sparkSubmitParamsListOnExistingCluster = this.prepareSparkSubmitParams(sparkSubmitParams);
         } else {
             List<String> sparkBaseParams = new ArrayList<>();
-            sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.4,org.apache.spark:spark-avro_2.11:2.4.4", "--class", DataPullTask.MAIN_CLASS, jarPath}));
+            sparkBaseParams.addAll(toList(new String[]{"spark-submit", "--conf", "spark.default.parallelism=3", "--conf", "spark.storage.blockManagerSlaveTimeoutMs=1200s", "--conf", "spark.executor.heartbeatInterval=900s", "--conf", "spark.driver.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.executor.extraJavaOptions=-Djavax.net.ssl.trustStore=/etc/pki/java/cacerts/ -Djavax.net.ssl.trustStorePassword=changeit", "--conf", "spark.driver.defaultJavaOptions=-Djdk.tls.client.protocols=TLSv1.2", "--conf", "spark.executor.defaultJavaOptions=-Djdk.tls.client.protocols=TLSv1.2", "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,org.apache.spark:spark-avro_2.12:3.5.0", "--class", DataPullTask.MAIN_CLASS, jarPath}));
             sparkSubmitParamsListOnExistingCluster.addAll(sparkBaseParams);
         }
 

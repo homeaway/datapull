@@ -48,10 +48,10 @@ public class EMRProperties {
     @Value("${instance_count:6}")
     private int instanceCount;
 
-    @Value("${master_type:m6g.xlarge}")
+    @Value("${master_type:m7g.xlarge}")
     private String masterType;
 
-    @Value("${slave_type:m6g.xlarge}")
+    @Value("${slave_type:m7g.xlarge}")
     private String slaveType;
 
     @Value("${service_role:emr_datapull_role}")
@@ -60,7 +60,7 @@ public class EMRProperties {
     @Value("${job_flow_role:emr_ec2_datapull_role}")
     private String jobFlowRole;
 
-    @Value("${emr_release:emr-5.36.2}")
+    @Value("${emr_release:emr-7.12.0}")
     private String emrRelease;
 
     @Value( "${bootstrap_folder_path:}" )

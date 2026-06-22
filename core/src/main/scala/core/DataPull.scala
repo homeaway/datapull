@@ -21,10 +21,11 @@ import java.nio.ByteBuffer
 import java.time._
 import java.util.{Scanner, UUID}
 
-import com.datastax.driver.core.utils.UUIDs
+import com.datastax.oss.driver.api.core.uuid.Uuids
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.mongodb.spark.sql.fieldTypes.Binary
+import org.bson.types.Binary
+import org.apache.spark.sql.types._
 import config.AppConfig
 import helper._
 import javax.net.ssl._
@@ -39,8 +40,10 @@ import security._
 import scala.collection.mutable.ListBuffer
 import scala.util.control.Breaks.breakable
 
+//import com.expedia.hdw.common.parallax.ParallaxHash
+
 // Main class
-object DataPull {
+object DataPull extends Serializable {
 
   def main(args: Array[String]): Unit = {
 
@@ -123,15 +126,25 @@ object DataPull {
         .config("" + config.executor, config.interval)
         .config("" + config.failures, no_of_retries)
         .config("fs." + s3Prefix + ".multiobjectdelete.enable", true)
-        .config("spark.sql.hive.metastore.version", "1.2.1")
+        //.config("spark.sql.hive.metastore.version", "1.2.1")
         .config("spark.sql.hive.metastore.jars", "builtin")
-        .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
+        .config("spark.sql.hive.caseSensitiveInferenceMode", "NEVER_INFER")
+        .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+        .config("spark.sql.catalog.spark_catalog", "org.apache.iceberg.spark.SparkSessionCatalog")
+        .config("spark.sql.catalog.spark_catalog.type", "hive")
+        .config("spark.sql.catalog.iceberg", "org.apache.iceberg.spark.SparkCatalog")
+        .config("spark.sql.catalog.iceberg.type", "hive")
         .enableHiveSupport()
         .getOrCreate()
 
 
       val helper = new Helper(config)
-      ec2Role = helper.GetEC2Role()
+      try {
+        ec2Role = helper.GetEC2Role()
+      } catch {
+        case e: Exception =>
+          println("Warning: Unable to retrieve EC2 role via IMDS, defaulting to 'local'. Error: " + e.getMessage)
+      }
     }
     applicationId = sparkSession.sparkContext.applicationId
 
@@ -140,6 +153,7 @@ object DataPull {
     sparkSession.udf.register("binaryToUUID", binaryToUUID _)
     sparkSession.udf.register("uuid", uuid _)
     sparkSession.udf.register("binaryToJUUID", binaryToJUUID _)
+//    sparkSession.udf.register("stringToParallaxHash", stringToParallaxHash _)
 
     stepSubmissionTime = Instant.now().toString
 
@@ -239,11 +253,12 @@ object DataPull {
     if (awsenv == "prod") {
 
       if (isScheduled) {
-        if (failureEmailAddress != "") {
-          failureEmailAddress = failureEmailAddress + ";" + pagerdutyEmailAddress
+        if (pagerdutyEmailAddress != null && pagerdutyEmailAddress.nonEmpty) {
+          if (failureEmailAddress != "")
+            failureEmailAddress = failureEmailAddress + "," + pagerdutyEmailAddress
+          else
+            failureEmailAddress = pagerdutyEmailAddress
         }
-        else
-          failureEmailAddress = pagerdutyEmailAddress
       }
     }
 
@@ -296,9 +311,26 @@ object DataPull {
     val keys = properties.keys()
     while (keys.hasNext()) {
       val key = keys.next().toString()
-      sparkSession.conf.set(key, properties.getString(key))
+      try {
+        sparkSession.conf.set(key, properties.getString(key))
+      } catch {
+        case e: org.apache.spark.sql.AnalysisException =>
+          println(s"Warning: Cannot set static Spark config '$key' at runtime, skipping. ${e.getMessage}")
+      }
+    }
+    // Spark 3.x: if writeLegacyFormat=true (INT96 timestamps), automatically inject rebase
+    // modes to LEGACY to prevent SparkUpgradeException on write. Only set if the pipeline
+    // has not explicitly provided its own value.
+    if (properties.optString("spark.sql.parquet.writeLegacyFormat", "").equalsIgnoreCase("true")) {
+      if (properties.optString("spark.sql.parquet.int96RebaseModeInWrite", "").isEmpty) {
+        sparkSession.conf.set("spark.sql.parquet.int96RebaseModeInWrite", "LEGACY")
+      }
+      if (properties.optString("spark.sql.parquet.int96RebaseModeInRead", "").isEmpty) {
+        sparkSession.conf.set("spark.sql.parquet.int96RebaseModeInRead", "LEGACY")
+      }
     }
   }
+
 
   def setAWSCredentialsByPrefix(sparkSession: org.apache.spark.sql.SparkSession, sourceDestinationMap: Map[String, String], s3Prefix: String): Unit = {
     if (sourceDestinationMap.contains("awssecretaccesskey") && sourceDestinationMap("awssecretaccesskey") != "") {
@@ -356,7 +388,7 @@ object DataPull {
 
   def uuid(): String = {
 
-    UUIDs.timeBased().toString
+    Uuids.timeBased().toString
 
   }
 
@@ -375,6 +407,7 @@ object DataPull {
     }
   }
 
+  /*
   def uuidToBinary(uuid_key: String): Binary = {
     if (uuid_key == null) null
 
@@ -391,6 +424,19 @@ object DataPull {
       return binaryUuid
     }
   }
+  */
+
+def uuidToBinary(uuid_key: String): Array[Byte] = {
+    if (uuid_key == null) null
+    else {
+      val uuid = UUID.fromString(uuid_key)
+      val bb = ByteBuffer.allocate(16)
+      bb.putLong(uuid.getMostSignificantBits)
+      bb.putLong(uuid.getLeastSignificantBits)
+      bb.array()
+    }
+}
+
 
   def binaryToUUID(byte: Array[Byte]): String = {
 
@@ -412,6 +458,14 @@ object DataPull {
     }
     returnMap
   }
+
+//
+//  def stringToParallaxHash(stringData: String): String = {
+//    if (stringData == null) null
+//    else {
+//      ParallaxHash.parallaxHash().hash(stringData.toLowerCase)
+//    }
+//  }
 
   /**
    * Binary data to JUUID String representation

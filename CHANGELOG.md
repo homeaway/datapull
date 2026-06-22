@@ -6,6 +6,158 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
 
 
+## [0.1.91] - 2026-06-22
+Upgrade DataPull core to Spark 3.5.0, Scala 2.12, Java 11
+
+Dependency upgrades (core/pom.xml):
+- Spark 2.4.6 -> 3.5.0, Scala 2.11 -> 2.12, Hadoop 2.10.1 -> 3.2.1
+- MongoDB Spark Connector 10.4.0 (new format API)
+- Cassandra Spark Connector 3.5.0 (driver 4.x)
+- Iceberg 1.5.0 (new platform support)
+- Elasticsearch 8.17.10 with REST clients (elasticsearch-rest-client, elasticsearch, elasticsearch-spark-30_2.12)
+- mssql-jdbc 11.2.3.jre11, ojdbc8 21.9.0.0, terajdbc4 17.20.00.12
+- ABRis 6.4.0, Snowflake 2.10.0, PostgreSQL 42.6.0
+- Guava shade plugin for Spark 3.5 classloader compatibility
+- Log4j 2.17.1 (CVE-2021-44228 fix retained)
+- Added expediahotelloader with Spark/Scala exclusions
+
+Spark 3.5 pipeline normalization (DataPullRequestProcessor.java):
+- Added normalizeSparkConfig() called at pipeline JSON save-time to durably write
+  Spark 3.5 compatibility configs into the stored pipeline JSON before EMR submission
+- Fix 1: rewrites _2.11:<version> -> _2.12:3.5.0 in sparksubmitparams (Scala 2.11 packages)
+- Fix 2: injects int96RebaseModeInWrite/Read=LEGACY when writeLegacyFormat=true in sparksubmitparams
+- Fix 3: unconditionally injects into spark_defaults_properties (if not already set):
+  spark.sql.parquet.datetimeRebaseModeInWrite=LEGACY
+  spark.sql.parquet.datetimeRebaseModeInRead=LEGACY
+  spark.sql.legacy.timeParserPolicy=LEGACY
+  spark.sql.storeAssignmentPolicy=LEGACY
+- Fix 4: injects int96RebaseModeInWrite/Read=LEGACY when writeLegacyFormat=true is found
+  in migrations[*].properties (covers pipelines that set it as a per-migration session
+  property rather than in sparksubmitparams)
+
+Spark 3.5 cluster-launch defaults (DataPullTask.java):
+- prepareSparkSubmitParams(): Fix 1 (Scala 2.11 regex) and Fix 2 (INT96 rebase) applied
+  at spark-submit time in addition to normalizeSparkConfig() at save-time
+- runTaskInNewCluster(): unconditionally injects datetimeRebaseModeInWrite/Read=LEGACY,
+  timeParserPolicy=LEGACY, storeAssignmentPolicy=LEGACY into spark-defaults EMR
+  classification before pipeline-level overrides
+- Default spark-submit packages updated: spark-sql-kafka-0-10 and spark-avro
+  hardcoded references changed from _2.11:2.4.4 to _2.12:3.5.0
+
+Cassandra SSL auto-injection (DataPullRequestProcessor.java):
+- Added findCassandraSSLHost(): scans all migrations for Cassandra source/destination
+  with ssl.enabled=true and returns the cluster host
+- Added isCassandraWithSSL(): helper checking platform=cassandra + sparkoptions.sslEnabled
+- Added hasCassandraCustomTrustStore(): returns true if pipeline provides its own
+  trustStore.path; skips auto-injection to avoid overriding pipeline's JKS
+- Added injectCassandraSSLConfig(): when SSL is needed and no custom truststore exists,
+  appends bootstrap script to create /mnt/bootstrapfiles/scylla-truststore.jks by
+  fetching the live server cert via openssl s_client, sets jdk.tls.client.protocols=TLSv1.2
+  and jdk.security.allowNonCaAnchor=true in java.security, and injects 5 SSL spark_defaults:
+  spark.cassandra.connection.ssl.enabled=true
+  spark.cassandra.connection.ssl.trustStore.path
+  spark.cassandra.connection.ssl.trustStore.password
+  spark.cassandra.connection.ssl.clientAuth.enabled=false
+  spark.cassandra.connection.ssl.enabledAlgorithms
+
+Cassandra SSL runtime fix (DataFrameFromTo.scala):
+- cassandraToDataFrame() and dataFrameToCassandra(): when ssl.enabled=true is detected,
+  sets jdk.tls.client.protocols=TLSv1.2 and jdk.security.allowNonCaAnchor=true via
+  java.security.Security.setProperty() at executor JVM runtime (Java 17 on EMR 7.x
+  enforces CA anchor flag and disables TLSv1/TLSv1.1 by default)
+- Auto-injects TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+  as enabledAlgorithms if not already set
+
+MongoDB modernization (DataFrameFromTo.scala):
+- Replaced MongoSpark/ReadConfig/WriteConfig with format("mongodb") API
+- Replaced MongoClient/MongoClientURI with MongoClients.create()
+- Updated mongodbToDataFrame, dataFrameToMongodb, mongoRunCommand
+- Added spark.mongodb.read.inferSchema.sampleSize=1000 default to restore schema
+  inference behaviour changed in mongo-spark-connector 10.x (Spark 3.x returns empty
+  StructType for complex fields without sampling)
+
+MongoDB read preference / replica-set support (Helper.scala, DataFrameFromTo.scala, Migration.scala):
+- buildMongoURI(): added optional readPreference param, appended to the URI when set
+- mongodbToDataFrame(): now passes replicaset + readPreference on the read path (was hardcoded
+  null). Guarded so replicaSet is only injected when readPreference is set — existing pipelines
+  that carry a non-RS-name `replicaset` value keep prior single-host behaviour (backward-compatible)
+- Migration: reads top-level `replicaset`/`readpreference` source fields and passes them through
+- Enables routing MongoDB/DocumentDB reads to secondaries via replica-set topology mode
+
+JDBC ResultSet lifecycle fix (DataFrameFromTo.scala, Helper.scala):
+- rdbmsRunCommand() return type changed from ResultSet to Option[String]; the scalar value is read
+  inside the method before the connection closes, with rs -> statement -> connection close ordering.
+  Fixes "Operation not allowed after ResultSet closed" with mysql-connector 8.x on EMR 7
+- ReplaceInlineExpressions (inlineexprforjdbc) caller uses .orNull
+
+SMTP / email fixes (Controller.scala):
+- migrate() now receives SparkSession (was sparkContext.isLocal)
+- Added mail.smtp.ssl.trust when smtpTlsEnable=true (Java 17 cacerts do not trust the corporate
+  SMTP cert -> PKIX failure)
+- Recipient sanitizer: normalizes ';' -> ',' and strips duplicate/trailing commas
+
+SFTP reimplementation (core/pom.xml, DataFrameFromTo.scala):
+- Replaced spark-sftp_2.11 (Scala 2.11 -> NoSuchMethodError on EMR 7 / Scala 2.12) with sftp.client
+  1.0.3 (pure Java); fileToDataFrame/dataFrameToFile copy via com.springml.sftp.client.SFTPClient
+
+Cassandra SSL bootstrap hardening (DataPullRequestProcessor.java):
+- injectCassandraSSLConfig() cert fetch: added timeout on openssl s_client (fail fast instead of
+  hanging on an unreachable host), redirected openssl stderr to a logfile (visible in EMR bootstrap
+  logs), and test -s validation before the keytool import
+
+Empty schema guard (DataFrameFromTo.scala):
+- Added hasEmptyOrNestedEmptySchema() helper
+- dataFrameToFile() now skips write and logs a warning when DataFrame has empty or
+  nested-empty schema; Spark 3.5 throws on this whereas Spark 2.x wrote an empty file
+
+New Iceberg support (DataFrameFromTo.scala, Migration.scala):
+- Added dataFrameToIceberg with MERGE INTO SQL support
+- Added icebergToDataFrame for SQL-based reads
+- Added iceberg as source/destination platform in Migration
+
+Spark 3.5 compatibility (DataPull.scala):
+- Cassandra UUIDs -> Uuids (driver 4.x)
+- Binary type from org.bson.types.Binary
+- DataPull object extends Serializable
+- Hive caseSensitiveInferenceMode: INFER_ONLY -> NEVER_INFER
+- Hive metastore.version config commented out
+
+IMDSv2 and MSSQL fixes (Helper.scala):
+- Added imdsv2Token() for EC2 metadata token-based access
+- Updated GetEC2pkcs7() and GetEC2Role() with IMDSv2 headers
+- MSSQL JDBC URL: added encrypt and trustServerCertificate params
+- Commented out URI logging to prevent credential exposure
+
+Subnet and concurrency fixes (DataPullRequestProcessor.java, DataPullTask.java):
+- rotateSubnets() made synchronized, filters blank subnets, returns defensive copy
+- getSubnet() skips blank applicationSubnet1
+- getJobFlowInstancesConfig() throws IllegalStateException when subnet pool is empty
+- System.out.println replaced with log.info/log.warn throughout
+
+All homeaway bug fixes preserved (v0.1.83-0.1.90):
+- ConcurrentHashMap for thread-safe stepPipelineMap
+- Subnet NULL/invalid validation with default pool fallback
+- Credentials display fix, duplicate tags fix
+- Default 'datapullemr' application tag
+- url parameter in RDBMS methods, KMS encryption support
+- setExternalSparkConf, ReplaceInlineExpressions
+
+### Changed
+api/pom.xml
+api/src/main/java/com/homeaway/datapullclient/config/EMRProperties.java
+api/src/main/java/com/homeaway/datapullclient/process/DataPullRequestProcessor.java
+api/src/main/java/com/homeaway/datapullclient/process/DataPullTask.java
+core/pom.xml
+core/src/main/scala/core/DataFrameFromTo.scala
+core/src/main/scala/core/DataPull.scala
+core/src/main/scala/core/Migration.scala
+core/src/main/scala/core/Controller.scala
+core/src/main/scala/helper/Helper.scala
+core/src/main/scala/helper/IcebergUtils.scala
+core/src/main/resources/Samples/Input_Json_Specification.json
+
+
+
 ## [0.1.90] - 2026-02-16
 Addressing "key not found: url" Exception
 ### Changed

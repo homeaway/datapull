@@ -73,9 +73,19 @@ class Helper(appConfig: AppConfig) {
   }
 
   def GetEC2pkcs7(): String = {
-    var pkcs7 = getHttpResponse("http://169.254.169.254/latest/dynamic/instance-identity/pkcs7", 100000, 10000, "GET").ResponseBody
+    var pkcs7Properties = Map[String, String]()
+    pkcs7Properties += ("X-aws-ec2-metadata-token" -> imdsv2Token())
+    var pkcs7 = getHttpResponse("http://169.254.169.254/latest/dynamic/instance-identity/pkcs7", 100000, 10000, "GET", httpHeaders = pkcs7Properties).ResponseBody
     pkcs7 = pkcs7.split('\n').mkString
     pkcs7
+  }
+
+  def imdsv2Token(): String = {
+    var tokenProperties = Map[String, String]()
+    tokenProperties += ("X-aws-ec2-metadata-token-ttl-seconds" -> "21600")
+
+    var token = getHttpResponse(url = "http://169.254.169.254/latest/api/token", 100000, 10000, "PUT", httpHeaders = tokenProperties).ResponseBody
+    token
   }
 
   /**
@@ -127,6 +137,10 @@ class Helper(appConfig: AppConfig) {
           connection.setRequestMethod(requestMethod)
           httpHeaders.foreach(h => connection.setRequestProperty(h._1, h._2))
 
+          if (requestMethod.equalsIgnoreCase("PUT") || requestMethod.equalsIgnoreCase("POST")) {
+            connection.setDoOutput(true)
+          }
+
           if (jsonBody != "") {
 
             connection.setRequestMethod("POST")
@@ -157,7 +171,7 @@ class Helper(appConfig: AppConfig) {
 
             vault_exception.append(tmp_string)
 
-            if (retry_count == no_of_retries) {
+            if (retry_count >= no_of_retries) {
               exceptions = true
               throw ex
             }
@@ -177,7 +191,9 @@ class Helper(appConfig: AppConfig) {
   }
 
   def GetEC2Role(): String = {
-    var role = getHttpResponse("http://169.254.169.254/latest/meta-data/iam/security-credentials/", 100000, 10000, "GET").ResponseBody
+    var ec2RoleProperties = Map[String, String]()
+    ec2RoleProperties += ("X-aws-ec2-metadata-token" -> imdsv2Token())
+    var role = getHttpResponse("http://169.254.169.254/latest/meta-data/iam/security-credentials/", 100000, 10000, "GET", httpHeaders = ec2RoleProperties).ResponseBody
     role
   }
 
@@ -284,7 +300,8 @@ class Helper(appConfig: AppConfig) {
       }
       else {
         driver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
-        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database
+        url = "jdbc:sqlserver://" + server + ":" + (if (port == null) "1433" else port) + ";database=" + database +
+          ";encrypt=true;trustServerCertificate=true"
       }
     }
     else if (platform == "oracle") {
@@ -304,7 +321,7 @@ class Helper(appConfig: AppConfig) {
       driver = "org.postgresql.Driver"
       url = "jdbc:postgresql://" + server + ":" + (if (port == null) "5432" else port) + "/" + database + (if (sslEnabled == true) "?sslmode=require" else "")
     }
-    println("logging the URI: " + url)
+    //println("logging the URI: " + url)
     Map("driver" -> driver, "url" -> url)
   }
 
@@ -316,11 +333,14 @@ class Helper(appConfig: AppConfig) {
       "jdbc:teradata://" + server + "/" + (if (isWindowsAuthenticated) "LOGMECH=LDAP," else "") + "TYPE=" + typeForTeradata.getOrElse("DEFAULT") + ",DATABASE=" + database + ",TMODE=TERA,DBS_PORT=" + port.getOrElse(1025).toString
   }
 
-  def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean, sslEnabled: String): String = {
+  def buildMongoURI(login: String, password: String, cluster: String, replicaSet: String, autheticationDatabase: String, database: String, collection: String, authenticationEnabled: Boolean, sslEnabled: String, readPreference: String = null): String = {
+    // readPreference is only honored by the driver in replica-set topology mode (i.e. when replicaSet is also set);
+    // in single-host/SINGLE mode the driver ignores it and reads from the one connected host.
+    val readPreferenceParam = if (readPreference == null || readPreference.isEmpty) "" else "&readPreference=" + readPreference
     if (authenticationEnabled) {
-      "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet) + (if (sslEnabled == "true") "&ssl=true&sslInvalidHostNameAllowed=true" else "")
+      "mongodb://" + URLEncoder.encode(login, "UTF-8") + ":" + URLEncoder.encode(password, "UTF-8") + "@" + cluster + ":27017/" + database + "." + collection + "?authSource=" + (if (autheticationDatabase != "") autheticationDatabase else "admin") + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet) + (if (sslEnabled == "true") "&ssl=true&sslInvalidHostNameAllowed=true" else "") + readPreferenceParam
     } else {
-      "mongodb://" + cluster + ":27017/" + database + "." + collection + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet)
+      "mongodb://" + cluster + ":27017/" + database + "." + collection + (if (replicaSet == null) "" else "&replicaSet=" + replicaSet) + readPreferenceParam
     }
   }
 
@@ -349,7 +369,7 @@ class Helper(appConfig: AppConfig) {
   }
 
   def ReplaceInlineExpressions(inputString: String, sparkSession: org.apache.spark.sql.SparkSession): String = {
-    val RegexForInlineExpr = """inlineexpr\{\{(.*)}}""".r
+    val RegexForInlineExpr = """inlineexpr\{\{(.*?)}}""".r
     val returnVal = RegexForInlineExpr.replaceAllIn(inputString, _ match { case RegexForInlineExpr(inlineExprr) => println(inlineExprr);
       val df = sparkSession.sql(inlineExprr);
       val rows = df.take(1);
@@ -358,7 +378,7 @@ class Helper(appConfig: AppConfig) {
       } else ""
     })
 
-    val RegexForInlineSecret = """inlinesecret\{\{(.*)}}""".r
+    val RegexForInlineSecret = """inlinesecret\{\{(.*?)}}""".r
     RegexForInlineSecret.replaceAllIn(returnVal, _ match { case RegexForInlineSecret(inlineExprr) => println(inlineExprr);
       val inlineExprrAsJson = new JSONObject(new JSONObject("{\"data\": \"{" + inlineExprr + "}\"}").getString("data"))
       if (inlineExprrAsJson.has("secretstore") && inlineExprrAsJson.has("secretname")) {
@@ -375,6 +395,7 @@ class Helper(appConfig: AppConfig) {
       }
     })
 
+
   }
 
   def ReplaceInlineExpressions(platformObject: JSONObject, optionalJsonPropertiesList:List[String]): JSONObject ={
@@ -384,9 +405,9 @@ class Helper(appConfig: AppConfig) {
       val propertiesMap = jsonObjectPropertiesToMap(jsonObject = platformObject ) ++ jsonObjectPropertiesToMap(optionalJsonPropertiesList, platformObject)
       val dataframeFromTo = new DataFrameFromTo(appConfig, "test")
       val colType=  jsonObjectPropertiesToMap(inlineexprforjdbcasJson).get("coltype")
-      val rs=  dataframeFromTo.rdbmsRunCommand(
+      dataframeFromTo.rdbmsRunCommand(
         platform = platformObject.getString("platform"),
-        url = propertiesMap("url"),
+        url = propertiesMap.getOrElse("url", ""),
         awsEnv = propertiesMap("awsenv"),
         server = propertiesMap("server"),
         port = propertiesMap.getOrElse("port", null),
@@ -401,24 +422,7 @@ class Helper(appConfig: AppConfig) {
         domainName = propertiesMap.getOrElse("domain", null),
         typeForTeradata = propertiesMap.get("typeforteradata"),
         colType = colType
-      )
-      var returnString: String= null
-      while (rs.next()) {
-        if (colType.toString.equals("Some(int)")) {
-          returnString=  String.valueOf(rs.getInt(1))
-        } else if (colType.toString.equals("Some(string)")) {
-          returnString= rs.getString(1)
-        } else if (colType.toString.equals("Some(float)")) {
-          returnString= String.valueOf(rs.getFloat(1))
-        } else if (colType.toString.equals("Some(date)")) {
-          returnString= String.valueOf(rs.getDate(1))
-        } else if (colType.toString.equals("Some(long)")) {
-          returnString= String.valueOf(rs.getLong(1))
-        } else {
-          returnString= String.valueOf(rs.getInt(1))
-        }
-      }
-      returnString
+      ).orNull
     })
     new JSONObject(returnVal)
   }

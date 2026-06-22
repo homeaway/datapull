@@ -22,9 +22,11 @@ import java.util.concurrent.Executors
 
 import com.amazonaws.services.simpleemail.model.{Body, Content, Destination}
 import config.AppConfig
-import javax.mail._
 import helper._
+
+import javax.mail._
 import javax.mail.internet.{InternetAddress, MimeMessage}
+
 import logging._
 import org.codehaus.jettison.json.JSONArray
 import security._
@@ -94,7 +96,7 @@ class Controller(appConfig: AppConfig, pipeline: String) {
         val migration = new Migration()
 
         def runner(migrationJsonString: String) = Future {
-          migration.migrate(migrationJsonString, reportEmailAddress, poolId, verifymigration, reportCounts, no_of_retries, custom_retries, jobId, sparkSession.sparkContext.isLocal, preciseCounts, appConfig, pipelineName)
+          migration.migrate(migrationJsonString, reportEmailAddress, poolId, verifymigration, reportCounts, no_of_retries, custom_retries, jobId, sparkSession, preciseCounts, appConfig, pipelineName)
         }
 
         try {
@@ -123,7 +125,7 @@ class Controller(appConfig: AppConfig, pipeline: String) {
         breakableLoop.breakable {
           for (i <- 0 to migrations.length() - 1) {
             var migration = new Migration()
-            val migrationResult: Map[String, String] = migration.migrate(migrations.getJSONObject(i).toString(), reportEmailAddress, i.toString, verifymigration, reportCounts, no_of_retries, custom_retries, jobId, sparkSession.sparkContext.isLocal, preciseCounts, appConfig, pipelineName)
+            val migrationResult: Map[String, String] = migration.migrate(migrations.getJSONObject(i).toString(), reportEmailAddress, i.toString, verifymigration, reportCounts, no_of_retries, custom_retries, jobId, sparkSession, preciseCounts, appConfig, pipelineName)
             reportbodyHtml.append(migrationResult("reportRowHtml"))
             if (migrationResult("migrationError") != null)
               migrationErrors += migrationResult("migrationError")
@@ -197,9 +199,7 @@ class Controller(appConfig: AppConfig, pipeline: String) {
       subject_local = "Data Pull Report - " + pipelineName + " (" + applicationId + ")"
     }
 
-    if (authenticatedUser != null || authenticatedUser.nonEmpty) {
-      toAddresses = toAddresses + "," + emailAddress
-    }
+
 
     if (appConfig.smtpServerAddress != "SMTP_SERVER") {
       if (!isNullOrEmpty(emailAddress)) {
@@ -209,6 +209,7 @@ class Controller(appConfig: AppConfig, pipeline: String) {
 
           if (appConfig.smtpTlsEnable == "true") {
             properties.put("mail.smtp.starttls.enable", "true")
+            properties.put("mail.smtp.ssl.trust", appConfig.smtpServerAddress)
           }
 
           if (appConfig.smtpPort != "") {
@@ -237,7 +238,7 @@ class Controller(appConfig: AppConfig, pipeline: String) {
 
           // Set the from, to, subject, body text
           message.setFrom(new InternetAddress(appConfig.dataToolsEmailAddress))
-          message.setRecipients(Message.RecipientType.TO, toAddresses)
+          message.setRecipients(Message.RecipientType.TO, toAddresses.replaceAll(";", ",").replaceAll(",+", ",").stripSuffix(","))
           message.setRecipients(Message.RecipientType.BCC, "" + appConfig.dataToolsEmailAddress)
           message.setSubject(subject_local)
           message.setContent(htmlContent, "text/html; charset=utf-8")

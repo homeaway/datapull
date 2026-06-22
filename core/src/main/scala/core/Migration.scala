@@ -42,39 +42,13 @@ class Migration extends SparkListener {
   val secretStoreDefaultValue: String = "vault"
   var appConfig: AppConfig = null;
 
-  def migrate(migrationJSONString: String, reportEmailAddress: String, migrationId: String, verifymigration: Boolean, reportCounts: Boolean, no_of_retries: Int, custom_retries: Boolean, migrationLogId: String, isLocal: Boolean, preciseCounts: Boolean, appConfig: AppConfig, pipeline: String): Map[String, String] = {
+  def migrate(migrationJSONString: String, reportEmailAddress: String, migrationId: String, verifymigration: Boolean, reportCounts: Boolean, no_of_retries: Int, custom_retries: Boolean, migrationLogId: String, sparkSession: SparkSession, preciseCounts: Boolean, appConfig: AppConfig, pipeline: String): Map[String, String] = {
     val s3TempFolderDeletionError = StringBuilder.newBuilder
     val reportRowHtml = StringBuilder.newBuilder
     val migration: JSONObject = new JSONObject(migrationJSONString)
     val dataPullLogs = new DataPullLog(appConfig, pipeline)
     this.appConfig = appConfig;
     val helper = new Helper(appConfig)
-    var sparkSession: SparkSession = null
-
-    if (isLocal) {
-      sparkSession = SparkSession.builder.master("local[*]")
-        .config("spark.scheduler.mode", "FAIR")
-        .appName("DataPull - local")
-        .config("spark.network.timeout", "10000s")
-        .config("spark.executor.heartbeatInterval", "1000s")
-        .config("spark.sql.broadcastTimeout", 36000)
-        // .config("spark.driver.bindAddress","127.0.0.1")
-        .getOrCreate()
-    } else {
-      sparkSession = SparkSession.builder //.master("local[*]")
-        .config("spark.scheduler.mode", "FAIR")
-        .appName("DataPull")
-        .config("spark.network.timeout", "10000s")
-        .config("spark.executor.heartbeatInterval", "1000s")
-        .config("spark.sql.broadcastTimeout", 36000)
-        .config("spark.task.maxFailures", no_of_retries)
-        .config("fs.s3a.multiobjectdelete.enable", true)
-        .config("spark.sql.hive.metastore.version", "1.2.1")
-        .config("spark.sql.hive.metastore.jars", "builtin")
-        .config("spark.sql.hive.caseSensitiveInferenceMode", "INFER_ONLY")
-        .enableHiveSupport()
-        .getOrCreate()
-    }
 
     var sources = new JSONArray()
     var destination = new JSONObject()
@@ -164,7 +138,16 @@ class Migration extends SparkListener {
         }
         aliases += (if (selectedSource.has("alias")) selectedSource.getString("alias") else "")
 
-        df.createOrReplaceTempView(store)
+        // When caseSensitive=true, JDBC drivers (Teradata, MSSQL) return UPPERCASE column names.
+        // Spark 3.x strictly enforces case, so sql.query references in lowercase would fail with
+        // AnalysisException. Normalize all column names to lowercase before registering the temp
+        // view so that the sql.query works regardless of what the JDBC driver returns.
+        val viewDf = if (sparkSession.conf.getOption("spark.sql.caseSensitive").exists(_.equalsIgnoreCase("true"))) {
+          df.toDF(df.columns.map(_.toLowerCase): _*)
+        } else {
+          df
+        }
+        viewDf.createOrReplaceTempView(store)
 
         platforms += platform
       }
@@ -210,7 +193,7 @@ class Migration extends SparkListener {
       else if (destinationMap("platform") == "mssql" || destinationMap("platform") == "mysql" || destinationMap("platform") == "postgres" || destinationMap("platform") == "oracle" || destinationMap("platform") == "teradata") {
         dataframeFromTo.dataFrameToRdbms(
           platform = destinationMap("platform"),
-          url = destinationMap("url"),
+          url = destinationMap.getOrElse("url", ""),
           awsEnv = destinationMap("awsenv"),
           server = destinationMap("server"),
           database = destinationMap("database"),
@@ -385,6 +368,25 @@ class Migration extends SparkListener {
           dft,
           sparkSession
         )
+      } else if (destinationMap("platform") == "iceberg") {
+        val extraSparkOptions = (if (destination.optJSONObject("sparkoptions") == null) None else Some(destination.optJSONObject("sparkoptions")))
+
+        // Support dynamic partition overwrite via partitioncolumns
+        val partitionColumns = destinationMap.get("partitioncolumns").map(_.split(",").map(_.trim).toSeq).getOrElse(Seq.empty)
+        if (partitionColumns.nonEmpty && destinationMap.getOrElse("savemode", "append").equalsIgnoreCase("overwrite")) {
+          IcebergUtils.processTablePartitionsDynamic(sparkSession, dft, destinationMap("database"), destinationMap("table"), partitionColumns)
+        } else {
+          dataframeFromTo.dataFrameToIceberg(sparkSession, dft, destinationMap("table"), destinationMap("database"), destinationMap.getOrElse("savemode", "append"),
+            destinationMap.getOrElse("ismergeinto", "false").toBoolean, destinationMap.getOrElse("mergeintosql", " ")
+            , extraSparkOptions)
+        }
+
+        // Post-write deduplication if configured
+        val dedupKeyColumns = destinationMap.get("dedupkeycolumns").map(_.split(",").map(_.trim).toSeq).getOrElse(Seq.empty)
+        if (dedupKeyColumns.nonEmpty) {
+          val orderByCol = destinationMap.get("deduporderbycolumn")
+          IcebergUtils.icebergTableDeduplication(sparkSession, destinationMap("database"), destinationMap("table"), dedupKeyColumns, orderByCol)
+        }
       }
 
       if (dft.isStreaming) {
@@ -623,7 +625,7 @@ class Migration extends SparkListener {
 
       dataframeFromTo.hiveToDataFrame(sparkSession = sparkSession, query = propertiesMap("query"), properties = properties)
     } else if (platform == "mongodb") {
-      dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", secretStoreDefaultValue), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("tmpfilelocation", null), propertiesMap.getOrElse("samplesize", null), propertiesMap.getOrElse("sslenabled", "false"))
+      dataframeFromTo.mongodbToDataFrame(propertiesMap("awsenv"), propertiesMap("cluster"), propertiesMap.getOrElse("overrideconnector", "false"), propertiesMap("database"), propertiesMap("authenticationdatabase"), propertiesMap("collection"), propertiesMap("login"), propertiesMap("password"), sparkSession, propertiesMap("vaultenv"), platformObject.optJSONObject("sparkoptions"), propertiesMap.getOrElse("secretstore", secretStoreDefaultValue), propertiesMap.getOrElse("authenticationenabled", "true"), propertiesMap.getOrElse("tmpfilelocation", null), propertiesMap.getOrElse("samplesize", null), propertiesMap.getOrElse("sslenabled", "false"), propertiesMap.getOrElse("replicaset", null), propertiesMap.getOrElse("readpreference", null))
     }
     else if (platform == "kafka") {
       dataframeFromTo.kafkaToDataFrame(
@@ -685,6 +687,8 @@ class Migration extends SparkListener {
         propertiesMap("vaultenv"),
         propertiesMap.getOrElse("secretstore", secretStoreDefaultValue),
         sparkSession)
+    } else if (platform == "iceberg") {
+      dataframeFromTo.icebergToDataFrame(sparkSession, propertiesMap("query"))
     }
     else {
       sparkSession.emptyDataFrame
@@ -772,6 +776,7 @@ class Migration extends SparkListener {
         post_migrate_commands.put(tmpJsonObject)
       }
 
+
     }
 
 
@@ -789,12 +794,11 @@ class Migration extends SparkListener {
       lengthOfArray = command.length()
 
       for (i <- 0 to lengthOfArray - 1) {
-
         val dataframeFromTo = new DataFrameFromTo(appConfig, pipeline)
         if (platform == "mssql" || platform == "mysql" || platform == "oracle" || platform == "postgres" || platform == "teradata") {
           dataframeFromTo.rdbmsRunCommand(
             platform = platform,
-            url = propertiesMap("url"),
+            url = propertiesMap.getOrElse("url", ""),
             awsEnv = propertiesMap("awsenv"),
             server = propertiesMap("server"),
             port = propertiesMap.getOrElse("port", null),
@@ -895,6 +899,8 @@ class Migration extends SparkListener {
         propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "database", "authenticationdatabase", "collection", "login", "password"), platformObject)
       } else if (platform == "kafka") {
         propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("bootstrapServers", "schemaRegistries", "topic", "keyField", "keyFormat"), platformObject)
+      } else if (platform == "iceberg") {
+        propertiesMap = propertiesMap ++ jsonObjectPropertiesToMap(List("cluster", "clustertype", "database", "table"), platformObject)
       }
       htmlString.append("<dl>")
       propertiesMap.filter((t) => t._2 != "" && t._1 != "login" && t._1 != "password" && t._1 != "awsaccesskeyid" && t._1 != "awssecretaccesskey").foreach(i => htmlString.append("<dt>" + i._1 + "</dt><dd>" + i._2 + "</dd>"))
